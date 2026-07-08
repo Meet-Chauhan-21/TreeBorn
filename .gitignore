@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+
+# Client build output
+client/dist/
+client/.vite/
+
+# Server build/runtime output
+server/dist/
+server/build/
+server/.cache/
+
+# Environment files
+.env
+.env.*
+client/.env
+client/.env.*
+server/.env
+server/.env.*
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+
+# Coverage
+coverage/
+client/coverage/
+server/coverage/
