@@ -5,6 +5,7 @@ import { User as UserIcon, ShoppingBag, MapPin, LogOut, Download, Mail, Phone, P
 import { toast } from 'sonner';
 import { useAuth } from '../context/AuthContext';
 import type { Address } from '../context/AuthContext';
+import type { Order } from '../context/AuthContext';
 import { SearchableDropdown } from '../components/layout/SearchableDropdown';
 import { locationData } from '../data/locationData';
 import Navbar from '../components/layout/Navbar';
@@ -14,7 +15,7 @@ import WhatsAppButton from '../components/layout/WhatsAppButton';
 
 export const Profile: React.FC = () => {
   const navigate = useNavigate();
-  const { user, loading, logout, updateUser, addAddress, updateAddress, deleteAddress } = useAuth();
+  const { user, loading, logout, updateUser, addAddress, updateAddress, deleteAddress, fetchOrders } = useAuth();
   const [activeTab, setActiveTab] = useState<'profile' | 'orders' | 'addresses'>('profile');
   
   // Profile settings state
@@ -27,6 +28,9 @@ export const Profile: React.FC = () => {
   // Order pagination state
   const [orderPage, setOrderPage] = useState(1);
   const ordersPerPage = 3;
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [ordersTotal, setOrdersTotal] = useState(0);
+  const [ordersLoading, setOrdersLoading] = useState(false);
 
   // Address form management state
   const [isEditingAddress, setIsEditingAddress] = useState(false);
@@ -55,6 +59,35 @@ export const Profile: React.FC = () => {
       });
     }
   }, [user, loading, navigate]);
+
+  // Fetch real orders when the user opens "Order History"
+  useEffect(() => {
+    if (activeTab !== 'orders' || !user) return;
+
+    let cancelled = false;
+
+    const run = async () => {
+      setOrdersLoading(true);
+      const data = await fetchOrders(orderPage, ordersPerPage);
+      if (cancelled) return;
+
+      if (!data) {
+        setOrders([]);
+        setOrdersTotal(0);
+        setOrdersLoading(false);
+        return;
+      }
+
+      setOrders(data.orders);
+      setOrdersTotal(data.total);
+      setOrdersLoading(false);
+    };
+
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, orderPage, ordersPerPage, user, fetchOrders]);
 
   const handleSaveInfo = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,81 +120,12 @@ export const Profile: React.FC = () => {
     );
   }
 
-  // Expanded Mock Orders Dataset for Pagination Testing
-  const mockOrders = [
-    {
-      id: 'TREEBORN-9801',
-      date: 'July 08, 2026',
-      status: 'Delivered',
-      items: [
-        { name: 'Restorative Peptide Serum', quantity: 1, price: 85.00 },
-        { name: 'Gentle Hydrating Cleanser', quantity: 1, price: 36.00 },
-      ],
-      total: 121.00,
-    },
-    {
-      id: 'TREEBORN-8564',
-      date: 'July 05, 2026',
-      status: 'Delivered',
-      items: [
-        { name: 'Barrier Renewal Cream', quantity: 1, price: 68.00 },
-      ],
-      total: 68.00,
-    },
-    {
-      id: 'TREEBORN-7412',
-      date: 'June 22, 2026',
-      status: 'Delivered',
-      items: [
-        { name: 'Nourishing Face Oil', quantity: 2, price: 45.00 },
-      ],
-      total: 90.00,
-    },
-    {
-      id: 'TREEBORN-6325',
-      date: 'June 15, 2026',
-      status: 'Delivered',
-      items: [
-        { name: 'Exfoliating Scrub', quantity: 1, price: 28.00 },
-        { name: 'Rosewater Toner', quantity: 1, price: 22.00 },
-      ],
-      total: 50.00,
-    },
-    {
-      id: 'TREEBORN-5214',
-      date: 'May 18, 2026',
-      status: 'Delivered',
-      items: [
-        { name: 'Hyaluronic Acid Ampoule', quantity: 1, price: 54.00 },
-      ],
-      total: 54.00,
-    },
-    {
-      id: 'TREEBORN-4103',
-      date: 'April 30, 2026',
-      status: 'Delivered',
-      items: [
-        { name: 'Vitamin C Brightening Serum', quantity: 1, price: 72.00 },
-      ],
-      total: 72.00,
-    },
-    {
-      id: 'TREEBORN-3092',
-      date: 'March 12, 2026',
-      status: 'Delivered',
-      items: [
-        { name: 'Clay Detox Mask', quantity: 2, price: 32.00 },
-      ],
-      total: 64.00,
-    }
-  ];
+  const totalPages = ordersTotal > 0 ? Math.ceil(ordersTotal / ordersPerPage) : 0;
 
-  // Paginated and sorted orders (already sorted chronologically in our list)
-  const totalPages = Math.ceil(mockOrders.length / ordersPerPage);
-  const paginatedOrders = mockOrders.slice(
-    (orderPage - 1) * ordersPerPage,
-    orderPage * ordersPerPage
-  );
+  const formatOrderDate = (isoDate?: string) => {
+    if (!isoDate) return '';
+    return new Date(isoDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: '2-digit' });
+  };
 
   // Address Dropdown Select Cascades
   const countryOptions = locationData.map((c) => c.name);
@@ -297,7 +261,7 @@ export const Profile: React.FC = () => {
                 </button>
 
                 <button
-                  onClick={() => { setActiveTab('orders'); setIsEditingAddress(false); }}
+                  onClick={() => { setActiveTab('orders'); setIsEditingAddress(false); setOrderPage(1); }}
                   className={`flex items-center gap-3 px-4 py-3 rounded-xl text-left cursor-pointer transition-colors ${
                     activeTab === 'orders'
                       ? 'bg-primary/5 text-primary'
@@ -415,64 +379,81 @@ export const Profile: React.FC = () => {
                   <div className="border-b border-border-gray/40 pb-4">
                     <h2 className="text-lg font-display font-semibold text-dark">Order History</h2>
                     <p className="text-xs text-gray-500 mt-1 font-sans">
-                      Track active deliveries and review previous botanical purchases. Showing {paginatedOrders.length} of {mockOrders.length} orders.
+                      {ordersLoading
+                        ? 'Loading your order history...'
+                        : `Track active deliveries and review previous botanical purchases. Showing ${orders.length} of ${ordersTotal} orders.`}
                     </p>
                   </div>
 
                   <div className="space-y-5">
-                    {paginatedOrders.map((order) => (
-                      <div
-                        key={order.id}
-                        className="border border-border-gray/40 rounded-2xl overflow-hidden shadow-xs hover:border-primary/10 transition-colors"
-                      >
-                        {/* Order Header bar */}
-                        <div className="bg-light-gray/35 border-b border-border-gray/30 p-4 sm:px-5 flex flex-wrap justify-between items-center gap-3">
-                          <div className="flex gap-4 sm:gap-6 text-xs text-gray-500 font-sans">
-                            <div>
-                              <span className="block font-medium">Order Placed</span>
-                              <span className="font-semibold text-dark/80 mt-0.5 block">{order.date}</span>
-                            </div>
-                            <div>
-                              <span className="block font-medium">Order ID</span>
-                              <span className="font-semibold text-dark/80 mt-0.5 block">{order.id}</span>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-3">
-                            <span className="inline-flex items-center bg-secondary/10 text-secondary px-2.5 py-0.5 rounded-full text-[9px] font-sans font-bold uppercase tracking-wider">
-                              {order.status}
-                            </span>
-                            <button
-                              onClick={() => toast.success('Mock invoice download started.')}
-                              className="text-gray-400 hover:text-primary transition-colors flex items-center gap-1 text-xs cursor-pointer focus:outline-none"
-                              aria-label="Download Invoice"
-                            >
-                              <Download size={13} />
-                              <span className="hidden sm:inline">Invoice</span>
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Order Items list */}
-                        <div className="p-4 sm:px-5 divide-y divide-border-gray/30">
-                          {order.items.map((item, idx) => (
-                            <div key={idx} className="py-3.5 first:pt-0 last:pb-0 flex justify-between items-center text-xs sm:text-sm font-sans">
-                              <div>
-                                <h4 className="font-semibold text-dark leading-tight">{item.name}</h4>
-                                <span className="text-[10px] text-gray-400 mt-0.5 block">Quantity: {item.quantity}</span>
-                              </div>
-                              <span className="font-display font-bold text-dark">${item.price.toFixed(2)}</span>
-                            </div>
-                          ))}
-                        </div>
-
-                        {/* Order total footer */}
-                        <div className="bg-light-gray/10 border-t border-border-gray/30 p-4 sm:px-5 flex justify-between items-center text-xs sm:text-sm font-display">
-                          <span className="font-semibold text-gray-500">Total Paid</span>
-                          <span className="font-bold text-primary text-base">${order.total.toFixed(2)}</span>
-                        </div>
+                    {ordersLoading ? (
+                      <div className="py-12 flex items-center justify-center">
+                        <div className="w-10 h-10 border-4 border-[#0F3D2E]/20 border-t-[#0F3D2E] rounded-full animate-spin" />
                       </div>
-                    ))}
+                    ) : orders.length === 0 ? (
+                      <div className="py-12 text-center space-y-2">
+                        <ShoppingBag size={22} className="text-gray-400 mx-auto" />
+                        <h4 className="font-display font-semibold text-sm text-dark">No orders yet</h4>
+                        <p className="text-xs text-gray-500 font-sans">Place your first order to see it here.</p>
+                      </div>
+                    ) : (
+                      orders.map((order) => (
+                        <div
+                          key={order.orderNumber}
+                          className="border border-border-gray/40 rounded-2xl overflow-hidden shadow-xs hover:border-primary/10 transition-colors"
+                        >
+                          {/* Order Header bar */}
+                          <div className="bg-light-gray/35 border-b border-border-gray/30 p-4 sm:px-5 flex flex-wrap justify-between items-center gap-3">
+                            <div className="flex gap-4 sm:gap-6 text-xs text-gray-500 font-sans">
+                              <div>
+                                <span className="block font-medium">Order Placed</span>
+                                <span className="font-semibold text-dark/80 mt-0.5 block">{formatOrderDate(order.createdAt)}</span>
+                              </div>
+                              <div>
+                                <span className="block font-medium">Order ID</span>
+                                <span className="font-semibold text-dark/80 mt-0.5 block">{order.orderNumber}</span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                              <span className="inline-flex items-center bg-secondary/10 text-secondary px-2.5 py-0.5 rounded-full text-[9px] font-sans font-bold uppercase tracking-wider">
+                                {order.status}
+                              </span>
+                              <button
+                                onClick={() => toast.success('Invoice download started.')}
+                                className="text-gray-400 hover:text-primary transition-colors flex items-center gap-1 text-xs cursor-pointer focus:outline-none"
+                                aria-label="Download Invoice"
+                              >
+                                <Download size={13} />
+                                <span className="hidden sm:inline">Invoice</span>
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Order Items list */}
+                          <div className="p-4 sm:px-5 divide-y divide-border-gray/30">
+                            {order.items.map((item, idx) => (
+                              <div
+                                key={`${item.productId}-${idx}`}
+                                className="py-3.5 first:pt-0 last:pb-0 flex justify-between items-center text-xs sm:text-sm font-sans"
+                              >
+                                <div>
+                                  <h4 className="font-semibold text-dark leading-tight">{item.name}</h4>
+                                  <span className="text-[10px] text-gray-400 mt-0.5 block">Quantity: {item.quantity}</span>
+                                </div>
+                                <span className="font-display font-bold text-dark">${item.price.toFixed(2)}</span>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Order total footer */}
+                          <div className="bg-light-gray/10 border-t border-border-gray/30 p-4 sm:px-5 flex justify-between items-center text-xs sm:text-sm font-display">
+                            <span className="font-semibold text-gray-500">Total Paid</span>
+                            <span className="font-bold text-primary text-base">${order.totals.total.toFixed(2)}</span>
+                          </div>
+                        </div>
+                      ))
+                    )}
 
                     {/* Pagination Controls */}
                     {totalPages > 1 && (

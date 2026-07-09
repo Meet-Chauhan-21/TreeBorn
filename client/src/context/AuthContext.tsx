@@ -15,6 +15,35 @@ export interface Address {
   isDefault?: boolean;
 }
 
+export interface OrderItem {
+  productId: string;
+  name: string;
+  quantity: number;
+  price: number;
+  selectedSize?: string;
+}
+
+export interface Order {
+  _id?: string;
+  orderNumber: string;
+  status: string;
+  items: OrderItem[];
+  shippingAddress?: Omit<Address, '_id'>;
+  totals: {
+    subtotal: number;
+    shipping: number;
+    tax: number;
+    total: number;
+  };
+  payment?: {
+    method: string;
+    status: string;
+    cardName?: string;
+    cardLast4?: string;
+  };
+  createdAt?: string;
+}
+
 export interface User {
   id?: string;
   name: string;
@@ -36,6 +65,17 @@ interface AuthContextType {
   addAddress: (address: Omit<Address, '_id'>) => Promise<boolean>;
   updateAddress: (addressId: string, address: Omit<Address, '_id'>) => Promise<boolean>;
   deleteAddress: (addressId: string) => Promise<boolean>;
+  placeOrder: (payload: {
+    items: OrderItem[];
+    shippingAddress: Omit<Address, '_id'>;
+    paymentMethod: 'card' | 'cod';
+    paymentDetails?: { cardName?: string; cardLast4?: string };
+    totals: { subtotal: number; shipping: number; tax: number; total: number };
+  }) => Promise<{ order: Order } | null>;
+  fetchOrders: (
+    page?: number,
+    limit?: number
+  ) => Promise<{ orders: Order[]; total: number; page: number; limit: number } | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -349,6 +389,82 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const placeOrder = async (payload: {
+    items: OrderItem[];
+    shippingAddress: Omit<Address, '_id'>;
+    paymentMethod: 'card' | 'cod';
+    paymentDetails?: { cardName?: string; cardLast4?: string };
+    totals: { subtotal: number; shipping: number; tax: number; total: number };
+  }): Promise<{ order: Order } | null> => {
+    if (!accessToken) {
+      toast.error('Session expired. Please log in.');
+      return null;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE}/orders`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          items: payload.items,
+          shippingAddress: payload.shippingAddress,
+          paymentMethod: payload.paymentMethod,
+          paymentDetails: payload.paymentDetails,
+          totals: payload.totals
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data.message || 'Failed to place order.');
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Place order error:', error);
+      toast.error('Network error. Failed to place order.');
+      return null;
+    }
+  };
+
+  const fetchOrders = async (
+    page: number = 1,
+    limit: number = 3
+  ): Promise<{ orders: Order[]; total: number; page: number; limit: number } | null> => {
+    if (!accessToken) {
+      toast.error('Session expired. Please log in.');
+      return null;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE}/orders?page=${page}&limit=${limit}`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data.message || 'Failed to fetch orders.');
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Fetch orders error:', error);
+      toast.error('Network error. Failed to fetch orders.');
+      return null;
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -361,7 +477,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         updateUser,
         addAddress,
         updateAddress,
-        deleteAddress
+        deleteAddress,
+        placeOrder,
+        fetchOrders
       }}
     >
       {children}

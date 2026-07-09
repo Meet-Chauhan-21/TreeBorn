@@ -16,7 +16,7 @@ import Button from '../components/layout/Button';
 export const Checkout: React.FC = () => {
   const navigate = useNavigate();
   const { cart, clearCart } = useStore();
-  const { user } = useAuth();
+  const { user, placeOrder, loading } = useAuth();
 
   // Load user saved addresses
   const savedAddresses = user?.addresses || [];
@@ -56,6 +56,15 @@ export const Checkout: React.FC = () => {
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderId, setOrderId] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'cod'>('card');
+
+  // Orders are created server-side and require auth
+  React.useEffect(() => {
+    if (loading) return;
+    if (!user && !orderPlaced) {
+      toast.error('Please sign in to place an order.');
+      navigate('/login');
+    }
+  }, [user, loading, navigate, orderPlaced]);
 
   // Cart values
   const subtotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
@@ -152,19 +161,72 @@ export const Checkout: React.FC = () => {
     }
 
     setIsSubmitting(true);
-    // Simulate transaction processing
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setIsSubmitting(false);
+    try {
+      const selectedSavedAddress =
+        !useNewAddress ? savedAddresses.find((a) => a._id === selectedAddressId) : undefined;
 
-    // Generate random order ID
-    const generatedId = `TREEBORN-${Math.floor(1000 + Math.random() * 9000)}`;
-    setOrderId(generatedId);
-    setOrderPlaced(true);
-    
-    if (paymentMethod === 'card') {
-      toast.success('Payment authorized. Order confirmed!');
-    } else {
-      toast.success('Order placed successfully (Cash on Delivery)!');
+      if (!useNewAddress && !selectedSavedAddress) {
+        toast.error('Please select a valid saved shipping address.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      const shippingAddress = useNewAddress
+        ? {
+            name: newAddressForm.name,
+            phone: newAddressForm.phone,
+            street: newAddressForm.street,
+            country: newAddressForm.country,
+            state: newAddressForm.state,
+            district: newAddressForm.district,
+            zip: newAddressForm.zip
+          }
+        : {
+            name: selectedSavedAddress!.name,
+            phone: selectedSavedAddress!.phone,
+            street: selectedSavedAddress!.street,
+            country: selectedSavedAddress!.country,
+            state: selectedSavedAddress!.state,
+            district: selectedSavedAddress!.district,
+            zip: selectedSavedAddress!.zip
+          };
+
+      const cardDigitsOnly = paymentInfo.cardNumber.replace(/\s/g, '');
+      const cardLast4 = cardDigitsOnly.slice(-4);
+
+      const result = await placeOrder({
+        items: cart.map((item) => ({
+          productId: item.product.id,
+          name: item.product.name,
+          quantity: item.quantity,
+          price: item.product.price,
+          selectedSize: item.selectedSize
+        })),
+        shippingAddress,
+        paymentMethod,
+        paymentDetails:
+          paymentMethod === 'card'
+            ? { cardName: paymentInfo.cardName, cardLast4 }
+            : undefined,
+        totals: { subtotal, shipping, tax, total }
+      });
+
+      setIsSubmitting(false);
+
+      if (!result) return;
+
+      setOrderId(result.order.orderNumber);
+      setOrderPlaced(true);
+
+      if (paymentMethod === 'card') {
+        toast.success('Payment authorized. Order confirmed!');
+      } else {
+        toast.success('Order placed successfully (Cash on Delivery)!');
+      }
+    } catch (err) {
+      console.error('Checkout order error:', err);
+      toast.error('Failed to place order.');
+      setIsSubmitting(false);
     }
   };
 

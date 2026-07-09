@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Heart, ShoppingBag, User, Menu, X } from 'lucide-react';
 import { Container } from './Container';
@@ -9,17 +9,62 @@ import { PRODUCTS } from '../../data/mockData';
 import logoImg from '../../images/logo.png';
 
 export const Navbar: React.FC = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<typeof PRODUCTS>([]);
+  const [activeSectionHash, setActiveSectionHash] = useState<string>('');
 
   const { cart, wishlist, setIsCartOpen, setIsWishlistOpen } = useStore();
   const { user } = useAuth();
 
   const wishlistCount = wishlist.length;
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
+
+  const accountHref = user ? '/profile' : '/login';
+  const isAccountActive = location.pathname === accountHref;
+  const isCheckoutActive = location.pathname === '/checkout';
+
+  const isNavLinkActive = (path: string) => {
+    if (path === '/') {
+      return location.pathname === '/' && !activeSectionHash;
+    }
+    if (path.startsWith('/#')) {
+      const expectedHash = `#${path.slice(2)}`;
+      return location.pathname === '/' && activeSectionHash === expectedHash;
+    }
+    return false;
+  };
+
+  const handleNavClick = (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    path: string,
+    closeMobileMenu: boolean = false
+  ) => {
+    if (closeMobileMenu) setIsMobileMenuOpen(false);
+
+    if (!path.startsWith('/#')) {
+      return;
+    }
+
+    e.preventDefault();
+    const targetHash = `#${path.slice(2)}`;
+    const targetId = targetHash.replace('#', '');
+
+    if (location.pathname === '/') {
+      const section = document.getElementById(targetId);
+      if (section) {
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        window.history.replaceState(null, '', targetHash);
+      }
+      return;
+    }
+
+    navigate(`/${targetHash}`);
+  };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -54,6 +99,60 @@ export const Navbar: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  useEffect(() => {
+    if (location.pathname !== '/') {
+      setActiveSectionHash('');
+      return;
+    }
+
+    const sectionHashes = ['#shop', '#categories', '#about', '#contact'];
+    const sectionIds = sectionHashes.map((hash) => hash.replace('#', ''));
+
+    const updateActiveSection = () => {
+      // At very top, keep Home active.
+      if (window.scrollY < 120) {
+        setActiveSectionHash('');
+        return;
+      }
+
+      const navOffset = 140;
+      let currentHash = '';
+
+      for (const sectionId of sectionIds) {
+        const section = document.getElementById(sectionId);
+        if (!section) continue;
+        const rect = section.getBoundingClientRect();
+        if (rect.top <= navOffset && rect.bottom > navOffset) {
+          currentHash = `#${sectionId}`;
+          break;
+        }
+      }
+
+      if (!currentHash) {
+        // Fallback: use last section passed while scrolling down.
+        for (const sectionId of sectionIds) {
+          const section = document.getElementById(sectionId);
+          if (!section) continue;
+          const sectionTop = section.getBoundingClientRect().top;
+          if (sectionTop <= navOffset) {
+            currentHash = `#${sectionId}`;
+          }
+        }
+      }
+
+      setActiveSectionHash(currentHash);
+    };
+
+    // Sync initial state with URL hash (if present), then start scroll tracking.
+    setActiveSectionHash(location.hash || '');
+    updateActiveSection();
+    window.addEventListener('scroll', updateActiveSection, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', updateActiveSection);
+    };
+  }, [location.pathname, location.hash]);
+
   const navLinks = [
     { name: 'Home', path: '/' },
     { name: 'Shop', path: '/#shop' },
@@ -85,14 +184,21 @@ export const Navbar: React.FC = () => {
           {/* Desktop Navigation Links */}
           <nav className="hidden md:flex items-center space-x-8">
             {navLinks.map((link) => (
-              <a
+              <Link
                 key={link.name}
-                href={link.path}
-                className="font-display text-sm font-medium tracking-wide text-dark/80 hover:text-primary transition-colors relative py-1 group"
+                to={link.path}
+                onClick={(e) => handleNavClick(e, link.path)}
+                className={`font-display text-sm font-medium tracking-wide transition-colors relative py-1 group ${
+                  isNavLinkActive(link.path) ? 'text-primary' : 'text-dark/80 hover:text-primary'
+                }`}
               >
                 {link.name}
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
-              </a>
+                <span
+                  className={`absolute bottom-0 left-0 h-0.5 bg-primary transition-all duration-300 ${
+                    isNavLinkActive(link.path) ? 'w-full' : 'w-0'
+                  } group-hover:w-full`}
+                />
+              </Link>
             ))}
           </nav>
 
@@ -119,7 +225,9 @@ export const Navbar: React.FC = () => {
             </button>
             <button
               onClick={() => setIsCartOpen(true)}
-              className="text-dark hover:text-primary transition-colors relative cursor-pointer focus:outline-none"
+              className={`${
+                isCheckoutActive ? 'text-primary' : 'text-dark'
+              } hover:text-primary transition-colors relative cursor-pointer focus:outline-none`}
               aria-label="Cart"
             >
               <ShoppingBag size={20} strokeWidth={2} />
@@ -131,7 +239,9 @@ export const Navbar: React.FC = () => {
             </button>
             <Link
               to={user ? "/profile" : "/login"}
-              className="text-dark hover:text-primary transition-colors flex items-center relative group"
+              className={`${
+                isAccountActive ? 'text-primary' : 'text-dark'
+              } hover:text-primary transition-colors flex items-center relative group`}
               aria-label="Profile"
             >
               {user ? (
@@ -163,7 +273,9 @@ export const Navbar: React.FC = () => {
             </button>
             <button
               onClick={() => setIsCartOpen(true)}
-              className="text-dark hover:text-primary transition-colors relative cursor-pointer focus:outline-none"
+              className={`${
+                isCheckoutActive ? 'text-primary' : 'text-dark'
+              } hover:text-primary transition-colors relative cursor-pointer focus:outline-none`}
               aria-label="Cart"
             >
               <ShoppingBag size={20} strokeWidth={2} />
@@ -218,14 +330,16 @@ export const Navbar: React.FC = () => {
 
               <nav className="flex flex-col space-y-4 flex-grow">
                 {navLinks.map((link) => (
-                  <a
+                  <Link
                     key={link.name}
-                    href={link.path}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="font-display text-base font-medium text-dark hover:text-primary transition-colors py-1 border-b border-gray-50"
+                    to={link.path}
+                    onClick={(e) => handleNavClick(e, link.path, true)}
+                    className={`font-display text-base font-medium transition-colors py-1 border-b border-gray-50 ${
+                      isNavLinkActive(link.path) ? 'text-primary' : 'text-dark hover:text-primary'
+                    }`}
                   >
                     {link.name}
-                  </a>
+                  </Link>
                 ))}
               </nav>
 
@@ -254,7 +368,9 @@ export const Navbar: React.FC = () => {
                   <Link
                     to={user ? "/profile" : "/login"}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex flex-col items-center gap-1 hover:text-primary"
+                    className={`flex flex-col items-center gap-1 hover:text-primary ${
+                      isAccountActive ? 'text-primary' : 'text-dark'
+                    }`}
                   >
                     {user ? (
                       <div className="w-5.5 h-5.5 rounded-full bg-primary text-white flex items-center justify-center font-bold text-[9px]">
