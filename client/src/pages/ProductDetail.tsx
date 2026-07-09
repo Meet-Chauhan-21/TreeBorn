@@ -8,20 +8,20 @@ import Footer from '../components/layout/Footer';
 import Container from '../components/layout/Container';
 import Button from '../components/layout/Button';
 import WhatsAppButton from '../components/layout/WhatsAppButton';
-import { PRODUCTS } from '../data/mockData';
 import { useStore } from '../context/StoreContext';
 
 export const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { addToCart, toggleWishlist, isInWishlist, setIsCartOpen } = useStore();
+  const { addToCart, toggleWishlist, isInWishlist, setIsCartOpen, products, productsLoading } = useStore();
 
   const [selectedSize, setSelectedSize] = useState('50ml');
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<'desc' | 'ingredients' | 'benefits' | 'shipping'>('desc');
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   // Find the product
-  const product = PRODUCTS.find((p) => p.id === id);
+  const product = products.find((p) => p.id === id);
 
   // Scroll to top on load or product change
   useEffect(() => {
@@ -30,8 +30,21 @@ export const ProductDetail: React.FC = () => {
       setSelectedSize('50ml');
       setQuantity(1);
       setActiveTab('desc');
+      setSelectedImageIndex(0);
     }
   }, [id, product]);
+
+  if (productsLoading) {
+    return (
+      <>
+        <Navbar />
+        <main className="pt-32 pb-20 min-h-[60vh] flex items-center justify-center">
+          <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+        </main>
+        <Footer />
+      </>
+    );
+  }
 
   if (!product) {
     return (
@@ -78,13 +91,19 @@ export const ProductDetail: React.FC = () => {
     }
   };
 
+  const galleryImages = [
+    ...(product.images || []),
+    product.image,
+    product.hoverImage,
+  ].filter((image, index, list) => Boolean(image) && list.indexOf(image) === index);
+
   // Find similar products in the same category, excluding active product
-  const similarProducts = PRODUCTS.filter(
+  const similarProducts = products.filter(
     (p) => p.category === product.category && p.id !== product.id
   ).slice(0, 4);
 
   // Fallback: If no similar products in same category, show other bestsellers
-  const backupSimilar = PRODUCTS.filter((p) => p.id !== product.id).slice(0, 4);
+  const backupSimilar = products.filter((p) => p.id !== product.id).slice(0, 4);
   const displaySimilar = similarProducts.length > 0 ? similarProducts : backupSimilar;
 
   const sizes = ['30ml', '50ml', '100ml'];
@@ -121,7 +140,7 @@ export const ProductDetail: React.FC = () => {
                   </span>
                 )}
                 <img
-                  src={product.image}
+                  src={galleryImages[selectedImageIndex] || product.image}
                   alt={product.name}
                   className="w-full h-full object-cover object-center transform group-hover:scale-105 transition-transform duration-1000"
                 />
@@ -129,15 +148,22 @@ export const ProductDetail: React.FC = () => {
               
               {/* Product close-ups thumbnails for premium feel */}
               <div className="grid grid-cols-3 gap-4">
-                <div className="aspect-square rounded-2xl overflow-hidden bg-light-gray border border-border-gray/25 shadow-xs cursor-pointer opacity-80 hover:opacity-100 transition-opacity">
-                  <img src={product.hoverImage} alt="Alternate view" className="w-full h-full object-cover object-center" />
-                </div>
-                <div className="aspect-square rounded-2xl overflow-hidden bg-light-gray border border-border-gray/25 shadow-xs cursor-pointer opacity-80 hover:opacity-100 transition-opacity">
-                  <img src={product.image} alt="Front View" className="w-full h-full object-cover object-center" />
-                </div>
-                <div className="aspect-square rounded-2xl overflow-hidden bg-light-gray border border-border-gray/25 shadow-xs cursor-pointer opacity-80 hover:opacity-100 transition-opacity flex items-center justify-center text-center p-3 text-[10px] font-display font-semibold text-primary bg-accent-sage/30">
-                  Botanical Extract Core
-                </div>
+                {galleryImages.slice(0, 3).map((image, index) => (
+                  <button
+                    key={image}
+                    type="button"
+                    onClick={() => setSelectedImageIndex(index)}
+                    className={`aspect-square rounded-2xl overflow-hidden bg-light-gray border shadow-xs cursor-pointer transition-opacity ${selectedImageIndex === index ? 'border-primary opacity-100' : 'border-border-gray/25 opacity-80 hover:opacity-100'}`}
+                    aria-label={`View product image ${index + 1}`}
+                  >
+                    <img src={image} alt={`${product.name} view ${index + 1}`} className="w-full h-full object-cover object-center" />
+                  </button>
+                ))}
+                {galleryImages.length < 3 && (
+                  <div className="aspect-square rounded-2xl overflow-hidden bg-accent-sage/30 border border-border-gray/25 shadow-xs flex items-center justify-center text-center p-3 text-[10px] font-display font-semibold text-primary">
+                    Botanical Extract Core
+                  </div>
+                )}
               </div>
             </div>
 

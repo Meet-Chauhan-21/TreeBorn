@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { Product } from '../types';
+import { fallbackProducts, fetchPublicProducts } from '../services/products';
 
 export interface CartItem {
   product: Product;
@@ -10,6 +11,8 @@ export interface CartItem {
 interface StoreContextType {
   cart: CartItem[];
   wishlist: Product[];
+  products: Product[];
+  productsLoading: boolean;
   activeProduct: Product | null;
   isCartOpen: boolean;
   isWishlistOpen: boolean;
@@ -32,6 +35,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return saved ? JSON.parse(saved) : [];
   });
 
+  const [products, setProducts] = useState<Product[]>(fallbackProducts);
+  const [productsLoading, setProductsLoading] = useState(true);
+
   const [wishlist, setWishlist] = useState<Product[]>(() => {
     const saved = localStorage.getItem('treeborn_wishlist');
     return saved ? JSON.parse(saved) : [];
@@ -49,6 +55,31 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     localStorage.setItem('treeborn_wishlist', JSON.stringify(wishlist));
   }, [wishlist]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadProducts = async () => {
+      try {
+        const apiProducts = await fetchPublicProducts();
+        if (!cancelled) {
+          setProducts(apiProducts);
+        }
+      } catch (error) {
+        console.error('Failed to load products:', error);
+      } finally {
+        if (!cancelled) {
+          setProductsLoading(false);
+        }
+      }
+    };
+
+    loadProducts();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const addToCart = (product: Product, quantity: number, size = '50ml') => {
     setCart((prevCart) => {
@@ -113,6 +144,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       value={{
         cart,
         wishlist,
+        products,
+        productsLoading,
         activeProduct,
         isCartOpen,
         isWishlistOpen,

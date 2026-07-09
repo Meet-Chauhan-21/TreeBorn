@@ -1,18 +1,19 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { PRODUCTS } from '../../data/mockData';
+import { useStore } from '../../context/StoreContext';
 
 export const WhatsAppButton: React.FC = () => {
   const location = useLocation();
   const path = location.pathname;
+  const { products } = useStore();
 
   // Determine message based on current page path
   let message = 'Hello TREEBORN Skincare, I am interested in your botanical formulations. Can you please assist me?';
 
   if (path.startsWith('/product/')) {
     const productId = path.split('/product/')[1];
-    const product = PRODUCTS.find((p) => p.id === productId);
+    const product = products.find((p) => p.id === productId);
     if (product) {
       message = `Hello, I am interested in purchasing ${product.name} - $${product.price.toFixed(2)}. Can you please help me with my order?`;
     }

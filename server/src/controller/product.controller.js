@@ -1,0 +1,253 @@
+const Product = require('../models/Product.model');
+
+// @desc    Get all products
+// @route   GET /api/products
+// @access  Public
+const getAllProducts = async (req, res) => {
+  try {
+    const page = Math.max(parseInt(req.query.page || '1', 10), 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit || '20', 10), 1), 100);
+    const skip = (page - 1) * limit;
+    const search = req.query.search || '';
+    const category = req.query.category || '';
+
+    let query = { status: 'active' };
+    if (search) {
+      query.name = { $regex: search, $options: 'i' };
+    }
+    if (category && category !== 'all') {
+      query.category = category;
+    }
+
+    const [products, total] = await Promise.all([
+      Product.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Product.countDocuments(query)
+    ]);
+
+    return res.status(200).json({
+      products,
+      total,
+      page,
+      limit
+    });
+  } catch (error) {
+    console.error('Get Products Error:', error);
+    return res.status(500).json({ message: 'Server error. Failed to fetch products.' });
+  }
+};
+
+// @desc    Get product by ID
+// @route   GET /api/products/:id
+// @access  Public
+const getProductById = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+    return res.status(200).json({ product });
+  } catch (error) {
+    console.error('Get Product Error:', error);
+    return res.status(500).json({ message: 'Server error. Failed to fetch product.' });
+  }
+};
+
+// @desc    Create product (Admin only)
+// @route   POST /api/admin/products
+// @access  Private/Admin
+const createProduct = async (req, res) => {
+  try {
+    const {
+      name,
+      category,
+      description,
+      price,
+      oldPrice,
+      discount,
+      image,
+      hoverImage,
+      images,
+      ingredients,
+      benefits,
+      rating,
+      reviewsCount,
+      isBestSeller,
+      isNewArrival,
+      stock,
+      sku,
+      status
+    } = req.body;
+
+    if (!name || !category || !description || price === undefined || price === null || image === undefined || image === '' || stock === undefined || stock === null || sku === undefined || sku === '') {
+      return res.status(400).json({ message: 'Please provide all required fields.' });
+    }
+
+    const skuExists = await Product.findOne({ sku });
+    if (skuExists) {
+      return res.status(400).json({ message: 'SKU already exists.' });
+    }
+
+    const product = await Product.create({
+      name,
+      category,
+      description,
+      price,
+      oldPrice: oldPrice || null,
+      discount: discount || 0,
+      image,
+      hoverImage: hoverImage || (Array.isArray(images) && images[1]) || image,
+      images: Array.isArray(images) ? images.filter(Boolean) : [],
+      ingredients: ingredients || [],
+      benefits: benefits || [],
+      rating: rating !== undefined ? rating : 0,
+      reviewsCount: reviewsCount !== undefined ? reviewsCount : 0,
+      isBestSeller: isBestSeller || false,
+      isNewArrival: isNewArrival || false,
+      stock,
+      sku,
+      status: status || 'active'
+    });
+
+    return res.status(201).json({
+      message: 'Product created successfully',
+      product
+    });
+  } catch (error) {
+    console.error('Create Product Error:', error);
+    return res.status(500).json({ message: 'Server error. Failed to create product.' });
+  }
+};
+
+// @desc    Update product (Admin only)
+// @route   PUT /api/admin/products/:id
+// @access  Private/Admin
+const updateProduct = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    const {
+      name,
+      category,
+      description,
+      price,
+      oldPrice,
+      discount,
+      image,
+      hoverImage,
+      images,
+      ingredients,
+      benefits,
+      rating,
+      reviewsCount,
+      isBestSeller,
+      isNewArrival,
+      stock,
+      sku,
+      status
+    } = req.body;
+
+    if (sku && sku !== product.sku) {
+      const skuExists = await Product.findOne({ sku });
+      if (skuExists) {
+        return res.status(400).json({ message: 'SKU already exists.' });
+      }
+    }
+
+    product.name = name || product.name;
+    product.category = category || product.category;
+    product.description = description || product.description;
+    product.price = price !== undefined ? price : product.price;
+    product.oldPrice = oldPrice !== undefined ? oldPrice : product.oldPrice;
+    product.discount = discount !== undefined ? discount : product.discount;
+    product.image = image || product.image;
+    product.hoverImage = hoverImage !== undefined ? hoverImage : product.hoverImage;
+    product.images = Array.isArray(images) ? images.filter(Boolean) : product.images;
+    product.ingredients = ingredients || product.ingredients;
+    product.benefits = benefits || product.benefits;
+    product.rating = rating !== undefined ? rating : product.rating;
+    product.reviewsCount = reviewsCount !== undefined ? reviewsCount : product.reviewsCount;
+    product.isBestSeller = isBestSeller !== undefined ? isBestSeller : product.isBestSeller;
+    product.isNewArrival = isNewArrival !== undefined ? isNewArrival : product.isNewArrival;
+    product.stock = stock !== undefined ? stock : product.stock;
+    product.sku = sku || product.sku;
+    product.status = status || product.status;
+
+    const updatedProduct = await product.save();
+
+    return res.status(200).json({
+      message: 'Product updated successfully',
+      product: updatedProduct
+    });
+  } catch (error) {
+    console.error('Update Product Error:', error);
+    return res.status(500).json({ message: 'Server error. Failed to update product.' });
+  }
+};
+
+// @desc    Delete product (Admin only)
+// @route   DELETE /api/admin/products/:id
+// @access  Private/Admin
+const deleteProduct = async (req, res) => {
+  try {
+    const product = await Product.findByIdAndDelete(req.params.id);
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+    return res.status(200).json({ message: 'Product deleted successfully' });
+  } catch (error) {
+    console.error('Delete Product Error:', error);
+    return res.status(500).json({ message: 'Server error. Failed to delete product.' });
+  }
+};
+
+// @desc    Get all products for admin (including inactive)
+// @route   GET /api/admin/products
+// @access  Private/Admin
+const getAllProductsAdmin = async (req, res) => {
+  try {
+    const page = Math.max(parseInt(req.query.page || '1', 10), 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit || '50', 10), 1), 100);
+    const skip = (page - 1) * limit;
+    const search = req.query.search || '';
+    const category = req.query.category || '';
+    const status = req.query.status || '';
+
+    let query = {};
+    if (search) {
+      query.name = { $regex: search, $options: 'i' };
+    }
+    if (category && category !== 'all') {
+      query.category = category;
+    }
+    if (status && status !== 'all') {
+      query.status = status;
+    }
+
+    const [products, total] = await Promise.all([
+      Product.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Product.countDocuments(query)
+    ]);
+
+    return res.status(200).json({
+      products,
+      total,
+      page,
+      limit
+    });
+  } catch (error) {
+    console.error('Get Admin Products Error:', error);
+    return res.status(500).json({ message: 'Server error. Failed to fetch products.' });
+  }
+};
+
+module.exports = {
+  getAllProducts,
+  getProductById,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+  getAllProductsAdmin
+};

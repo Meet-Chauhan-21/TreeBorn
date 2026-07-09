@@ -10,10 +10,17 @@ export interface Product {
   discount?: number; // percentage, e.g., 15
   image: string;
   hoverImage: string;
+  images?: string[];
   isBestSeller?: boolean;
   isNew?: boolean;
+  isNewArrival?: boolean;
   ingredients?: string[];
   benefits?: string[];
+  status?: 'active' | 'inactive' | string;
+  stock?: number;
+  sku?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Category {

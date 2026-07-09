@@ -4,17 +4,19 @@ import { ArrowRight, Star, ShieldCheck } from 'lucide-react';
 import { Button } from '../layout/Button';
 import { Container } from '../layout/Container';
 import { useStore } from '../../context/StoreContext';
-import { PRODUCTS } from '../../data/mockData';
+import { fallbackProducts } from '../../services/products';
 
 export const Hero: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const { addToCart, setIsCartOpen } = useStore();
+  const { addToCart, setIsCartOpen, products } = useStore();
+
+  const catalog = products.length > 0 ? products : fallbackProducts;
 
   const heroProducts = [
     {
-      product: PRODUCTS.find((p) => p.id === 'prod-01') || PRODUCTS[0],
+      product: catalog[0] || catalog[0],
       tagline: 'Dermatologist Approved Active formulas',
       titleHighlight: 'Botanicals',
       titleText1: 'Scientific',
@@ -22,7 +24,7 @@ export const Hero: React.FC = () => {
       bgGlow: 'bg-primary/5',
     },
     {
-      product: PRODUCTS.find((p) => p.id === 'prod-02') || PRODUCTS[1],
+      product: catalog[1] || catalog[0],
       tagline: 'Ceramide-Infused Skin Defense',
       titleHighlight: 'Barrier',
       titleText1: 'Deep Cellular',
@@ -30,7 +32,7 @@ export const Hero: React.FC = () => {
       bgGlow: 'bg-secondary/5',
     },
     {
-      product: PRODUCTS.find((p) => p.id === 'prod-04') || PRODUCTS[3],
+      product: catalog[2] || catalog[0],
       tagline: 'Cold-Pressed Botanical Elixir',
       titleHighlight: 'Radiance',
       titleText1: 'Pure Recovery',

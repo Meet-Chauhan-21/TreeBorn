@@ -57,6 +57,7 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  accessToken: string | null;
   login: (email: string, password: string) => Promise<boolean>;
   register: (name: string, email: string, password: string, phone: string) => Promise<boolean>; // phone is now required
   googleLogin: () => void;
@@ -470,6 +471,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         user,
         loading,
+        accessToken,
         login,
         register,
         googleLogin,

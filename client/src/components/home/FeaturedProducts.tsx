@@ -6,9 +6,8 @@ import { toast } from 'sonner';
 import { Container } from '../layout/Container';
 import { SectionTitle } from '../layout/SectionTitle';
 import { Button } from '../layout/Button';
-import { PRODUCTS } from '../../data/mockData';
-import type { Product } from '../../types';
 import { useStore } from '../../context/StoreContext';
+import type { Product } from '../../types';
 
 export const FeaturedProducts: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'all' | 'bestsellers' | 'new'>('all');
@@ -18,9 +17,10 @@ export const FeaturedProducts: React.FC = () => {
     toggleWishlist,
     isInWishlist,
     setIsCartOpen,
+    products,
   } = useStore();
 
-  const handleToggleWishlist = (product: Product) => {
+  const handleToggleWishlist = (product: (typeof products)[number]) => {
     toggleWishlist(product);
     if (isInWishlist(product.id)) {
       toast.info('Removed from your wishlist.');
@@ -35,7 +35,7 @@ export const FeaturedProducts: React.FC = () => {
     toast.success(`${product.name} added to shopping bag.`);
   };
 
-  const filteredProducts = PRODUCTS.filter((product) => {
+  const filteredProducts = products.filter((product) => {
     if (activeTab === 'bestsellers') return product.isBestSeller;
     if (activeTab === 'new') return product.isNew;
     return true;

@@ -5,7 +5,7 @@ import { Search, Heart, ShoppingBag, User, Menu, X } from 'lucide-react';
 import { Container } from './Container';
 import { useStore } from '../../context/StoreContext';
 import { useAuth } from '../../context/AuthContext';
-import { PRODUCTS } from '../../data/mockData';
+import type { Product } from '../../types';
 import logoImg from '../../images/logo.png';
 
 export const Navbar: React.FC = () => {
@@ -15,10 +15,10 @@ export const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<typeof PRODUCTS>([]);
+  const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [activeSectionHash, setActiveSectionHash] = useState<string>('');
 
-  const { cart, wishlist, setIsCartOpen, setIsWishlistOpen } = useStore();
+  const { cart, wishlist, setIsCartOpen, setIsWishlistOpen, products } = useStore();
   const { user } = useAuth();
 
   const wishlistCount = wishlist.length;
@@ -72,7 +72,7 @@ export const Navbar: React.FC = () => {
     if (!val.trim()) {
       setSearchResults([]);
     } else {
-      const filtered = PRODUCTS.filter((p) =>
+      const filtered = products.filter((p) =>
         p.name.toLowerCase().includes(val.toLowerCase()) ||
         p.category.toLowerCase().includes(val.toLowerCase())
       );

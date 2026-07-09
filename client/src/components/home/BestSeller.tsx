@@ -4,10 +4,13 @@ import { Star, Check, ShoppingBag } from 'lucide-react';
 import { toast } from 'sonner';
 import { Container } from '../layout/Container';
 import { Button } from '../layout/Button';
-import { PRODUCTS } from '../../data/mockData';
+import { fallbackProducts } from '../../services/products';
+import { useStore } from '../../context/StoreContext';
 
 export const BestSeller: React.FC = () => {
-  const bestseller = PRODUCTS.find((p) => p.id === 'prod-01') || PRODUCTS[0];
+  const { products } = useStore();
+  const catalog = products.length > 0 ? products : fallbackProducts;
+  const bestseller = catalog.find((p) => p.isBestSeller) || catalog[0];
 
   const handleAddToCart = () => {
     toast.success(`${bestseller.name} added to shopping bag.`);
@@ -16,7 +19,7 @@ export const BestSeller: React.FC = () => {
   return (
     <section className="py-20 bg-light-gray relative overflow-hidden">
       {/* Background shape */}
-      <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-primary/3 blur-[80px] -z-10" />
+      <div className="absolute right-0 top-1/2 -translate-y-1/2 w-125 h-125 rounded-full bg-primary/3 blur-[80px] -z-10" />
 
       <Container>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
@@ -28,7 +31,7 @@ export const BestSeller: React.FC = () => {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8 }}
-              className="relative aspect-square sm:aspect-[4/3] lg:aspect-square rounded-3xl overflow-hidden shadow-2xl border-4 border-white"
+              className="relative aspect-square sm:aspect-4/3 lg:aspect-square rounded-3xl overflow-hidden shadow-2xl border-4 border-white"
             >
               <img
                 src="https://images.unsplash.com/photo-1617897903246-719242758050?q=80&w=800&auto=format&fit=crop"
@@ -38,7 +41,7 @@ export const BestSeller: React.FC = () => {
             </motion.div>
             
             {/* Absolute badge */}
-            <div className="absolute -bottom-6 -right-6 glassmorphism p-5 rounded-2xl border border-white/80 shadow-lg hidden sm:block max-w-[200px]">
+            <div className="absolute -bottom-6 -right-6 glassmorphism p-5 rounded-2xl border border-white/80 shadow-lg hidden sm:block max-w-50">
               <span className="text-2xl font-display font-bold text-primary block">96%</span>
               <span className="text-xs text-gray-600 font-sans leading-tight block mt-1">
                 of buyers reported visible firming & hydration in 7 days.
@@ -95,7 +98,7 @@ export const BestSeller: React.FC = () => {
             >
               {bestseller.benefits?.map((benefit) => (
                 <li key={benefit} className="flex items-start gap-2.5 text-sm text-dark font-sans font-medium">
-                  <span className="mt-0.5 w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
+                  <span className="mt-0.5 w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
                     <Check size={12} strokeWidth={2.5} />
                   </span>
                   <span>{benefit}</span>
@@ -166,7 +169,7 @@ export const BestSeller: React.FC = () => {
       </Container>
 
       {/* Tilted Infinite Moving Company Marquee Strip */}
-      <div className="w-full overflow-hidden bg-[#0F3D2E] py-4.5 mt-16 mb-6 rotate-[1.5deg] scale-[1.05] border-y border-[#1F7A4D]/35 shadow-xl select-none relative z-10">
+      <div className="w-full overflow-hidden bg-primary py-4.5 mt-16 mb-6 rotate-[1.5deg] scale-[1.05] border-y border-secondary/35 shadow-xl select-none relative z-10">
         <div className="flex whitespace-nowrap overflow-hidden">
           <div className="animate-marquee flex gap-16 text-white font-display font-medium text-xs sm:text-sm tracking-widest uppercase items-center">
             <span className="font-bold text-accent-sage">Tree Born</span>
