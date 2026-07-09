@@ -8,7 +8,7 @@ export const WhatsAppButton: React.FC = () => {
   const path = location.pathname;
 
   // Determine message based on current page path
-  let message = 'Hello AURA Skincare, I am interested in your botanical formulations. Can you please assist me?';
+  let message = 'Hello TREEBORN Skincare, I am interested in your botanical formulations. Can you please assist me?';
 
   if (path.startsWith('/product/')) {
     const productId = path.split('/product/')[1];
@@ -45,7 +45,7 @@ export const WhatsAppButton: React.FC = () => {
 
       {/* Slide-out tooltip helper on hover (slides out to the left) */}
       <span className="absolute right-full mr-3 bg-white text-dark border border-border-gray/80 px-3 py-1.5 rounded-lg text-xs font-semibold font-display shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
-        Chat with AURA
+        Chat with TREEBORN
       </span>
     </motion.a>
   );

@@ -1,17 +1,17 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Plus, Minus, Trash2, ShoppingBag } from 'lucide-react';
 import { useStore } from '../../context/StoreContext';
-import { toast } from 'sonner';
 
 export const CartDrawer: React.FC = () => {
+  const navigate = useNavigate();
   const {
     cart,
     isCartOpen,
     setIsCartOpen,
     updateCartQuantity,
     removeFromCart,
-    clearCart,
   } = useStore();
 
   const subtotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
@@ -21,9 +21,8 @@ export const CartDrawer: React.FC = () => {
   const remainingForFreeShipping = freeShippingThreshold - subtotal;
 
   const handleCheckout = () => {
-    toast.success('Proceeding to checkout... Mock order placed successfully!');
-    clearCart();
     setIsCartOpen(false);
+    navigate('/checkout');
   };
 
   return (

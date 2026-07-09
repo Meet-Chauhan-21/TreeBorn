@@ -16,9 +16,9 @@ export const Home: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>AURA — Premium Botanical Skincare & Cellular Restoration</title>
-        <meta name="description" content="Unlock your skin's biological potential with AURA's premium, organic, cruelty-free skincare formulas. Experience advanced cellular science designed for natural glow." />
-        <meta property="og:title" content="AURA — Premium Botanical Skincare" />
+        <title>TREEBORN — Premium Botanical Skincare & Cellular Restoration</title>
+        <meta name="description" content="Unlock your skin's biological potential with TREEBORN's premium, organic, cruelty-free skincare formulas. Experience advanced cellular science designed for natural glow." />
+        <meta property="og:title" content="TREEBORN — Premium Botanical Skincare" />
         <meta property="og:description" content="Pure botanical active formulas designed for deep cellular renewal and moisture barrier restoration." />
       </Helmet>
 

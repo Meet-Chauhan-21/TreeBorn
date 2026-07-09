@@ -164,6 +164,49 @@ export const BestSeller: React.FC = () => {
 
         </div>
       </Container>
+
+      {/* Tilted Infinite Moving Company Marquee Strip */}
+      <div className="w-full overflow-hidden bg-[#0F3D2E] py-4.5 mt-16 mb-6 rotate-[1.5deg] scale-[1.05] border-y border-[#1F7A4D]/35 shadow-xl select-none relative z-10">
+        <div className="flex whitespace-nowrap overflow-hidden">
+          <div className="animate-marquee flex gap-16 text-white font-display font-medium text-xs sm:text-sm tracking-widest uppercase items-center">
+            <span className="font-bold text-accent-sage">Tree Born</span>
+            <span>•</span>
+            <span>Biological Cellular Restoration</span>
+            <span>•</span>
+            <span className="font-bold text-accent-sage">Tree Born</span>
+            <span>•</span>
+            <span>100% Organic Active Botanicals</span>
+            <span>•</span>
+            <span className="font-bold text-accent-sage">Tree Born</span>
+            <span>•</span>
+            <span>Cruelty-Free & Dermatologist Approved</span>
+            <span>•</span>
+            <span className="font-bold text-accent-sage">Tree Born</span>
+            <span>•</span>
+            <span>Handcrafted Luxury Apothecary</span>
+            <span>•</span>
+          </div>
+          {/* Duplicate for infinite loop alignment */}
+          <div className="animate-marquee flex gap-16 text-white font-display font-medium text-xs sm:text-sm tracking-widest uppercase items-center" aria-hidden="true">
+            <span className="font-bold text-accent-sage">Tree Born</span>
+            <span>•</span>
+            <span>Biological Cellular Restoration</span>
+            <span>•</span>
+            <span className="font-bold text-accent-sage">Tree Born</span>
+            <span>•</span>
+            <span>100% Organic Active Botanicals</span>
+            <span>•</span>
+            <span className="font-bold text-accent-sage">Tree Born</span>
+            <span>•</span>
+            <span>Cruelty-Free & Dermatologist Approved</span>
+            <span>•</span>
+            <span className="font-bold text-accent-sage">Tree Born</span>
+            <span>•</span>
+            <span>Handcrafted Luxury Apothecary</span>
+            <span>•</span>
+          </div>
+        </div>
+      </div>
     </section>
   );
 };

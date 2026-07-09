@@ -39,7 +39,7 @@ export const Footer: React.FC = () => {
               to="/"
               className="font-display text-2xl font-bold tracking-widest text-white flex items-center gap-1.5 mb-5 focus:outline-none"
             >
-              <span>AURA</span>
+              <span>TREEBORN</span>
               <span className="h-1.5 w-1.5 rounded-full bg-secondary"></span>
             </Link>
             <p className="text-white/60 text-sm font-sans max-w-sm mb-6 leading-relaxed">
@@ -156,7 +156,7 @@ export const Footer: React.FC = () => {
         {/* Divider */}
         <div className="border-t border-white/10 pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-white/40">
           <p className="font-sans mb-4 sm:mb-0">
-            &copy; {currentYear} AURA Skincare. All rights reserved. Designed for pure restoration.
+            &copy; {currentYear} TREEBORN Skincare. All rights reserved. Designed for pure restoration.
           </p>
           <div className="flex space-x-6">
             <a href="#terms" className="hover:text-white/60 transition-colors">

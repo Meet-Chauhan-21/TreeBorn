@@ -92,7 +92,7 @@ export const ProductDetail: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>{`${product.name} — AURA Skincare`}</title>
+        <title>{`${product.name} — TREEBORN Skincare`}</title>
         <meta name="description" content={product.description} />
       </Helmet>
 

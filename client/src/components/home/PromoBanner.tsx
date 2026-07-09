@@ -31,7 +31,7 @@ export const PromoBanner: React.FC = () => {
     },
     {
       icon: <Gift size={16} className="text-primary flex-shrink-0" />,
-      text: 'JOIN THE AURA CIRCLE — Subscribe to our newsletter to receive double rewards points.',
+      text: 'JOIN THE TREEBORN CIRCLE — Subscribe to our newsletter to receive double rewards points.',
       linkText: 'Subscribe',
       href: '#contact',
     },

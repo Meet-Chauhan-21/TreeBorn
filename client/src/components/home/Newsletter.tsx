@@ -20,7 +20,7 @@ export const Newsletter: React.FC = () => {
     // Simulate API delay
     setTimeout(() => {
       setIsLoading(false);
-      toast.success('Welcome to the AURA Circle! Check your inbox for your 15% discount code.');
+      toast.success('Welcome to the TREEBORN Circle! Check your inbox for your 15% discount code.');
       setEmail('');
     }, 1200);
   };
@@ -48,7 +48,7 @@ export const Newsletter: React.FC = () => {
             </div>
 
             <h2 className="text-3xl sm:text-4xl font-display font-bold text-white tracking-tight">
-              Join the AURA Circle
+              Join the TREEBORN Circle
             </h2>
             
             <p className="text-white/70 text-sm sm:text-base font-sans max-w-lg mx-auto leading-relaxed">

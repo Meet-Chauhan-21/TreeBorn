@@ -28,12 +28,12 @@ const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [cart, setCart] = useState<CartItem[]>(() => {
-    const saved = localStorage.getItem('aura_cart');
+    const saved = localStorage.getItem('treeborn_cart');
     return saved ? JSON.parse(saved) : [];
   });
 
   const [wishlist, setWishlist] = useState<Product[]>(() => {
-    const saved = localStorage.getItem('aura_wishlist');
+    const saved = localStorage.getItem('treeborn_wishlist');
     return saved ? JSON.parse(saved) : [];
   });
 
@@ -43,11 +43,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Sync to local storage
   useEffect(() => {
-    localStorage.setItem('aura_cart', JSON.stringify(cart));
+    localStorage.setItem('treeborn_cart', JSON.stringify(cart));
   }, [cart]);
 
   useEffect(() => {
-    localStorage.setItem('aura_wishlist', JSON.stringify(wishlist));
+    localStorage.setItem('treeborn_wishlist', JSON.stringify(wishlist));
   }, [wishlist]);
 
   const addToCart = (product: Product, quantity: number, size = '50ml') => {

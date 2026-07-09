@@ -4,17 +4,42 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Heart, ShoppingBag, User, Menu, X } from 'lucide-react';
 import { Container } from './Container';
 import { useStore } from '../../context/StoreContext';
+import { useAuth } from '../../context/AuthContext';
+import { PRODUCTS } from '../../data/mockData';
 import logoImg from '../../images/logo.png';
 
 export const Navbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<typeof PRODUCTS>([]);
 
   const { cart, wishlist, setIsCartOpen, setIsWishlistOpen } = useStore();
+  const { user } = useAuth();
 
   const wishlistCount = wishlist.length;
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setSearchQuery(val);
+    if (!val.trim()) {
+      setSearchResults([]);
+    } else {
+      const filtered = PRODUCTS.filter((p) =>
+        p.name.toLowerCase().includes(val.toLowerCase()) ||
+        p.category.toLowerCase().includes(val.toLowerCase())
+      );
+      setSearchResults(filtered);
+    }
+  };
+
+  const closeSearch = () => {
+    setIsSearchOpen(false);
+    setSearchQuery('');
+    setSearchResults([]);
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -53,8 +78,8 @@ export const Navbar: React.FC = () => {
             to="/"
             className="font-display text-xl sm:text-2xl font-bold tracking-widest text-primary flex items-center gap-2 focus:outline-none"
           >
-            <img src={logoImg} alt="AURA logo" className="h-8 w-auto object-contain" />
-            <span className="hidden xs:inline">AURA</span>
+            <img src={logoImg} alt="TREEBORN logo" className="h-8 w-auto object-contain" />
+            <span className="hidden xs:inline">TREEBORN</span>
           </Link>
 
           {/* Desktop Navigation Links */}
@@ -105,11 +130,20 @@ export const Navbar: React.FC = () => {
               )}
             </button>
             <Link
-              to="/profile"
-              className="text-dark hover:text-primary transition-colors"
+              to={user ? "/profile" : "/login"}
+              className="text-dark hover:text-primary transition-colors flex items-center relative group"
               aria-label="Profile"
             >
-              <User size={20} strokeWidth={2} />
+              {user ? (
+                <div className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center font-bold text-[10px] shadow-xs">
+                  {user.avatar || 'MC'}
+                </div>
+              ) : (
+                <User size={20} strokeWidth={2} />
+              )}
+              <span className="absolute top-8 right-0 bg-dark text-white text-[9px] px-2 py-0.5 rounded opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                {user ? `Signed in as ${user.name}` : 'Sign In'}
+              </span>
             </Link>
           </div>
 
@@ -171,8 +205,8 @@ export const Navbar: React.FC = () => {
             >
               <div className="flex items-center justify-between border-b border-border-gray pb-4 mb-6">
                 <span className="font-display text-xl font-bold tracking-widest text-primary flex items-center gap-1.5">
-                  <img src={logoImg} alt="AURA logo" className="h-6 w-auto object-contain" />
-                  <span>AURA</span>
+                  <img src={logoImg} alt="TREEBORN logo" className="h-6 w-auto object-contain" />
+                  <span>TREEBORN</span>
                 </span>
                 <button
                   onClick={() => setIsMobileMenuOpen(false)}
@@ -218,12 +252,20 @@ export const Navbar: React.FC = () => {
                     <span className="text-[10px] font-medium tracking-wide">Wishlist</span>
                   </button>
                   <Link
-                    to="/profile"
+                    to={user ? "/profile" : "/login"}
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="flex flex-col items-center gap-1 hover:text-primary"
                   >
-                    <User size={20} />
-                    <span className="text-[10px] font-medium tracking-wide">Profile</span>
+                    {user ? (
+                      <div className="w-5.5 h-5.5 rounded-full bg-primary text-white flex items-center justify-center font-bold text-[9px]">
+                        {user.avatar}
+                      </div>
+                    ) : (
+                      <User size={20} />
+                    )}
+                    <span className="text-[10px] font-medium tracking-wide">
+                      {user ? 'Account' : 'Profile'}
+                    </span>
                   </Link>
                 </div>
               </div>
@@ -236,11 +278,11 @@ export const Navbar: React.FC = () => {
       <AnimatePresence>
         {isSearchOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -50 }}
+            initial={{ opacity: 0, y: -100 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -50 }}
+            exit={{ opacity: 0, y: -100 }}
             transition={{ duration: 0.3 }}
-            className="fixed inset-x-0 top-0 z-50 bg-white/95 border-b border-border-gray shadow-lg p-6 backdrop-blur-md flex items-center justify-center"
+            className="fixed inset-x-0 top-0 z-50 bg-white/95 border-b border-border-gray shadow-lg p-6 backdrop-blur-md flex flex-col items-center justify-center"
           >
             <div className="w-full max-w-2xl flex items-center gap-3">
               <Search className="text-gray-400" size={22} />
@@ -248,15 +290,48 @@ export const Navbar: React.FC = () => {
                 type="text"
                 placeholder="Search premium skincare products..."
                 autoFocus
+                value={searchQuery}
+                onChange={handleSearchChange}
                 className="w-full bg-transparent border-none text-dark font-sans text-lg focus:outline-none placeholder-gray-400"
               />
               <button
-                onClick={() => setIsSearchOpen(false)}
+                onClick={closeSearch}
                 className="p-1 rounded-full hover:bg-gray-100 text-dark transition-colors focus:outline-none cursor-pointer"
               >
                 <X size={22} />
               </button>
             </div>
+
+            {/* Live Search Autocomplete Dropdown */}
+            {searchQuery && (
+              <div className="w-full max-w-2xl mt-4 max-h-[300px] overflow-y-auto bg-white border border-border-gray/50 rounded-2xl shadow-xl divide-y divide-border-gray/35">
+                {searchResults.length > 0 ? (
+                  searchResults.map((product) => (
+                    <Link
+                      key={product.id}
+                      to={`/product/${product.id}`}
+                      onClick={closeSearch}
+                      className="flex items-center gap-4 p-3.5 hover:bg-light-gray/40 transition-colors"
+                    >
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="w-12 h-12 rounded-xl object-cover border border-border-gray/25"
+                      />
+                      <div className="flex-grow text-left">
+                        <h4 className="font-display font-semibold text-sm text-dark leading-tight">{product.name}</h4>
+                        <span className="text-[10px] text-secondary font-bold uppercase tracking-wider block mt-0.5">{product.category}</span>
+                      </div>
+                      <span className="font-display font-bold text-dark text-sm">${product.price.toFixed(2)}</span>
+                    </Link>
+                  ))
+                ) : (
+                  <div className="p-6 text-center text-xs text-gray-500 font-sans">
+                    No botanicals match your search query. Try searching for "Serum" or "Cream".
+                  </div>
+                )}
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
