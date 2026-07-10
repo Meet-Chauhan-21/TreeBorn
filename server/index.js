@@ -7,9 +7,13 @@ const userRoutes = require('./src/routes/user.route');
 const orderRoutes = require('./src/routes/order.route');
 const productRoutes = require('./src/routes/product.route');
 const adminRoutes = require('./src/routes/admin.route');
+const dns = require("dns");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// To Set Custom DNS
+dns.setServers(["8.8.8.8", "8.8.4.4"]);
 
 // Connect to Database
 connectDB();
