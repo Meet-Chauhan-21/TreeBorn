@@ -246,7 +246,7 @@ export const Navbar: React.FC = () => {
             >
               {user ? (
                 <div className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center font-bold text-[10px] shadow-xs">
-                  {user.avatar || 'MC'}
+                  {user.name ? user.name.split(' ').map((n: string) => n[0]).join('').toUpperCase() : 'U'}
                 </div>
               ) : (
                 <User size={20} strokeWidth={2} />
@@ -374,7 +374,7 @@ export const Navbar: React.FC = () => {
                   >
                     {user ? (
                       <div className="w-5.5 h-5.5 rounded-full bg-primary text-white flex items-center justify-center font-bold text-[9px]">
-                        {user.avatar}
+                        {user.name ? user.name.split(' ').map((n: string) => n[0]).join('').toUpperCase() : 'U'}
                       </div>
                     ) : (
                       <User size={20} />

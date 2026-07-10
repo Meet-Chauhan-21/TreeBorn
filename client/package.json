@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@react-oauth/google": "^0.13.5",
+    "formik": "^2.4.9",
     "framer-motion": "^12.42.2",
     "lucide-react": "^1.23.0",
     "react": "^19.2.7",
@@ -18,7 +20,8 @@
     "react-router-dom": "^7.18.1",
     "recharts": "^3.9.2",
     "sonner": "^2.0.7",
-    "swiper": "^14.0.2"
+    "swiper": "^14.0.2",
+    "yup": "^1.7.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

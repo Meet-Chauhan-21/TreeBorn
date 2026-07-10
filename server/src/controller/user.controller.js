@@ -1,6 +1,8 @@
 const User = require('../models/user.model');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { OAuth2Client } = require('google-auth-library');
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const { generateAccessToken, generateRefreshToken } = require('../util/token.util');
 
 // Helper to generate access and refresh tokens, save refresh token to DB, and set cookie
@@ -391,6 +393,96 @@ const deleteUserAddress = async (req, res) => {
   }
 };
 
+const googleSignIn = async (req, res) => {
+  try {
+    const { credential } = req.body;
+
+    if (!credential) {
+      return res.status(400).json({ message: 'Google credential (ID Token) is required' });
+    }
+
+    let ticket;
+    try {
+      ticket = await googleClient.verifyIdToken({
+        idToken: credential,
+        audience: process.env.GOOGLE_CLIENT_ID
+      });
+    } catch (err) {
+      console.error('Google verification library error:', err.message);
+      return res.status(400).json({ message: 'Invalid or expired Google ID Token.' });
+    }
+
+    const payload = ticket.getPayload();
+
+    // Verify issuer (iss)
+    const issuer = payload.iss;
+    if (issuer !== 'https://accounts.google.com' && issuer !== 'accounts.google.com') {
+      return res.status(400).json({ message: 'Invalid Google token issuer' });
+    }
+
+    // Verify audience (aud)
+    if (payload.aud !== process.env.GOOGLE_CLIENT_ID) {
+      return res.status(400).json({ message: 'Invalid Google token audience' });
+    }
+
+    // Verify email_verified
+    if (!payload.email_verified) {
+      return res.status(400).json({ message: 'Google email is not verified' });
+    }
+
+    const googleId = payload.sub; // unique Google ID
+    const email = payload.email.toLowerCase();
+    const name = payload.name;
+    const picture = payload.picture || '';
+
+    // Check if user already exists with this email
+    let user = await User.findOne({ email });
+
+    if (user) {
+      // If user exists with provider = local, reject auto-linking as per requirements
+      if (user.provider === 'local') {
+        return res.status(400).json({
+          message: 'An account already exists with this email. Please log in using your password.'
+        });
+      }
+
+      // If user exists with provider = google, verify googleId matches
+      if (user.provider === 'google' && user.googleId !== googleId) {
+        return res.status(400).json({
+          message: 'Unauthorized. Google ID mismatch.'
+        });
+      }
+
+      // Update name if changed on Google profile
+      if (user.name !== name) {
+        user.name = name;
+        await user.save();
+      }
+    } else {
+      // Create new Google user
+      user = new User({
+        name,
+        email,
+        googleId,
+        provider: 'google',
+        role: 'user'
+      });
+      await user.save();
+    }
+
+    // Reuse existing login token generation & cookie helper
+    const { accessToken } = await generateTokensAndSetCookie(user, res);
+
+    return res.status(200).json({
+      message: 'Google login successful',
+      accessToken
+    });
+  } catch (error) {
+    console.error('Google Sign-In Error:', error);
+    return res.status(500).json({ message: 'Server error during Google Sign-In.' });
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
@@ -400,5 +492,6 @@ module.exports = {
   updateUserProfile,
   addUserAddress,
   updateUserAddress,
-  deleteUserAddress
+  deleteUserAddress,
+  googleSignIn
 };

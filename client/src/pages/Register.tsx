@@ -1,23 +1,42 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { User, Mail, Lock, ArrowRight, ShieldCheck, Phone } from 'lucide-react';
+import { User, Mail, Lock, ArrowRight, ShieldCheck, Phone, Eye, EyeOff } from 'lucide-react';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
 import { useAuth } from '../context/AuthContext';
+import { GoogleLogin } from '@react-oauth/google';
 import { toast } from 'sonner';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import Container from '../components/layout/Container';
 import Button from '../components/layout/Button';
 
+// Validation Schema using Yup
+const registerSchema = Yup.object().shape({
+  name: Yup.string()
+    .min(2, 'Name must be at least 2 characters')
+    .required('Full Name is required'),
+  email: Yup.string()
+    .email('Please enter a valid email address')
+    .required('Email address is required'),
+  phone: Yup.string()
+    .min(10, 'Contact Phone must be at least 10 digits')
+    .required('Contact Phone is required'),
+  password: Yup.string()
+    .min(6, 'Password must be at least 6 characters')
+    .required('Password is required'),
+  confirmPassword: Yup.string()
+    .oneOf([Yup.ref('password')], 'Passwords must match')
+    .required('Confirm Password is required'),
+});
+
 export const Register: React.FC = () => {
   const navigate = useNavigate();
   const { register, googleLogin, user } = useAuth();
-
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Redirect if already logged in
@@ -28,52 +47,42 @@ export const Register: React.FC = () => {
     }
   }, [user, navigate]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!name || !email || !phone || !password || !confirmPassword) {
-      toast.error('Please fill out all fields.');
-      return;
-    }
-
-    if (password.length < 6) {
-      toast.error('Password must be at least 6 characters long.');
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      toast.error('Passwords do not match. Please verify.');
-      return;
-    }
-
-    setIsSubmitting(true);
-    const success = await register(name, email, password, phone);
-    setIsSubmitting(false);
-
-    if (success) {
-      // Redirection is handled by the useEffect hook once the user state changes
-    }
-  };
+  // Formik configuration
+  const formik = useFormik({
+    initialValues: {
+      name: '',
+      email: '',
+      phone: '',
+      password: '',
+      confirmPassword: '',
+    },
+    validationSchema: registerSchema,
+    onSubmit: async (values) => {
+      setIsSubmitting(true);
+      await register(values.name, values.email, values.password, values.phone);
+      setIsSubmitting(false);
+    },
+  });
 
   return (
     <>
       <Helmet>
-        <title>Create Account — TREEBORN Premium Skincare</title>
-        <meta name="description" content="Register an TREEBORN Skincare account to unlock Gold Circle loyalty rewards, customized regimens, and swift ordering." />
+        <title>Register — TREEBORN Premium Skincare</title>
+        <meta name="description" content="Join TREEBORN Skincare and unlock gold circle rewards, botanicals order logging, and advanced restoration formulations." />
       </Helmet>
 
       <Navbar />
 
       <main className="pt-24 pb-20 min-h-screen bg-light-gray/30 flex items-center">
         <Container className="py-8">
-          <div className="max-w-5xl mx-auto bg-white rounded-3xl overflow-hidden shadow-xl border border-border-gray/30 grid grid-cols-1 md:grid-cols-12 min-h-[580px]">
+          <div className="max-w-5xl mx-auto bg-white rounded-3xl overflow-hidden shadow-xl border border-border-gray/30 grid grid-cols-1 md:grid-cols-12 min-h-[640px]">
             
-            {/* Left Column - Organic Brand Banner (Visible on md+) */}
+            {/* Left Column - Organic Brand Banner */}
             <div className="hidden md:block md:col-span-5 bg-primary relative p-8 text-white overflow-hidden">
               <div className="absolute inset-0 opacity-40 mix-blend-overlay">
                 <img
-                  src="https://images.unsplash.com/photo-1556228720-195a672e8a03?q=80&w=800&auto=format&fit=crop"
-                  alt="Apothecary skincare oils"
+                  src="https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?q=80&w=800&auto=format&fit=crop"
+                  alt="Premium dropper bottle"
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -82,22 +91,22 @@ export const Register: React.FC = () => {
               <div className="relative z-10 h-full flex flex-col justify-between">
                 <div>
                   <span className="text-[10px] uppercase font-bold tracking-widest text-secondary bg-white/10 px-2.5 py-1 rounded-full inline-block backdrop-blur-xs">
-                    Pure Botanical
+                    Pure & Clinical
                   </span>
                 </div>
                 
                 <div className="space-y-4">
                   <h2 className="font-display font-bold text-2xl lg:text-3xl leading-tight">
-                    Join the TreeBorn Circle
+                    Sartorial Botanical Apothecary
                   </h2>
                   <p className="text-xs text-white/80 leading-relaxed font-sans">
-                    Create an account today to access secure checkouts, tracking, and personalized skincare logs.
+                    Begin your restoration journey. Become a Gold Circle member to earn points, secure free shipping, and custom formulate.
                   </p>
                 </div>
                 
                 <div className="flex items-center gap-2 text-xs text-secondary font-semibold font-display">
                   <ShieldCheck size={14} />
-                  <span>Secure Cryptographic Checkouts</span>
+                  <span>Cruelty-Free & Dermatologist Approved</span>
                 </div>
               </div>
             </div>
@@ -114,7 +123,7 @@ export const Register: React.FC = () => {
                   </p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={formik.handleSubmit} className="space-y-4">
                   {/* Name input */}
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-dark/70 font-display flex items-center gap-1.5">
@@ -123,12 +132,22 @@ export const Register: React.FC = () => {
                     </label>
                     <input
                       type="text"
-                      required
+                      name="name"
                       placeholder="Priyesh Patel"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="w-full border border-border-gray/80 px-4 py-3 text-sm rounded-xl text-dark focus:outline-none focus:border-primary font-sans bg-light-gray/20 transition-colors"
+                      value={formik.values.name}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      className={`w-full border px-4 py-3 text-sm rounded-xl text-dark focus:outline-none focus:border-primary font-sans bg-light-gray/20 transition-colors ${
+                        formik.touched.name && formik.errors.name
+                          ? 'border-red-500 focus:border-red-500'
+                          : 'border-border-gray/80'
+                      }`}
                     />
+                    {formik.touched.name && formik.errors.name && (
+                      <div className="text-[10px] text-red-500 font-sans font-medium mt-1">
+                        {formik.errors.name}
+                      </div>
+                    )}
                   </div>
 
                   {/* Email input */}
@@ -139,12 +158,22 @@ export const Register: React.FC = () => {
                     </label>
                     <input
                       type="email"
-                      required
+                      name="email"
                       placeholder="priyesh.patel@gmail.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full border border-border-gray/80 px-4 py-3 text-sm rounded-xl text-dark focus:outline-none focus:border-primary font-sans bg-light-gray/20 transition-colors"
+                      value={formik.values.email}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      className={`w-full border px-4 py-3 text-sm rounded-xl text-dark focus:outline-none focus:border-primary font-sans bg-light-gray/20 transition-colors ${
+                        formik.touched.email && formik.errors.email
+                          ? 'border-red-500 focus:border-red-500'
+                          : 'border-border-gray/80'
+                      }`}
                     />
+                    {formik.touched.email && formik.errors.email && (
+                      <div className="text-[10px] text-red-500 font-sans font-medium mt-1">
+                        {formik.errors.email}
+                      </div>
+                    )}
                   </div>
 
                   {/* Phone input */}
@@ -155,12 +184,22 @@ export const Register: React.FC = () => {
                     </label>
                     <input
                       type="tel"
-                      required
+                      name="phone"
                       placeholder="+91 98765 43210"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      className="w-full border border-border-gray/80 px-4 py-3 text-sm rounded-xl text-dark focus:outline-none focus:border-primary font-sans bg-light-gray/20 transition-colors"
+                      value={formik.values.phone}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      className={`w-full border px-4 py-3 text-sm rounded-xl text-dark focus:outline-none focus:border-primary font-sans bg-light-gray/20 transition-colors ${
+                        formik.touched.phone && formik.errors.phone
+                          ? 'border-red-500 focus:border-red-500'
+                          : 'border-border-gray/80'
+                      }`}
                     />
+                    {formik.touched.phone && formik.errors.phone && (
+                      <div className="text-[10px] text-red-500 font-sans font-medium mt-1">
+                        {formik.errors.phone}
+                      </div>
+                    )}
                   </div>
 
                   {/* Passwords grid */}
@@ -170,28 +209,67 @@ export const Register: React.FC = () => {
                         <Lock size={13} className="text-gray-400" />
                         <span>Password</span>
                       </label>
-                      <input
-                        type="password"
-                        required
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="w-full border border-border-gray/80 px-4 py-3 text-sm rounded-xl text-dark focus:outline-none focus:border-primary font-sans bg-light-gray/20 transition-colors"
-                      />
+                      <div className="relative">
+                        <input
+                          type={showPassword ? 'text' : 'password'}
+                          name="password"
+                          placeholder="••••••••"
+                          value={formik.values.password}
+                          onChange={formik.handleChange}
+                          onBlur={formik.handleBlur}
+                          className={`w-full border pl-4 pr-10 py-3 text-sm rounded-xl text-dark focus:outline-none focus:border-primary font-sans bg-light-gray/20 transition-colors ${
+                            formik.touched.password && formik.errors.password
+                              ? 'border-red-500 focus:border-red-500'
+                              : 'border-border-gray/80'
+                          }`}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-dark focus:outline-none cursor-pointer p-0.5"
+                        >
+                          {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
+                      {formik.touched.password && formik.errors.password && (
+                        <div className="text-[10px] text-red-500 font-sans font-medium mt-1">
+                          {formik.errors.password}
+                        </div>
+                      )}
                     </div>
+                    
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-dark/70 font-display flex items-center gap-1.5">
                         <Lock size={13} className="text-gray-400" />
                         <span>Confirm Password</span>
                       </label>
-                      <input
-                        type="password"
-                        required
-                        placeholder="••••••••"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="w-full border border-border-gray/80 px-4 py-3 text-sm rounded-xl text-dark focus:outline-none focus:border-primary font-sans bg-light-gray/20 transition-colors"
-                      />
+                      <div className="relative">
+                        <input
+                          type={showConfirmPassword ? 'text' : 'password'}
+                          name="confirmPassword"
+                          placeholder="••••••••"
+                          value={formik.values.confirmPassword}
+                          onChange={formik.handleChange}
+                          onBlur={formik.handleBlur}
+                          className={`w-full border pl-4 pr-10 py-3 text-sm rounded-xl text-dark focus:outline-none focus:border-primary font-sans bg-light-gray/20 transition-colors ${
+                            formik.touched.confirmPassword && formik.errors.confirmPassword
+                              ? 'border-red-500 focus:border-red-500'
+                              : 'border-border-gray/80'
+                          }`}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-dark focus:outline-none cursor-pointer p-0.5"
+                        >
+                          {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
+                      {formik.touched.confirmPassword && formik.errors.confirmPassword && (
+                        <div className="text-[10px] text-red-500 font-sans font-medium mt-1">
+                          {formik.errors.confirmPassword}
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -227,19 +305,21 @@ export const Register: React.FC = () => {
                 </div>
 
                 {/* Google Sign-in Button */}
-                <button
-                  type="button"
-                  onClick={googleLogin}
-                  className="w-full flex items-center justify-center gap-3 border border-border-gray/80 hover:bg-light-gray/25 hover:border-gray-300 py-3 px-4 rounded-xl text-sm font-sans font-semibold text-dark transition-all cursor-pointer focus:outline-none"
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24">
-                    <path
-                      fill="#EA4335"
-                      d="M12.24 10.285V14.4h6.887c-.648 2.41-2.519 4.114-5.136 4.114-3.488 0-6.315-2.827-6.315-6.315s2.827-6.315 6.315-6.315c1.558 0 2.978.567 4.077 1.498l3.15-3.15C19.123 2.059 15.938 1 12.24 1 6.03 1 1 6.03 1 12.24s5.03 11.24 11.24 11.24c5.894 0 10.932-4.227 10.932-11.24 0-.742-.086-1.44-.22-2.115H12.24z"
-                    />
-                  </svg>
-                  <span>Sign Up with Google</span>
-                </button>
+                <div className="w-full flex justify-center [&>div]:w-full">
+                  <GoogleLogin
+                    onSuccess={async (credentialResponse) => {
+                      if (credentialResponse.credential) {
+                        await googleLogin(credentialResponse.credential);
+                      }
+                    }}
+                    onError={() => {
+                      toast.error('Google Sign-In failed.');
+                    }}
+                    theme="outline"
+                    shape="rectangular"
+                    width="100%"
+                  />
+                </div>
 
                 <p className="text-center text-xs text-gray-500 font-sans pt-2">
                   Already have an account?{' '}

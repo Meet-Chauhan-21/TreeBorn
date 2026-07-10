@@ -49,7 +49,6 @@ export interface User {
   name: string;
   email: string;
   phone?: string;
-  avatar?: string;
   role?: string;
   addresses?: Address[];
 }
@@ -60,7 +59,7 @@ interface AuthContextType {
   accessToken: string | null;
   login: (email: string, password: string) => Promise<boolean>;
   register: (name: string, email: string, password: string, phone: string) => Promise<boolean>; // phone is now required
-  googleLogin: () => void;
+  googleLogin: (credential: string) => Promise<boolean>;
   logout: () => void;
   updateUser: (updatedData: Partial<User>) => Promise<boolean>; // backend integrated
   addAddress: (address: Omit<Address, '_id'>) => Promise<boolean>;
@@ -99,13 +98,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (response.ok) {
         const data = await response.json();
-        const avatar = data.user.name
-          ? data.user.name.split(' ').map((n: string) => n[0]).join('').toUpperCase()
-          : 'U';
-        return {
-          ...data.user,
-          avatar,
-        };
+        return data.user;
       }
       return null;
     } catch (error) {
@@ -161,13 +154,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       setAccessToken(data.accessToken);
-      const avatar = data.user.name
-        ? data.user.name.split(' ').map((n: string) => n[0]).join('').toUpperCase()
-        : 'U';
-      const sessionUser = {
-        ...data.user,
-        avatar,
-      };
+      const sessionUser = data.user;
 
       setUser(sessionUser);
       toast.success(`Welcome back, ${sessionUser.name}!`);
@@ -200,13 +187,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       setAccessToken(data.accessToken);
-      const avatar = name
-        ? name.split(' ').map((n: string) => n[0]).join('').toUpperCase()
-        : 'U';
-      const sessionUser = {
-        ...data.user,
-        avatar,
-      };
+      const sessionUser = data.user;
 
       setUser(sessionUser);
       toast.success(`Account created successfully! Welcome to TreeBorn, ${name}.`);
@@ -220,8 +201,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const googleLogin = () => {
-    toast.info('Google Login Mock: In production this connects to OAuth endpoints.');
+  const googleLogin = async (credential: string): Promise<boolean> => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_BASE}/google`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ credential }),
+        credentials: 'include',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Display backend validation message directly to the user
+        toast.error(data.message || 'Google Sign-In failed.');
+        setLoading(false);
+        return false;
+      }
+
+      setAccessToken(data.accessToken);
+
+      // Fetch the authenticated user using existing profile endpoint after successful Google login
+      const profile = await fetchUserProfile(data.accessToken);
+      if (profile) {
+        setUser(profile);
+        toast.success(`Welcome back, ${profile.name}!`);
+        setLoading(false);
+        return true;
+      } else {
+        toast.error('Failed to retrieve user profile.');
+        setLoading(false);
+        return false;
+      }
+    } catch (error) {
+      console.error('Google login error:', error);
+      toast.error('Server error during Google login.');
+      setLoading(false);
+      return false;
+    }
   };
 
   const logout = async () => {
@@ -267,14 +285,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
       }
 
-      const avatar = data.user.name
-        ? data.user.name.split(' ').map((n: string) => n[0]).join('').toUpperCase()
-        : 'U';
-
-      setUser({
-        ...data.user,
-        avatar
-      });
+      setUser(data.user);
       return true;
     } catch (error) {
       console.error('Update profile fetch error:', error);

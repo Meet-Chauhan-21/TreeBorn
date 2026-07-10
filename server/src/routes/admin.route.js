@@ -7,8 +7,8 @@ const {
   updateProduct,
   deleteProduct
 } = require('../controller/product.controller');
-const User = require('../models/User.model');
-const Order = require('../models/Order.model');
+const User = require('../models/user.model');
+const Order = require('../models/order.model');
 const Product = require('../models/Product.model');
 
 // Admin middleware - apply to all admin routes
