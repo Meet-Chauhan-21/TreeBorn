@@ -19,12 +19,25 @@ dns.setServers(["8.8.8.8", "8.8.4.4"]);
 connectDB();
 
 // CORS configuration (allow credentials for HttpOnly cookie transfer)
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://treeborn.vercel.app',
+  'https://www.treeborn.shop',
+  'https://treeborn.shop'
+];
+
 const corsOptions = {
-  origin: process.env.CLIENT_URL || 
-  'http://localhost:5173' || 
-  'https://treeborn.vercel.app' ||
-  'https://www.treeborn.shop' ||
-  'https://treeborn.shop',
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps, curl, or server-to-server)
+    if (!origin) return callback(null, true);
+    
+    // Check if the origin matches any allowed pattern or CLIENT_URL env
+    if (allowedOrigins.includes(origin) || origin === process.env.CLIENT_URL) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
