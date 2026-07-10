@@ -1,8 +1,8 @@
 require('dotenv').config();
 const mongoose = require('mongoose');
-const User = require('./src/models/User.model');
-const Product = require('./src/models/Product.model');
-const Order = require('./src/models/Order.model');
+const User = require('./src/models/user.model');
+const Product = require('./src/models/product.model');
+const Order = require('./src/models/order.model');
 const bcrypt = require('bcryptjs');
 
 const productsData = [
