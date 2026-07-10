@@ -1,4 +1,4 @@
-const Order = require('../models/Order.model');
+const Order = require('../models/order.model');
 
 const ORDER_NUMBER_PREFIX = 'TREEBORN';
 

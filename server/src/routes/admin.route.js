@@ -9,7 +9,7 @@ const {
 } = require('../controller/product.controller');
 const User = require('../models/user.model');
 const Order = require('../models/order.model');
-const Product = require('../models/Product.model');
+const Product = require('../models/product.model');
 
 // Admin middleware - apply to all admin routes
 router.use(verifyJWT, authorizeRoles('admin'));
@@ -229,7 +229,8 @@ router.get('/dashboard', async (req, res) => {
       Order.find().populate('user', 'name').sort({ createdAt: -1 }).limit(5),
       Order.aggregate([
         { $unwind: '$items' },
-        { $group: {
+        {
+          $group: {
             _id: '$items.productId',
             name: { $first: '$items.name' },
             sales: { $sum: '$items.quantity' },
@@ -246,7 +247,8 @@ router.get('/dashboard', async (req, res) => {
     // Get monthly revenue data for chart
     const monthlyRevenue = await Order.aggregate([
       { $match: { 'payment.status': 'paid' } },
-      { $group: {
+      {
+        $group: {
           _id: { $month: '$createdAt' },
           revenue: { $sum: '$totals.total' },
           orders: { $sum: 1 }
