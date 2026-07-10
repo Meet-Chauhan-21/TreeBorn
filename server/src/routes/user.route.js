@@ -12,7 +12,7 @@ const {
   updateUserAddress,
   deleteUserAddress,
   googleSignIn
-} = require('../controller/User.controller');
+} = require('../controller/user.controller');
 const { verifyJWT, authorizeRoles } = require('../middleware/auth.middleware');
 
 // Rate limiting configuration for Google Login (max 10 requests per 15 minutes)
