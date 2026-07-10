@@ -1,7 +1,7 @@
 import { PRODUCTS as FALLBACK_PRODUCTS } from '../data/mockData';
 import type { Product } from '../types';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+import { API_BASE_URL } from '../config';
 
 type ProductPayload = Record<string, any>;
 

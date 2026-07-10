@@ -8,6 +8,7 @@ import Button from '../../components/admin/Button';
 import StatusBadge from '../../components/admin/StatusBadge';
 import DataTable from '../../components/admin/DataTable';
 import { useAuth } from '../../context/AuthContext';
+import { API_BASE_URL } from '../../config';
 
 const UsersList: React.FC = () => {
   const navigate = useNavigate();
@@ -20,7 +21,7 @@ const UsersList: React.FC = () => {
     if (!window.confirm(`Are you sure you want to delete user "${userName}"?`)) return;
 
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/users/${userId}`, {
+      const response = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${accessToken}`
@@ -45,7 +46,7 @@ const UsersList: React.FC = () => {
       if (!accessToken) return;
       
       try {
-        const response = await fetch('http://localhost:5000/api/admin/users', {
+        const response = await fetch(`${API_BASE_URL}/admin/users`, {
           headers: { 'Authorization': `Bearer ${accessToken}` }
         });
         

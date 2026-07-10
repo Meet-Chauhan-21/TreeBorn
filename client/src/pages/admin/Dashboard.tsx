@@ -24,6 +24,7 @@ import StatusBadge from '../../components/admin/StatusBadge';
 import Button from '../../components/admin/Button';
 import DataTable from '../../components/admin/DataTable';
 import { useAuth } from '../../context/AuthContext';
+import { API_BASE_URL } from '../../config';
 
 const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -68,7 +69,7 @@ const Dashboard: React.FC = () => {
       if (!accessToken) return;
       
       try {
-        const response = await fetch('http://localhost:5000/api/admin/dashboard', {
+        const response = await fetch(`${API_BASE_URL}/admin/dashboard`, {
           headers: { 'Authorization': `Bearer ${accessToken}` }
         });
         

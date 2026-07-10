@@ -7,6 +7,7 @@ import Card from '../../components/admin/Card';
 import Button from '../../components/admin/Button';
 import { useAuth } from '../../context/AuthContext';
 import { fetchPublicProductById } from '../../services/products';
+import { API_BASE_URL } from '../../config';
 
 const ProductForm: React.FC = () => {
   const navigate = useNavigate();
@@ -85,8 +86,8 @@ const ProductForm: React.FC = () => {
     
     try {
       const url = isEdit 
-        ? `http://localhost:5000/api/admin/products/${id}`
-        : 'http://localhost:5000/api/admin/products';
+        ? `${API_BASE_URL}/admin/products/${id}`
+        : `${API_BASE_URL}/admin/products`;
       
       const response = await fetch(url, {
         method: isEdit ? 'PUT' : 'POST',

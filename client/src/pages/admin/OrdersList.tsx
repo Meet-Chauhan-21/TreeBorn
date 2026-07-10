@@ -7,6 +7,7 @@ import Card from '../../components/admin/Card';
 import Button from '../../components/admin/Button';
 import DataTable from '../../components/admin/DataTable';
 import { useAuth } from '../../context/AuthContext';
+import { API_BASE_URL } from '../../config';
 
 const OrderStatusSelect: React.FC<{
   orderId: string;
@@ -22,7 +23,7 @@ const OrderStatusSelect: React.FC<{
     if (!accessToken) return;
     setUpdating(true);
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/orders/${orderId}/status`, {
+      const response = await fetch(`${API_BASE_URL}/admin/orders/${orderId}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -81,7 +82,7 @@ const OrdersList: React.FC = () => {
       if (!accessToken) return;
       
       try {
-        const response = await fetch('http://localhost:5000/api/admin/orders', {
+        const response = await fetch(`${API_BASE_URL}/admin/orders`, {
           headers: { 'Authorization': `Bearer ${accessToken}` }
         });
         

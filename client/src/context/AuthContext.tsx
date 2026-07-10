@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { API_BASE_URL } from '../config';
 
-const API_BASE = 'http://localhost:5000/api/users';
+const API_BASE = `${API_BASE_URL}/users`;
 
 export interface Address {
   _id?: string;

@@ -6,6 +6,7 @@ import Card from '../../components/admin/Card';
 import Button from '../../components/admin/Button';
 import StatusBadge from '../../components/admin/StatusBadge';
 import { useAuth } from '../../context/AuthContext';
+import { API_BASE_URL } from '../../config';
 
 const UserView: React.FC = () => {
   const navigate = useNavigate();
@@ -19,7 +20,7 @@ const UserView: React.FC = () => {
 
     const loadUser = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/admin/users/${id}`, {
+        const response = await fetch(`${API_BASE_URL}/admin/users/${id}`, {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
 

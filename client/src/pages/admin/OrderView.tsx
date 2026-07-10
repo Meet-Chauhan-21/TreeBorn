@@ -7,6 +7,7 @@ import Card from '../../components/admin/Card';
 import Button from '../../components/admin/Button';
 import StatusBadge from '../../components/admin/StatusBadge';
 import { useAuth } from '../../context/AuthContext';
+import { API_BASE_URL } from '../../config';
 
 const statusOptions = ['Placed', 'Processing', 'Delivered', 'Cancelled'];
 
@@ -24,7 +25,7 @@ const OrderView: React.FC = () => {
 
     const loadOrder = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/admin/orders/${id}`, {
+        const response = await fetch(`${API_BASE_URL}/admin/orders/${id}`, {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
 
@@ -48,7 +49,7 @@ const OrderView: React.FC = () => {
 
     setSaving(true);
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/orders/${id}/status`, {
+      const response = await fetch(`${API_BASE_URL}/admin/orders/${id}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

@@ -8,6 +8,7 @@ import Button from '../../components/admin/Button';
 import StatusBadge from '../../components/admin/StatusBadge';
 import DataTable from '../../components/admin/DataTable';
 import { useAuth } from '../../context/AuthContext';
+import { API_BASE_URL } from '../../config';
 
 const ProductsList: React.FC = () => {
   const navigate = useNavigate();
@@ -22,7 +23,7 @@ const ProductsList: React.FC = () => {
       if (!accessToken) return;
       
       try {
-        const response = await fetch('http://localhost:5000/api/admin/products', {
+        const response = await fetch(`${API_BASE_URL}/admin/products`, {
           headers: { 'Authorization': `Bearer ${accessToken}` }
         });
         
@@ -44,7 +45,7 @@ const ProductsList: React.FC = () => {
     if (!window.confirm('Are you sure you want to delete this product?')) return;
     
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/products/${productId}`, {
+      const response = await fetch(`${API_BASE_URL}/admin/products/${productId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${accessToken}` }
       });
