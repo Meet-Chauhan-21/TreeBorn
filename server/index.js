@@ -20,7 +20,11 @@ connectDB();
 
 // CORS configuration (allow credentials for HttpOnly cookie transfer)
 const corsOptions = {
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: process.env.CLIENT_URL || 
+  'http://localhost:5173' || 
+  'https://treeborn.vercel.app' ||
+  'https://www.treeborn.shop' ||
+  'https://treeborn.shop',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
