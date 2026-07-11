@@ -16,12 +16,13 @@ function App() {
           <StoreProvider>
             <RouterProvider router={router} />
             <Toaster
-              position="bottom-right"
+              position="top-right"
+              duration={1500}
               toastOptions={{
                 style: {
-                  background: '#0F3D2E',
+                  background: '#3B0764',
                   color: '#FFFFFF',
-                  border: '1px solid #1F7A4D',
+                  border: '1px solid #9333EA',
                   fontFamily: 'var(--font-sans)',
                 },
               }}

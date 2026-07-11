@@ -193,11 +193,11 @@ export const FeaturedProducts: React.FC = () => {
                     {/* Price Tag */}
                     <div className="flex items-center gap-2 mt-auto">
                       <span className="font-display font-bold text-dark text-sm sm:text-base">
-                        ${product.price.toFixed(2)}
+                        ₹{product.price.toFixed(2)}
                       </span>
                       {product.oldPrice && (
                         <span className="font-display font-medium text-gray-400 text-xs sm:text-sm line-through">
-                          ${product.oldPrice.toFixed(2)}
+                          ₹{product.oldPrice.toFixed(2)}
                         </span>
                       )}
                     </div>

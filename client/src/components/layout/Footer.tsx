@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Container } from './Container';
+import logoImg from '../../images/logo.png';
 
 export const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
@@ -30,7 +31,7 @@ export const Footer: React.FC = () => {
   ];
 
   return (
-    <footer className="bg-coffee-dark text-white/90 pt-16 pb-8 border-t border-primary/20">
+    <footer className="bg-[#130F1A] text-white/90 pt-16 pb-8 border-t border-primary/20">
       <Container>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 mb-12">
           {/* Column 1 - Brand Info */}
@@ -166,10 +167,15 @@ export const Footer: React.FC = () => {
         </div>
 
         {/* Divider */}
-        <div className="border-t border-white/10 pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-white/40">
-          <p className="font-sans mb-4 sm:mb-0">
-            &copy; {currentYear} TREEBORN Skincare. All rights reserved. Designed for pure restoration.
-          </p>
+        <div className="border-t border-white/10 pt-8 flex flex-col items-center justify-between gap-6 text-xs text-white/40 md:flex-row">
+          <div className="space-y-1 text-center md:text-left">
+            <p className="font-sans text-[11px]">
+              &copy; {currentYear} TREEBORN Skincare. All rights reserved. Designed for pure restoration.
+            </p>
+            <p className="text-[10px] text-white/30 font-sans mt-0.5">
+              Developed by <a href="https://revolix.studio" target="_blank" rel="noopener noreferrer" className="hover:text-primary-light transition-colors font-semibold">Revolix Studio</a>
+            </p>
+          </div>
           <div className="flex space-x-6">
             <a href="#terms" className="hover:text-white/60 transition-colors">
               Terms & Conditions
@@ -181,6 +187,12 @@ export const Footer: React.FC = () => {
               Cookie Policy
             </a>
           </div>
+        </div>
+
+        {/* Tree Born Logo and label at the very end */}
+        <div className="mt-10 pt-6 border-t border-white/5 flex flex-col items-center justify-center select-none">
+          <img src={logoImg} alt="Tree Born Logo" className="h-9 w-auto opacity-30 hover:opacity-75 transition-opacity duration-300 object-contain" />
+          <span className="text-[9px] font-display font-medium tracking-widest text-white/25 mt-2 uppercase">Tree Born</span>
         </div>
       </Container>
     </footer>

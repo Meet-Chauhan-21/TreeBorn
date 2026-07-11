@@ -525,7 +525,7 @@ export const Profile: React.FC = () => {
                                   <h4 className="font-semibold text-dark leading-tight">{item.name}</h4>
                                   <span className="text-[10px] text-gray-400 mt-0.5 block">Quantity: {item.quantity}</span>
                                 </div>
-                                <span className="font-display font-bold text-primary">${item.price.toFixed(2)}</span>
+                                <span className="font-display font-bold text-primary">₹{item.price.toFixed(2)}</span>
                               </div>
                             ))}
                           </div>
@@ -533,7 +533,7 @@ export const Profile: React.FC = () => {
                           {/* Order total footer */}
                           <div className="bg-light-gray/5 border-t border-border-gray/30 p-4 sm:px-5 flex justify-between items-center text-xs sm:text-sm font-display">
                             <span className="font-semibold text-gray-500">Total Paid</span>
-                            <span className="font-bold text-primary text-base">${order.totals.total.toFixed(2)}</span>
+                            <span className="font-bold text-primary text-base">₹{order.totals.total.toFixed(2)}</span>
                           </div>
                         </div>
                       ))

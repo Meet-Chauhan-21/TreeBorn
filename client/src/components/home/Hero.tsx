@@ -230,7 +230,7 @@ export const Hero: React.FC = () => {
 
                   <div className="flex items-center justify-between mt-1">
                     <span className="font-display font-bold text-dark text-sm sm:text-base">
-                      ${activeSlide.product.price.toFixed(2)}
+                      ₹{activeSlide.product.price.toFixed(2)}
                     </span>
                     {activeSlide.product.discount && (
                       <span className="text-[9px] text-white bg-primary px-1.5 py-0.5 rounded-full font-sans font-medium">

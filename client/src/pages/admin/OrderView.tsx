@@ -146,7 +146,7 @@ const OrderView: React.FC = () => {
                       <p className="font-semibold text-gray-900">{item.name}</p>
                       <p className="text-sm text-gray-500">Size: {item.selectedSize} • Qty: {item.quantity}</p>
                     </div>
-                    <p className="font-bold text-primary">${(item.price * item.quantity).toFixed(2)}</p>
+                    <p className="font-bold text-primary">₹{(item.price * item.quantity).toFixed(2)}</p>
                   </div>
                 ))}
               </div>
@@ -166,10 +166,10 @@ const OrderView: React.FC = () => {
 
             <Card title="Totals">
               <div className="space-y-3 text-sm">
-                <div className="flex items-center justify-between"><span className="text-gray-500">Subtotal</span><span className="font-semibold">${order.totals?.subtotal?.toFixed(2)}</span></div>
-                <div className="flex items-center justify-between"><span className="text-gray-500">Shipping</span><span className="font-semibold">${order.totals?.shipping?.toFixed(2)}</span></div>
-                <div className="flex items-center justify-between"><span className="text-gray-500">Tax</span><span className="font-semibold">${order.totals?.tax?.toFixed(2)}</span></div>
-                <div className="flex items-center justify-between pt-3 border-t border-gray-100 text-base"><span className="font-bold text-gray-900">Total</span><span className="font-bold text-primary">${order.totals?.total?.toFixed(2)}</span></div>
+                <div className="flex items-center justify-between"><span className="text-gray-500">Subtotal</span><span className="font-semibold">₹{order.totals?.subtotal?.toFixed(2)}</span></div>
+                <div className="flex items-center justify-between"><span className="text-gray-500">Shipping</span><span className="font-semibold">₹{order.totals?.shipping?.toFixed(2)}</span></div>
+                <div className="flex items-center justify-between"><span className="text-gray-500">Tax</span><span className="font-semibold">₹{order.totals?.tax?.toFixed(2)}</span></div>
+                <div className="flex items-center justify-between pt-3 border-t border-gray-100 text-base"><span className="font-bold text-gray-900">Total</span><span className="font-bold text-primary">₹{order.totals?.total?.toFixed(2)}</span></div>
               </div>
             </Card>
           </div>

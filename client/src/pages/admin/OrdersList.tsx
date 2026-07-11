@@ -122,7 +122,7 @@ const OrdersList: React.FC = () => {
     {
       key: 'total',
       header: 'Total',
-      render: (item: any) => <span className="font-bold text-gray-900">${item.totals.total.toFixed(2)}</span>,
+      render: (item: any) => <span className="font-bold text-gray-900">₹{item.totals.total.toFixed(2)}</span>,
     },
     {
       key: 'status',

@@ -75,7 +75,7 @@ export const CartDrawer: React.FC = () => {
                       <span>
                         Add{' '}
                         <strong className="font-display font-bold">
-                          ${remainingForFreeShipping.toFixed(2)}
+                          ₹{remainingForFreeShipping.toFixed(2)}
                         </strong>{' '}
                         more to qualify for FREE Shipping!
                       </span>
@@ -168,7 +168,7 @@ export const CartDrawer: React.FC = () => {
                         </div>
                         
                         <span className="font-display font-bold text-dark text-sm">
-                          ${(item.product.price * item.quantity).toFixed(2)}
+                          ₹{(item.product.price * item.quantity).toFixed(2)}
                         </span>
                       </div>
                     </div>
@@ -187,7 +187,7 @@ export const CartDrawer: React.FC = () => {
                   </div>
                   <div className="flex justify-between text-base font-display font-bold text-dark">
                     <span>Subtotal</span>
-                    <span>${subtotal.toFixed(2)}</span>
+                    <span>₹{subtotal.toFixed(2)}</span>
                   </div>
                 </div>
 

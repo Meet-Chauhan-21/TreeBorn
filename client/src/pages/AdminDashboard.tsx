@@ -28,7 +28,7 @@ export const AdminDashboard: React.FC = () => {
   if (loading || !user || user.role !== 'admin') {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-[#0F3D2E]/20 border-t-[#0F3D2E] rounded-full animate-spin" />
+        <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
       </div>
     );
   }
@@ -36,7 +36,7 @@ export const AdminDashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
       <div className="max-w-md w-full bg-white rounded-3xl border border-gray-200 p-8 shadow-md text-center space-y-6">
-        <div className="w-16 h-16 bg-[#0F3D2E]/10 rounded-full flex items-center justify-center mx-auto text-[#0F3D2E]">
+        <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto text-primary">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
@@ -58,7 +58,7 @@ export const AdminDashboard: React.FC = () => {
           <p className="text-sm text-gray-500 font-medium">TreeBorn Administration Dashboard</p>
         </div>
 
-        <div className="bg-gray-50 rounded-2xl p-4 border border-gray-200/60 text-left space-y-2.5 text-xs text-gray-600">
+        <div className="bg-gray-50 rounded-2xl p-4 border border-gray-200/60 text-left space-y-2.5 text-xs text-gray-650">
           <div className="flex justify-between">
             <span className="font-semibold text-gray-500">Name:</span>
             <span className="font-medium text-gray-900">{user.name}</span>
@@ -77,7 +77,7 @@ export const AdminDashboard: React.FC = () => {
 
         <button
           onClick={handleAdminLogout}
-          className="w-full bg-[#0F3D2E] hover:bg-[#0F3D2E]/90 text-white font-semibold py-3 px-6 rounded-full cursor-pointer transition-colors text-sm shadow-xs"
+          className="w-full bg-primary hover:bg-primary-light text-white font-semibold py-3 px-6 rounded-full cursor-pointer transition-colors text-sm shadow-xs"
         >
           Logout Admin
         </button>

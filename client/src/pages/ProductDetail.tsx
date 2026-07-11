@@ -199,11 +199,11 @@ export const ProductDetail: React.FC = () => {
                 {/* Price Display */}
                 <div className="flex items-baseline gap-2.5">
                   <span className="text-3xl font-display font-bold text-dark">
-                    ${getPrice().toFixed(2)}
+                    ₹{getPrice().toFixed(2)}
                   </span>
                   {product.oldPrice && selectedSize === '50ml' && (
                     <span className="text-lg text-gray-400 font-medium line-through font-display">
-                      ${product.oldPrice.toFixed(2)}
+                      ₹{product.oldPrice.toFixed(2)}
                     </span>
                   )}
                 </div>
@@ -366,7 +366,7 @@ export const ProductDetail: React.FC = () => {
                   )}
                   {activeTab === 'shipping' && (
                     <p>
-                      Your order will be packed in 100% recyclable, glass-first bottles and carbon-neutral outer packaging. Express shipping takes 2-4 business days. Complimentry delivery applies on all bags exceeding $75.
+                      Your order will be packed in 100% recyclable, glass-first bottles and carbon-neutral outer packaging. Express shipping takes 2-4 business days. Complimentry delivery applies on all bags exceeding ₹75.
                     </p>
                   )}
                 </div>
@@ -500,11 +500,11 @@ export const ProductDetail: React.FC = () => {
                       {/* Price Tag */}
                       <div className="flex items-center gap-2 mt-auto">
                         <span className="font-display font-bold text-dark text-sm sm:text-base">
-                          ${item.price.toFixed(2)}
+                          ₹{item.price.toFixed(2)}
                         </span>
                         {item.oldPrice && (
                           <span className="font-display font-medium text-gray-400 text-xs sm:text-sm line-through">
-                            ${item.oldPrice.toFixed(2)}
+                            ₹{item.oldPrice.toFixed(2)}
                           </span>
                         )}
                       </div>

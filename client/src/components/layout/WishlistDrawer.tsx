@@ -120,7 +120,7 @@ export const WishlistDrawer: React.FC = () => {
                         </div>
 
                         <div className="font-display font-bold text-dark text-sm mt-1.5">
-                          ${product.price.toFixed(2)}
+                          ₹{product.price.toFixed(2)}
                         </div>
                       </div>
 

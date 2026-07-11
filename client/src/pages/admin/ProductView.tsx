@@ -104,7 +104,7 @@ const ProductView: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-4 rounded-2xl bg-gray-50">
                     <p className="text-xs uppercase text-gray-400 font-semibold">Price</p>
-                    <p className="text-2xl font-bold text-gray-900">${Number(product.price).toFixed(2)}</p>
+                    <p className="text-2xl font-bold text-gray-900">₹{Number(product.price).toFixed(2)}</p>
                   </div>
                   <div className="p-4 rounded-2xl bg-gray-50">
                     <p className="text-xs uppercase text-gray-400 font-semibold">Stock</p>

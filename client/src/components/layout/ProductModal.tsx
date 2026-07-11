@@ -124,11 +124,11 @@ export const ProductModal: React.FC = () => {
               {/* Price */}
               <div className="flex items-baseline gap-2.5">
                 <span className="text-2xl font-display font-bold text-dark">
-                  ${getPrice().toFixed(2)}
+                  ₹{getPrice().toFixed(2)}
                 </span>
                 {activeProduct.oldPrice && selectedSize === '50ml' && (
                   <span className="text-base text-gray-400 font-medium line-through font-display">
-                    ${activeProduct.oldPrice.toFixed(2)}
+                    ₹{activeProduct.oldPrice.toFixed(2)}
                   </span>
                 )}
               </div>

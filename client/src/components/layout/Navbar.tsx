@@ -454,7 +454,7 @@ export const Navbar: React.FC = () => {
                         <h4 className="font-display font-semibold text-sm text-dark leading-tight">{product.name}</h4>
                         <span className="text-[10px] text-secondary font-bold uppercase tracking-wider block mt-0.5">{product.category}</span>
                       </div>
-                      <span className="font-display font-bold text-dark text-sm">${product.price.toFixed(2)}</span>
+                      <span className="font-display font-bold text-dark text-sm">₹{product.price.toFixed(2)}</span>
                     </Link>
                   ))
                 ) : (

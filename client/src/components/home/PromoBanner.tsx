@@ -25,7 +25,7 @@ export const PromoBanner: React.FC = () => {
     },
     {
       icon: <Truck size={16} className="text-primary flex-shrink-0" />,
-      text: 'COMPLIMENTARY DELIVERY — Free express carbon-neutral shipping on all orders over $75.',
+      text: 'COMPLIMENTARY DELIVERY — Free express carbon-neutral shipping on all orders over ₹75.',
       linkText: 'Learn More',
       href: '#about',
     },

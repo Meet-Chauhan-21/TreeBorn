@@ -143,11 +143,11 @@ export const BestSeller: React.FC = () => {
                 </span>
                 <div className="flex items-baseline gap-2">
                   <span className="text-2xl font-display font-bold text-dark">
-                    ${bestseller.price.toFixed(2)}
+                    ₹{bestseller.price.toFixed(2)}
                   </span>
                   {bestseller.oldPrice && (
                     <span className="text-sm font-medium text-gray-400 line-through">
-                      ${bestseller.oldPrice.toFixed(2)}
+                      ₹{bestseller.oldPrice.toFixed(2)}
                     </span>
                   )}
                 </div>

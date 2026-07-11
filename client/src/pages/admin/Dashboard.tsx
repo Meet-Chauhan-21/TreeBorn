@@ -104,7 +104,7 @@ const Dashboard: React.FC = () => {
     { 
       key: 'total', 
       header: 'Total',
-      render: (item: any) => `$${item.totals.total.toFixed(2)}`
+      render: (item: any) => `₹${item.totals.total.toFixed(2)}`
     },
     {
       key: 'status',
@@ -129,7 +129,7 @@ const Dashboard: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatsCard
             title="Revenue"
-            value={`$${stats.revenue.toLocaleString()}`}
+            value={`₹${stats.revenue.toLocaleString()}`}
             trend={{ value: '23.5%', positive: true }}
             icon="fa-solid fa-chart-line"
             color="green"

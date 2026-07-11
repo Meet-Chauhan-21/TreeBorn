@@ -15,7 +15,7 @@ export const WhatsAppButton: React.FC = () => {
     const productId = path.split('/product/')[1];
     const product = products.find((p) => p.id === productId);
     if (product) {
-      message = `Hello, I am interested in purchasing ${product.name} - $${product.price.toFixed(2)}. Can you please help me with my order?`;
+      message = `Hello, I am interested in purchasing ${product.name} - Rs. ${product.price.toFixed(2)}. Can you please help me with my order?`;
     }
   }
 

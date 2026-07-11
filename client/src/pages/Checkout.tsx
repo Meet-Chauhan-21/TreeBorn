@@ -28,10 +28,10 @@ const formatWhatsAppMessage = (
   
   message += `📦 *Products Ordered:*\n`;
   cartItems.forEach((item, index) => {
-    message += `${index + 1}. *${item.product.name}* (Size: ${item.selectedSize}) - Qty: ${item.quantity} - $${(item.product.price * item.quantity).toFixed(2)}\n`;
+    message += `${index + 1}. *${item.product.name}* (Size: ${item.selectedSize}) - Qty: ${item.quantity} - Rs. ${(item.product.price * item.quantity).toFixed(2)}\n`;
   });
   
-  message += `\n💵 *Total Amount Paid:* $${totalAmount.toFixed(2)}\n\n`;
+  message += `\n💵 *Total Amount Paid:* Rs. ${totalAmount.toFixed(2)}\n\n`;
   message += `📍 *Shipping Address:*\n`;
   message += `${shippingAddress.street},\n`;
   message += `${shippingAddress.district}, ${shippingAddress.state},\n`;
@@ -600,8 +600,8 @@ export const Checkout: React.FC = () => {
                       <Truck size={18} />
                       <span>Cash on Delivery (COD) Selected</span>
                     </div>
-                    <p className="text-xs text-gray-600 font-sans leading-relaxed">
-                      You will pay the total amount of <strong className="text-primary font-bold font-display">${total.toFixed(2)}</strong> in cash or via mobile UPI QR scan to the delivery associate when your botanical package arrives at your doorstep.
+                    <p className="text-xs text-gray-650 font-sans leading-relaxed">
+                      You will pay the total amount of <strong className="text-primary font-bold font-display">₹{total.toFixed(2)}</strong> in cash or via mobile UPI QR scan to the delivery associate when your botanical package arrives at your doorstep.
                     </p>
                     <div className="text-[10px] text-gray-500 font-sans space-y-1 pl-4 list-disc text-left">
                       <li>Free logistics shipping terms apply.</li>
@@ -651,7 +651,7 @@ export const Checkout: React.FC = () => {
                         <h4 className="font-semibold text-dark truncate">{item.product.name}</h4>
                         <span className="text-[10px] text-gray-400 block mt-0.5">Size: {item.selectedSize} • Qty: {item.quantity}</span>
                       </div>
-                      <span className="font-display font-bold text-dark">${(item.product.price * item.quantity).toFixed(2)}</span>
+                      <span className="font-display font-bold text-dark">₹{(item.product.price * item.quantity).toFixed(2)}</span>
                     </div>
                   ))}
                 </div>
@@ -660,23 +660,23 @@ export const Checkout: React.FC = () => {
                 <div className="space-y-2 border-b border-border-gray/40 py-4 text-xs font-sans">
                   <div className="flex justify-between text-gray-500">
                     <span>Subtotal</span>
-                    <span className="font-semibold text-dark">${subtotal.toFixed(2)}</span>
+                    <span className="font-semibold text-dark">₹{subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-gray-500">
                     <span>Logistics Shipping</span>
                     <span className="font-semibold text-dark">
-                      {shipping === 0 ? <span className="text-primary font-bold">FREE</span> : `$${shipping.toFixed(2)}`}
+                      {shipping === 0 ? <span className="text-primary font-bold">FREE</span> : `₹${shipping.toFixed(2)}`}
                     </span>
                   </div>
                   <div className="flex justify-between text-gray-500">
                     <span>Est. Sales Tax (8%)</span>
-                    <span className="font-semibold text-dark">${tax.toFixed(2)}</span>
+                    <span className="font-semibold text-dark">₹{tax.toFixed(2)}</span>
                   </div>
                 </div>
 
                 <div className="flex justify-between items-center pt-4 font-display text-dark">
                   <span className="font-bold text-sm uppercase tracking-wider">Order Total</span>
-                  <span className="font-bold text-xl text-primary">${total.toFixed(2)}</span>
+                  <span className="font-bold text-xl text-primary">₹{total.toFixed(2)}</span>
                 </div>
               </div>
             </div>
@@ -722,7 +722,7 @@ export const Checkout: React.FC = () => {
                 </div>
                 <div className="flex justify-between">
                   <span>Amount Charged:</span>
-                  <span className="font-bold text-primary">${total.toFixed(2)}</span>
+                  <span className="font-bold text-primary">₹{total.toFixed(2)}</span>
                 </div>
               </div>
 

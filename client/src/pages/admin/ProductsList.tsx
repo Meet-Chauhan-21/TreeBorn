@@ -91,7 +91,7 @@ const ProductsList: React.FC = () => {
       key: 'price',
       header: 'Price',
       render: (item: any) => (
-        <span className="font-semibold text-gray-900">${item.price.toFixed(2)}</span>
+        <span className="font-semibold text-gray-900">₹{item.price.toFixed(2)}</span>
       ),
     },
     {
