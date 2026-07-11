@@ -44,7 +44,7 @@ const Settings: React.FC = () => {
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
                     <input
                       type="email"
-                      defaultValue="support@treeborn.com"
+                      defaultValue="dabhisanjay901@gmail.com"
                       className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     />
                   </div>
@@ -52,7 +52,7 @@ const Settings: React.FC = () => {
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Phone</label>
                     <input
                       type="tel"
-                      defaultValue="+1 234 567 890"
+                      defaultValue="+91 8905330954"
                       className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     />
                   </div>

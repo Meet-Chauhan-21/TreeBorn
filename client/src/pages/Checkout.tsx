@@ -13,6 +13,34 @@ import Footer from '../components/layout/Footer';
 import Container from '../components/layout/Container';
 import Button from '../components/layout/Button';
 
+const formatWhatsAppMessage = (
+  orderNumber: string,
+  shippingAddress: any,
+  cartItems: any[],
+  totalAmount: number,
+  paymentMethod: string
+) => {
+  let message = `🌿 *NEW ORDER FROM TREEBORN* 🌿\n\n`;
+  message += `*Order Number:* ${orderNumber}\n`;
+  message += `*Customer:* ${shippingAddress.name}\n`;
+  message += `*Phone:* ${shippingAddress.phone}\n`;
+  message += `*Payment Method:* ${paymentMethod === 'cod' ? 'Cash on Delivery (COD)' : 'Prepaid Card'}\n\n`;
+  
+  message += `📦 *Products Ordered:*\n`;
+  cartItems.forEach((item, index) => {
+    message += `${index + 1}. *${item.product.name}* (Size: ${item.selectedSize}) - Qty: ${item.quantity} - $${(item.product.price * item.quantity).toFixed(2)}\n`;
+  });
+  
+  message += `\n💵 *Total Amount Paid:* $${totalAmount.toFixed(2)}\n\n`;
+  message += `📍 *Shipping Address:*\n`;
+  message += `${shippingAddress.street},\n`;
+  message += `${shippingAddress.district}, ${shippingAddress.state},\n`;
+  message += `${shippingAddress.country} - ${shippingAddress.zip}\n\n`;
+  message += `Thank you for shopping! 🌱`;
+  
+  return encodeURIComponent(message);
+};
+
 export const Checkout: React.FC = () => {
   const navigate = useNavigate();
   const { cart, clearCart } = useStore();
@@ -56,6 +84,7 @@ export const Checkout: React.FC = () => {
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderId, setOrderId] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'cod'>('card');
+  const [whatsappOrderUrl, setWhatsappOrderUrl] = useState('');
 
   // Orders are created server-side and require auth
   React.useEffect(() => {
@@ -216,12 +245,30 @@ export const Checkout: React.FC = () => {
       if (!result) return;
 
       setOrderId(result.order.orderNumber);
+
+      const orderMsg = formatWhatsAppMessage(
+        result.order.orderNumber,
+        shippingAddress,
+        cart,
+        total,
+        paymentMethod
+      );
+      const url = `https://wa.me/918905330954?text=${orderMsg}`;
+      setWhatsappOrderUrl(url);
+
       setOrderPlaced(true);
 
       if (paymentMethod === 'card') {
         toast.success('Payment authorized. Order confirmed!');
       } else {
         toast.success('Order placed successfully (Cash on Delivery)!');
+      }
+
+      // Auto open WhatsApp tab
+      try {
+        window.open(url, '_blank');
+      } catch (e) {
+        console.error('Popup blocked by browser:', e);
       }
     } catch (err) {
       console.error('Checkout order error:', err);
@@ -678,6 +725,19 @@ export const Checkout: React.FC = () => {
                   <span className="font-bold text-primary">${total.toFixed(2)}</span>
                 </div>
               </div>
+
+              {whatsappOrderUrl && (
+                <Button
+                  variant="outline"
+                  onClick={() => window.open(whatsappOrderUrl, '_blank')}
+                  className="w-full py-3 rounded-full font-semibold uppercase tracking-wider text-xs shadow-sm cursor-pointer border-[#16A34A] text-[#16A34A] hover:bg-green-50/20 flex items-center justify-center gap-2"
+                >
+                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.457L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.37 9.863-9.73.001-2.597-1.006-5.038-2.834-6.87-1.827-1.83-4.258-2.836-6.857-2.837-5.442 0-9.87 4.372-9.873 9.734-.001 1.738.455 3.43 1.32 4.932l-.993 3.629 3.73-.978zm11.23-5.32c-.3-.15-1.772-.875-2.046-.975-.276-.1-.476-.15-.676.15-.2.3-.775.975-.95 1.175-.175.2-.35.225-.65.075-.3-.15-1.267-.467-2.413-1.49-1.127-.992-1.89-2.22-2.112-2.6-.222-.38-.024-.585.126-.735.135-.135.3-.35.45-.525.15-.175.2-.3.3-.5.1-.2.05-.375-.025-.525-.075-.15-.676-1.625-.926-2.225-.244-.589-.49-.51-.676-.52-.175-.01-.375-.01-.575-.01-.2 0-.525.075-.8 3.375-.275 2.725 1.7 5.35 1.95 5.675.25.325 3.42 5.22 8.28 7.32 1.155.498 2.058.796 2.76 1.02.822.26 1.57.223 2.16.136.66-.098 1.772-.725 2.022-1.425.25-.7.25-1.3 0-1.425-.075-.125-.275-.225-.575-.375z"/>
+                  </svg>
+                  <span>Send Order details to WhatsApp</span>
+                </Button>
+              )}
 
               <Button
                 variant="primary"

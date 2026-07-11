@@ -172,13 +172,29 @@ export const Navbar: React.FC = () => {
         }`}
       >
         <Container className="flex items-center justify-between">
-          {/* Logo Frame */}
+          {/* Logo Frame with Spacer to prevent layout shift */}
           <Link
             to="/"
-            className="font-display text-xl sm:text-2xl font-bold tracking-widest text-primary flex items-center gap-2 focus:outline-none"
+            className="font-display font-medium text-primary flex items-center focus:outline-none relative z-50 h-8 w-36 sm:w-44 md:w-48"
           >
-            <img src={logoImg} alt="TREEBORN logo" className="h-8 w-auto object-contain" />
-            <span className="hidden xs:inline">TREEBORN</span>
+            <div className={`transition-all duration-500 flex items-center gap-1 whitespace-nowrap ${
+              isScrolled
+                ? 'absolute left-0 top-1/2 -translate-y-1/2 scale-100'
+                : 'absolute left-0 top-1/2 -translate-y-1/2 scale-120 sm:scale-130 md:scale-135 origin-left'
+            }`}>
+              <img 
+                src={logoImg} 
+                alt="Tree Born logo" 
+                className={`transition-all duration-500 object-contain ${
+                  isScrolled ? 'h-8 w-auto mt-0.5' : 'h-11 w-auto mt-1.5'
+                }`} 
+              />
+              <span className={`text-primary transition-all duration-500 font-bold tracking-normal ${
+                isScrolled ? 'text-sm' : 'text-sm sm:text-base'
+              }`}>
+                Tree Born
+              </span>
+            </div>
           </Link>
 
           {/* Desktop Navigation Links */}

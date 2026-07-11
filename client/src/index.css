@@ -1,15 +1,21 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #0F3D2E;
-  --color-primary-light: #16523F;
-  --color-primary-dark: #08261C;
-  --color-secondary: #1F7A4D;
+  --color-primary: #581C87;
+  --color-primary-light: #9333EA;
+  --color-primary-dark: #3B0764;
+  --color-secondary: #16A34A;
+  --color-coffee: #6F4E37;
+  --color-coffee-dark: #3E2723;
+  --color-coffee-light: #8B5A2B;
   --color-dark: #111111;
   --color-light-gray: #F8F8F8;
   --color-border-gray: #E5E7EB;
-  --color-accent-sage: #EBF3F0;
-  --color-accent-sage-dark: #D7E7E1;
+  --color-accent-sage: #E0F2FE;
+  --color-accent-sage-dark: #7DD3FC;
+  --color-light-blue: #E0F2FE;
+  --color-light-blue-dark: #7DD3FC;
+  --color-white: #FFFFFF;
 
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-display: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
@@ -59,7 +65,7 @@ html {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #0F3D2E;
+  background: #581C87;
 }
 
 /* Base styles for premium UI elements */
@@ -73,12 +79,12 @@ body {
 
 /* Custom Swiper Styles to match Premium Skincare brand colors */
 .swiper-pagination-bullet-active {
-  background: #0F3D2E !important;
+  background: #581C87 !important;
 }
 
 .swiper-button-next,
 .swiper-button-prev {
-  color: #0F3D2E !important;
+  color: #581C87 !important;
 }
 
 .glassmorphism {
@@ -98,12 +104,12 @@ body {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(15, 61, 46, 0.25);
+  background: rgba(88, 28, 135, 0.25);
   border-radius: 99px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(15, 61, 46, 0.5);
+  background: rgba(88, 28, 135, 0.5);
 }
 
 /* Infinite Marquee Animation classes */

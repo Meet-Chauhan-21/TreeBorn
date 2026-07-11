@@ -178,7 +178,7 @@ export const Profile: React.FC = () => {
   if (loading || !user) {
     return (
       <div className="min-h-screen bg-light-gray flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-[#0F3D2E]/20 border-t-[#0F3D2E] rounded-full animate-spin" />
+        <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
       </div>
     );
   }
@@ -247,30 +247,34 @@ export const Profile: React.FC = () => {
 
       <Navbar />
 
-      <main className="pt-24 pb-20 min-h-screen bg-[#F7FAF8]">
+      <main className="pt-24 pb-20 min-h-screen bg-light-gray/30">
         {/* Luxury Premium Header Profile Card Banner */}
-        <div className="bg-gradient-to-r from-[#0F3D2E] via-[#165641] to-[#0A291F] py-12 text-white border-b border-[#D4AF37]/20 shadow-md">
-          <Container>
+        <div className="bg-gradient-to-r from-primary-dark via-primary to-coffee-dark py-14 text-white border-b border-white/10 shadow-lg relative overflow-hidden rounded-b-[2.5rem]">
+          {/* Ambient glow backdrops */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary-light/25 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
+          <div className="absolute bottom-0 left-1/4 w-80 h-80 bg-light-blue/10 rounded-full blur-3xl -ml-20 -mb-20 pointer-events-none" />
+
+          <Container className="relative z-10">
             <div className="flex flex-col md:flex-row items-center justify-between gap-6">
               <div className="flex items-center gap-5 flex-col md:flex-row text-center md:text-left">
                 {/* Dynamically generated initials bubble */}
-                <div className="w-18 h-18 sm:w-20 sm:h-20 rounded-full bg-white/10 border-2 border-[#D4AF37]/50 flex items-center justify-center text-[#D4AF37] font-display font-bold text-2xl sm:text-3xl shadow-xl backdrop-blur-xs flex-shrink-0 relative">
+                <div className="w-18 h-18 sm:w-20 sm:h-20 rounded-full bg-gradient-to-tr from-primary-light to-primary border-2 border-light-blue-dark/50 flex items-center justify-center text-white font-display font-bold text-2xl sm:text-3xl shadow-xl backdrop-blur-md flex-shrink-0 relative">
                   {initials}
-                  <span className="absolute bottom-0 right-0 w-5 h-5 bg-[#D4AF37] border-2 border-[#0F3D2E] rounded-full flex items-center justify-center" title="Premium Gold Circle Member">
-                    <CheckCircle size={10} className="text-white" />
+                  <span className="absolute bottom-0 right-0 w-5.5 h-5.5 bg-secondary border-2 border-primary-dark rounded-full flex items-center justify-center shadow-xs" title="Premium Tree Born Circle Member">
+                    <CheckCircle size={11} className="text-white" />
                   </span>
                 </div>
                 <div className="space-y-1">
                   <h1 className="text-2xl sm:text-3xl font-display font-bold tracking-tight text-white flex items-center justify-center md:justify-start gap-2">
                     <span>{user.name}</span>
                     {user.role === 'admin' && (
-                      <span className="bg-[#D4AF37]/25 text-[#E6C655] border border-[#D4AF37]/40 px-2 py-0.5 rounded-full text-[9px] font-sans font-bold uppercase tracking-wider">
+                      <span className="bg-secondary/20 text-[#22C55E] border border-secondary/30 px-2 py-0.5 rounded-full text-[9px] font-sans font-bold uppercase tracking-wider">
                         Admin
                       </span>
                     )}
                   </h1>
                   <p className="text-xs text-white/80 font-sans tracking-wide">
-                    {user.email} &bull; Gold Circle Member
+                    {user.email} &bull; Tree Born Circle Member
                   </p>
                 </div>
               </div>
@@ -286,7 +290,7 @@ export const Profile: React.FC = () => {
                 {user.role === 'admin' && (
                   <button
                     onClick={() => navigate('/admin')}
-                    className="bg-[#D4AF37] hover:bg-[#C29E30] text-black text-xs font-bold px-5 py-2.5 rounded-full tracking-wider uppercase transition-all duration-200 cursor-pointer flex items-center gap-1.5 focus:outline-none"
+                    className="bg-secondary hover:bg-secondary/90 text-white text-xs font-bold px-5 py-2.5 rounded-full tracking-wider uppercase transition-all duration-200 cursor-pointer flex items-center gap-1.5 focus:outline-none shadow-sm"
                   >
                     <Shield size={13} />
                     <span>Admin Panel</span>
@@ -303,7 +307,7 @@ export const Profile: React.FC = () => {
             
             {/* Sidebar Navigation */}
             <div className="lg:col-span-3 bg-white rounded-3xl border border-border-gray/30 p-5 shadow-sm space-y-4">
-              <span className="text-[10px] font-sans font-bold uppercase tracking-widest text-[#0F3D2E]/50 block px-2">
+              <span className="text-[10px] font-sans font-bold uppercase tracking-widest text-primary/50 block px-2">
                 My Dashboard
               </span>
               <nav className="flex flex-col gap-1 text-xs font-display font-semibold uppercase tracking-wider text-dark/70">
@@ -311,11 +315,11 @@ export const Profile: React.FC = () => {
                   onClick={() => { setActiveTab('profile'); setIsEditingAddress(false); }}
                   className={`flex items-center gap-3 px-4 py-3.5 rounded-xl text-left cursor-pointer transition-all ${
                     activeTab === 'profile'
-                      ? 'bg-[#E2EFE9] text-[#0F3D2E] border-l-3 border-[#0F3D2E] pl-3'
+                      ? 'bg-primary/5 text-primary border-l-3 border-primary pl-3'
                       : 'hover:bg-light-gray/40'
                   }`}
                 >
-                  <UserIcon size={14} className={activeTab === 'profile' ? 'text-[#0F3D2E]' : 'text-gray-400'} />
+                  <UserIcon size={14} className={activeTab === 'profile' ? 'text-primary' : 'text-gray-400'} />
                   <span>Profile Settings</span>
                 </button>
 
@@ -323,11 +327,11 @@ export const Profile: React.FC = () => {
                   onClick={() => { setActiveTab('orders'); setIsEditingAddress(false); setOrderPage(1); }}
                   className={`flex items-center gap-3 px-4 py-3.5 rounded-xl text-left cursor-pointer transition-all ${
                     activeTab === 'orders'
-                      ? 'bg-[#E2EFE9] text-[#0F3D2E] border-l-3 border-[#0F3D2E] pl-3'
+                      ? 'bg-primary/5 text-primary border-l-3 border-primary pl-3'
                       : 'hover:bg-light-gray/40'
                   }`}
                 >
-                  <ShoppingBag size={14} className={activeTab === 'orders' ? 'text-[#0F3D2E]' : 'text-gray-400'} />
+                  <ShoppingBag size={14} className={activeTab === 'orders' ? 'text-primary' : 'text-gray-400'} />
                   <span>Order History</span>
                 </button>
 
@@ -335,11 +339,11 @@ export const Profile: React.FC = () => {
                   onClick={() => { setActiveTab('addresses'); }}
                   className={`flex items-center gap-3 px-4 py-3.5 rounded-xl text-left cursor-pointer transition-all ${
                     activeTab === 'addresses'
-                      ? 'bg-[#E2EFE9] text-[#0F3D2E] border-l-3 border-[#0F3D2E] pl-3'
+                      ? 'bg-primary/5 text-primary border-l-3 border-primary pl-3'
                       : 'hover:bg-light-gray/40'
                   }`}
                 >
-                  <MapPin size={14} className={activeTab === 'addresses' ? 'text-[#0F3D2E]' : 'text-gray-400'} />
+                  <MapPin size={14} className={activeTab === 'addresses' ? 'text-primary' : 'text-gray-400'} />
                   <span>Saved Addresses</span>
                 </button>
               </nav>
@@ -372,9 +376,9 @@ export const Profile: React.FC = () => {
                           value={profileFormik.values.name}
                           onChange={profileFormik.handleChange}
                           onBlur={profileFormik.handleBlur}
-                          className={`w-full border px-4 py-3 text-sm rounded-xl text-dark focus:outline-none focus:border-[#0F3D2E] font-sans bg-light-gray/10 transition-colors ${
+                          className={`w-full border px-4 py-3 text-sm rounded-xl text-dark focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 font-sans bg-light-gray/10 transition-colors ${
                             profileFormik.touched.name && profileFormik.errors.name
-                              ? 'border-red-500 focus:border-red-500'
+                              ? 'border-red-500 focus:border-red-550'
                               : 'border-border-gray/80'
                           }`}
                         />
@@ -397,7 +401,7 @@ export const Profile: React.FC = () => {
                           value={profileFormik.values.phone}
                           onChange={profileFormik.handleChange}
                           onBlur={profileFormik.handleBlur}
-                          className={`w-full border px-4 py-3 text-sm rounded-xl text-dark focus:outline-none focus:border-[#0F3D2E] font-sans bg-light-gray/10 transition-colors ${
+                          className={`w-full border px-4 py-3 text-sm rounded-xl text-dark focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 font-sans bg-light-gray/10 transition-colors ${
                             profileFormik.touched.phone && profileFormik.errors.phone
                               ? 'border-red-500 focus:border-red-500'
                               : 'border-border-gray/80'
@@ -423,7 +427,7 @@ export const Profile: React.FC = () => {
                         value={profileFormik.values.email}
                         onChange={profileFormik.handleChange}
                         onBlur={profileFormik.handleBlur}
-                        className={`w-full border px-4 py-3 text-sm rounded-xl text-dark focus:outline-none focus:border-[#0F3D2E] font-sans bg-light-gray/10 transition-colors ${
+                        className={`w-full border px-4 py-3 text-sm rounded-xl text-dark focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 font-sans bg-light-gray/10 transition-colors ${
                           profileFormik.touched.email && profileFormik.errors.email
                             ? 'border-red-500 focus:border-red-500'
                             : 'border-border-gray/80'
@@ -436,11 +440,11 @@ export const Profile: React.FC = () => {
                       )}
                     </div>
 
-                    <div className="pt-2 border-t border-[#0F3D2E]/10 mt-6">
+                    <div className="pt-2 border-t border-primary/10 mt-6">
                       <button
                         type="submit"
                         disabled={profileFormik.isSubmitting}
-                        className="bg-[#0F3D2E] hover:bg-[#165641] text-white text-xs font-bold px-6 py-3 rounded-full tracking-wider uppercase shadow-xs cursor-pointer transition-colors w-full sm:w-auto focus:outline-none"
+                        className="bg-primary hover:bg-primary-light text-white text-xs font-bold px-6 py-3.5 rounded-full tracking-wider uppercase shadow-xs hover:shadow-md transition-all active:scale-[0.98] cursor-pointer w-full sm:w-auto focus:outline-none"
                       >
                         {profileFormik.isSubmitting ? 'Saving...' : 'Save Settings'}
                       </button>
@@ -464,7 +468,7 @@ export const Profile: React.FC = () => {
                   <div className="space-y-5">
                     {ordersLoading ? (
                       <div className="py-12 flex items-center justify-center">
-                        <div className="w-10 h-10 border-4 border-[#0F3D2E]/20 border-t-[#0F3D2E] rounded-full animate-spin" />
+                        <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
                       </div>
                     ) : orders.length === 0 ? (
                       <div className="py-12 text-center space-y-2">
@@ -476,10 +480,10 @@ export const Profile: React.FC = () => {
                       orders.map((order) => (
                         <div
                           key={order.orderNumber}
-                          className="border border-border-gray/40 rounded-2xl overflow-hidden shadow-xs hover:border-[#0F3D2E]/10 transition-all hover:shadow-sm"
+                          className="border border-border-gray/40 rounded-2xl overflow-hidden shadow-xs hover:border-primary/10 transition-all hover:shadow-sm"
                         >
                           {/* Order Header bar */}
-                          <div className="bg-[#E2EFE9]/20 border-b border-border-gray/30 p-4 sm:px-5 flex flex-wrap justify-between items-center gap-3">
+                          <div className="bg-light-blue/15 border-b border-border-gray/30 p-4 sm:px-5 flex flex-wrap justify-between items-center gap-3">
                             <div className="flex gap-4 sm:gap-6 text-xs text-gray-500 font-sans">
                               <div>
                                 <span className="block font-medium">Order Placed</span>
@@ -492,12 +496,16 @@ export const Profile: React.FC = () => {
                             </div>
 
                             <div className="flex items-center gap-3">
-                              <span className="inline-flex items-center bg-[#E2EFE9] text-[#0F3D2E] px-2.5 py-0.5 rounded-full text-[9px] font-sans font-bold uppercase tracking-wider">
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-sans font-bold uppercase tracking-wider ${
+                                order.status === 'delivered'
+                                  ? 'bg-secondary/15 text-secondary'
+                                  : 'bg-primary/10 text-primary'
+                              }`}>
                                 {order.status}
                               </span>
                               <button
                                 onClick={() => toast.success('Invoice download started.')}
-                                className="text-gray-400 hover:text-[#0F3D2E] transition-colors flex items-center gap-1 text-xs cursor-pointer focus:outline-none"
+                                className="text-gray-400 hover:text-primary transition-colors flex items-center gap-1 text-xs cursor-pointer focus:outline-none"
                                 aria-label="Download Invoice"
                               >
                                 <Download size={13} />
@@ -517,7 +525,7 @@ export const Profile: React.FC = () => {
                                   <h4 className="font-semibold text-dark leading-tight">{item.name}</h4>
                                   <span className="text-[10px] text-gray-400 mt-0.5 block">Quantity: {item.quantity}</span>
                                 </div>
-                                <span className="font-display font-bold text-[#0F3D2E]">${item.price.toFixed(2)}</span>
+                                <span className="font-display font-bold text-primary">${item.price.toFixed(2)}</span>
                               </div>
                             ))}
                           </div>
@@ -525,7 +533,7 @@ export const Profile: React.FC = () => {
                           {/* Order total footer */}
                           <div className="bg-light-gray/5 border-t border-border-gray/30 p-4 sm:px-5 flex justify-between items-center text-xs sm:text-sm font-display">
                             <span className="font-semibold text-gray-500">Total Paid</span>
-                            <span className="font-bold text-[#0F3D2E] text-base">${order.totals.total.toFixed(2)}</span>
+                            <span className="font-bold text-primary text-base">${order.totals.total.toFixed(2)}</span>
                           </div>
                         </div>
                       ))
@@ -582,7 +590,7 @@ export const Profile: React.FC = () => {
                           addressFormik.resetForm();
                           setIsEditingAddress(true);
                         }}
-                        className="bg-[#0F3D2E] hover:bg-[#165641] text-white text-xs font-semibold px-4 py-2.5 rounded-full flex items-center gap-1.5 cursor-pointer shadow-xs transition-colors focus:outline-none"
+                        className="bg-primary hover:bg-primary-light text-white text-xs font-semibold px-4 py-2.5 rounded-full flex items-center gap-1.5 cursor-pointer shadow-xs transition-colors focus:outline-none"
                       >
                         <Plus size={14} />
                         <span>Add Address</span>
@@ -593,7 +601,7 @@ export const Profile: React.FC = () => {
                   {/* Add / Edit Address Form using Formik & Yup validations */}
                   {isEditingAddress ? (
                     <form onSubmit={addressFormik.handleSubmit} className="bg-light-gray/15 border border-border-gray/40 rounded-3xl p-5 sm:p-6 space-y-4">
-                      <h3 className="font-display font-bold text-sm text-[#0F3D2E] border-b border-border-gray/30 pb-2">
+                      <h3 className="font-display font-bold text-sm text-primary border-b border-border-gray/30 pb-2">
                         {editingAddressId ? 'Edit Address Detail' : 'Register New Address'}
                       </h3>
 
@@ -608,7 +616,7 @@ export const Profile: React.FC = () => {
                             value={addressFormik.values.name}
                             onChange={addressFormik.handleChange}
                             onBlur={addressFormik.handleBlur}
-                            className={`w-full border px-4 py-2.5 text-xs rounded-xl text-dark focus:outline-none focus:border-[#0F3D2E] font-sans bg-white transition-colors ${
+                            className={`w-full border px-4 py-2.5 text-xs rounded-xl text-dark focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 font-sans bg-white transition-colors ${
                               addressFormik.touched.name && addressFormik.errors.name
                                 ? 'border-red-500 focus:border-red-500'
                                 : 'border-border-gray/80'
@@ -631,7 +639,7 @@ export const Profile: React.FC = () => {
                             value={addressFormik.values.phone}
                             onChange={addressFormik.handleChange}
                             onBlur={addressFormik.handleBlur}
-                            className={`w-full border px-4 py-2.5 text-xs rounded-xl text-dark focus:outline-none focus:border-[#0F3D2E] font-sans bg-white transition-colors ${
+                            className={`w-full border px-4 py-2.5 text-xs rounded-xl text-dark focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 font-sans bg-white transition-colors ${
                               addressFormik.touched.phone && addressFormik.errors.phone
                                 ? 'border-red-500 focus:border-red-500'
                                 : 'border-border-gray/80'
@@ -655,7 +663,7 @@ export const Profile: React.FC = () => {
                           value={addressFormik.values.street}
                           onChange={addressFormik.handleChange}
                           onBlur={addressFormik.handleBlur}
-                          className={`w-full border px-4 py-2.5 text-xs rounded-xl text-dark focus:outline-none focus:border-[#0F3D2E] font-sans bg-white transition-colors ${
+                          className={`w-full border px-4 py-2.5 text-xs rounded-xl text-dark focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 font-sans bg-white transition-colors ${
                             addressFormik.touched.street && addressFormik.errors.street
                               ? 'border-red-500 focus:border-red-500'
                               : 'border-border-gray/80'
@@ -721,7 +729,7 @@ export const Profile: React.FC = () => {
                             value={addressFormik.values.zip}
                             onChange={addressFormik.handleChange}
                             onBlur={addressFormik.handleBlur}
-                            className={`w-full border px-4 py-2.5 text-xs rounded-xl text-dark focus:outline-none focus:border-[#0F3D2E] font-sans bg-white transition-colors ${
+                            className={`w-full border px-4 py-2.5 text-xs rounded-xl text-dark focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 font-sans bg-white transition-colors ${
                               addressFormik.touched.zip && addressFormik.errors.zip
                                 ? 'border-red-500 focus:border-red-500'
                                 : 'border-border-gray/80'
@@ -742,7 +750,7 @@ export const Profile: React.FC = () => {
                             name="isDefault"
                             checked={addressFormik.values.isDefault}
                             onChange={addressFormik.handleChange}
-                            className="rounded border-border-gray text-primary focus:ring-[#0F3D2E] w-4 h-4 cursor-pointer"
+                            className="rounded border-border-gray text-primary focus:ring-primary w-4 h-4 cursor-pointer"
                           />
                           <label htmlFor="isDefault" className="cursor-pointer">
                             Set as primary billing/shipping address
@@ -753,14 +761,14 @@ export const Profile: React.FC = () => {
                       <div className="pt-4 flex gap-3 text-xs font-semibold">
                         <button
                           type="submit"
-                          className="bg-[#0F3D2E] hover:bg-[#165641] text-white px-5 py-2.5 rounded-full cursor-pointer transition-colors focus:outline-none"
+                          className="bg-primary hover:bg-primary-light text-white px-5 py-2.5 rounded-full cursor-pointer transition-colors focus:outline-none"
                         >
                           {editingAddressId ? 'Update Address' : 'Register Address'}
                         </button>
                         <button
                           type="button"
                           onClick={() => { setIsEditingAddress(false); setEditingAddressId(null); addressFormik.resetForm(); }}
-                          className="bg-transparent border border-border-gray hover:bg-gray-100 text-dark/70 px-5 py-2.5 rounded-full cursor-pointer transition-colors focus:outline-none"
+                          className="bg-transparent border border-border-gray hover:bg-primary/5 hover:text-primary px-5 py-2.5 rounded-full cursor-pointer transition-colors focus:outline-none"
                         >
                           Cancel
                         </button>
@@ -774,12 +782,12 @@ export const Profile: React.FC = () => {
                             key={addr._id}
                             className={`border rounded-2xl p-4 sm:p-5 relative space-y-3 transition-all hover:shadow-xs ${
                               addr.isDefault
-                                ? 'border-[#0F3D2E] bg-[#E2EFE9]/10'
+                                ? 'border-primary bg-primary/2'
                                 : 'border-border-gray/40'
                             }`}
                           >
                             {addr.isDefault && (
-                              <span className="absolute top-4 right-4 bg-[#0F3D2E] text-white px-2 py-0.5 rounded-full text-[8px] font-sans font-bold uppercase tracking-wider">
+                              <span className="absolute top-4 right-4 bg-primary text-white px-2 py-0.5 rounded-full text-[8px] font-sans font-bold uppercase tracking-wider">
                                 Primary
                               </span>
                             )}
@@ -802,7 +810,7 @@ export const Profile: React.FC = () => {
                               </button>
                               <button
                                 onClick={() => handleDeleteAddress(addr._id)}
-                                className="text-red-500 hover:text-red-600 flex items-center gap-1 cursor-pointer transition-colors focus:outline-none"
+                                className="text-red-500 hover:text-red-655 flex items-center gap-1 cursor-pointer transition-colors focus:outline-none"
                               >
                                 <Trash2 size={12} />
                                 <span>Delete</span>

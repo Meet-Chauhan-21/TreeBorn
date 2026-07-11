@@ -30,7 +30,7 @@ export const Footer: React.FC = () => {
   ];
 
   return (
-    <footer className="bg-primary-dark text-white/90 pt-16 pb-8 border-t border-primary/20">
+    <footer className="bg-coffee-dark text-white/90 pt-16 pb-8 border-t border-primary/20">
       <Container>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 mb-12">
           {/* Column 1 - Brand Info */}
@@ -39,7 +39,7 @@ export const Footer: React.FC = () => {
               to="/"
               className="font-display text-2xl font-bold tracking-widest text-white flex items-center gap-1.5 mb-5 focus:outline-none"
             >
-              <span>TREEBORN</span>
+              <span>TREE BORN</span>
               <span className="h-1.5 w-1.5 rounded-full bg-secondary"></span>
             </Link>
             <p className="text-white/60 text-sm font-sans max-w-sm mb-6 leading-relaxed">
@@ -149,6 +149,18 @@ export const Footer: React.FC = () => {
                   </a>
                 </li>
               ))}
+              <li className="text-white/60 font-sans pt-2.5 border-t border-white/10 mt-1">
+                <span className="block text-white/40 text-[9px] uppercase font-bold tracking-wider mb-0.5">Email Support</span>
+                <a href="mailto:dabhisanjay901@gmail.com" className="hover:text-white transition-colors break-all">
+                  dabhisanjay901@gmail.com
+                </a>
+              </li>
+              <li className="text-white/60 font-sans pt-1">
+                <span className="block text-white/40 text-[9px] uppercase font-bold tracking-wider mb-0.5">WhatsApp Support</span>
+                <a href="https://wa.me/918905330954" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">
+                  +91 8905330954
+                </a>
+              </li>
             </ul>
           </div>
         </div>

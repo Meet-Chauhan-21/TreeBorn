@@ -20,7 +20,7 @@ export const WhatsAppButton: React.FC = () => {
   }
 
   const encodedMessage = encodeURIComponent(message);
-  const whatsappUrl = `https://wa.me/919999999999?text=${encodedMessage}`;
+  const whatsappUrl = `https://wa.me/918905330954?text=${encodedMessage}`;
 
   return (
     <motion.a
