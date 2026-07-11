@@ -54,11 +54,12 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title }) => 
   const pageTitle = title || titles[location.pathname] || 'Admin';
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#fafafc] admin-theme font-sans">
       <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
       <Header
         title={pageTitle}
         collapsed={collapsed}
+        setCollapsed={setCollapsed}
         setMobileMenuOpen={setMobileMenuOpen}
         mobileMenuOpen={mobileMenuOpen}
       />

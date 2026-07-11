@@ -36,7 +36,7 @@ export const Navbar: React.FC = () => {
       const expectedHash = `#${path.slice(2)}`;
       return location.pathname === '/' && activeSectionHash === expectedHash;
     }
-    return false;
+    return location.pathname.startsWith(path);
   };
 
   const handleNavClick = (
@@ -160,6 +160,10 @@ export const Navbar: React.FC = () => {
     { name: 'About', path: '/#about' },
     { name: 'Contact', path: '/#contact' },
   ];
+
+  if (user?.role === 'admin') {
+    navLinks.push({ name: 'Admin Panel', path: '/admin' });
+  }
 
   return (
     <>

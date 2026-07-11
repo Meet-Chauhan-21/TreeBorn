@@ -67,12 +67,12 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       if (!accessToken) return;
-      
+
       try {
         const response = await fetch(`${API_BASE_URL}/admin/dashboard`, {
           headers: { 'Authorization': `Bearer ${accessToken}` }
         });
-        
+
         if (response.ok) {
           const data = await response.json();
           setStats(data.stats);
@@ -91,18 +91,18 @@ const Dashboard: React.FC = () => {
 
   const orderColumns = [
     { key: 'orderNumber', header: 'Order ID' },
-    { 
-      key: 'customer', 
+    {
+      key: 'customer',
       header: 'Customer',
       render: (item: any) => item.user?.name || 'N/A'
     },
-    { 
-      key: 'date', 
+    {
+      key: 'date',
       header: 'Date',
       render: (item: any) => new Date(item.createdAt).toLocaleDateString()
     },
-    { 
-      key: 'total', 
+    {
+      key: 'total',
       header: 'Total',
       render: (item: any) => `₹${item.totals.total.toFixed(2)}`
     },
@@ -125,28 +125,28 @@ const Dashboard: React.FC = () => {
 
   return (
     <AdminLayout title="Dashboard">
-      <div className="space-y-8">
+      <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatsCard
             title="Revenue"
             value={`₹${stats.revenue.toLocaleString()}`}
             trend={{ value: '23.5%', positive: true }}
             icon="fa-solid fa-chart-line"
-            color="green"
+            color="purple"
           />
           <StatsCard
             title="Orders"
             value={stats.orders.toLocaleString()}
             trend={{ value: '15.2%', positive: true }}
             icon="fa-solid fa-arrow-down-wide-short"
-            color="green"
+            color="blue"
           />
           <StatsCard
             title="Products"
             value={stats.products.toLocaleString()}
             trend={{ value: '3.1%', positive: true }}
             icon="fa-solid fa-boxes-stacked"
-            color="green"
+            color="orange"
           />
           <StatsCard
             title="Users"
@@ -164,36 +164,36 @@ const Dashboard: React.FC = () => {
                 <AreaChart data={revenueData}>
                   <defs>
                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#0F3D2E" stopOpacity={0.2} />
-                      <stop offset="95%" stopColor="#0F3D2E" stopOpacity={0} />
+                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.15} />
+                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                   <XAxis
                     dataKey="month"
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fill: '#9ca3af', fontSize: 12 }}
+                    tick={{ fill: '#94a3b8', fontSize: 11 }}
                     dy={10}
                   />
                   <YAxis
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fill: '#9ca3af', fontSize: 12 }}
+                    tick={{ fill: '#94a3b8', fontSize: 11 }}
                   />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: '#fff',
-                      borderRadius: '12px',
-                      border: 'none',
-                      boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)',
+                      borderRadius: '8px',
+                      border: '1px solid #e2e8f0',
+                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
                     }}
                   />
                   <Area
                     type="monotone"
                     dataKey="revenue"
-                    stroke="#0F3D2E"
-                    strokeWidth={3}
+                    stroke="#6366f1"
+                    strokeWidth={2}
                     fillOpacity={1}
                     fill="url(#colorRevenue)"
                   />
@@ -221,7 +221,7 @@ const Dashboard: React.FC = () => {
               <div className="h-48">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={monthlySalesData}>
-                    <Bar dataKey="sales" fill="#0F3D2E" radius={[8, 8, 0, 0]} />
+                    <Bar dataKey="sales" fill="#6366f1" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -238,14 +238,13 @@ const Dashboard: React.FC = () => {
             <div className="space-y-4">
               {recentActivity.map((activity, index) => (
                 <div key={index} className="flex items-start gap-4">
-                  <div className={`w-2 h-2 rounded-full mt-2 ${
-                    activity.type === 'order' ? 'bg-blue-500' :
-                    activity.type === 'product' ? 'bg-green-500' : 'bg-purple-500'
-                  }`} />
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-900">{activity.text}</p>
-                    <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
-                      <Clock size={12} />
+                  <div className={`w-1.5 h-1.5 rounded-full mt-2.5 ${activity.type === 'order' ? 'bg-indigo-500' :
+                      activity.type === 'product' ? 'bg-emerald-500' : 'bg-violet-500'
+                    }`} />
+                  <div className="flex-1 text-left">
+                    <p className="text-sm text-slate-800 font-medium leading-tight">{activity.text}</p>
+                    <p className="text-[11px] text-slate-400 mt-1 flex items-center gap-1 font-sans">
+                      <Clock size={11} />
                       {activity.time}
                     </p>
                   </div>
@@ -256,20 +255,20 @@ const Dashboard: React.FC = () => {
         </div>
 
         <Card title="Top Selling Products">
-          <div className="space-y-4">
+          <div className="space-y-3">
             {topProducts.map((product, index) => (
-              <div key={product._id || index} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-colors">
+              <div key={product._id || index} className="flex items-center justify-between p-3.5 bg-slate-50/60 border border-slate-100 rounded-xl hover:bg-slate-50 transition-colors">
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary font-bold">
+                  <div className="w-8 h-8 bg-slate-100 border border-slate-200/50 rounded-lg flex items-center justify-center text-slate-800 font-bold text-xs shadow-3xs">
                     {index + 1}
                   </div>
-                  <div>
-                    <p className="font-semibold text-gray-900">{product.name}</p>
-                    <p className="text-sm text-gray-500">{product.sales} units sold</p>
+                  <div className="text-left">
+                    <p className="text-sm font-semibold text-slate-900 leading-tight">{product.name}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">{product.sales} units sold</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-primary">${product.revenue?.toLocaleString()}</p>
+                  <p className="text-sm font-bold text-slate-950">₹{product.revenue?.toLocaleString()}</p>
                 </div>
               </div>
             ))}

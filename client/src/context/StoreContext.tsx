@@ -1,6 +1,16 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { Product } from '../types';
 import { fallbackProducts, fetchPublicProducts } from '../services/products';
+import { API_BASE_URL } from '../config';
+
+export interface AppSettings {
+  email: string;
+  whatsappNumber: string;
+  themeColor: string;
+  enableCreditCard: boolean;
+  enablePaypal: boolean;
+  enableCOD: boolean;
+}
 
 export interface CartItem {
   product: Product;
@@ -16,6 +26,7 @@ interface StoreContextType {
   activeProduct: Product | null;
   isCartOpen: boolean;
   isWishlistOpen: boolean;
+  settings: AppSettings;
   addToCart: (product: Product, quantity: number, size?: string) => void;
   removeFromCart: (productId: string, size: string) => void;
   updateCartQuantity: (productId: string, size: string, quantity: number) => void;
@@ -25,6 +36,7 @@ interface StoreContextType {
   setActiveProduct: (product: Product | null) => void;
   setIsCartOpen: (open: boolean) => void;
   setIsWishlistOpen: (open: boolean) => void;
+  updateLocalSettings: (newSettings: AppSettings) => void;
 }
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
@@ -46,6 +58,67 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [activeProduct, setActiveProductState] = useState<Product | null>(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
+
+  const [settings, setSettings] = useState<AppSettings>({
+    email: 'dabhisanjay901@gmail.com',
+    whatsappNumber: '8905330954',
+    themeColor: '#581C87',
+    enableCreditCard: true,
+    enablePaypal: true,
+    enableCOD: true
+  });
+
+  const updateLocalSettings = (newSettings: AppSettings) => {
+    setSettings(newSettings);
+    applyThemeColor(newSettings.themeColor);
+  };
+
+  const applyThemeColor = (color: string) => {
+    if (!color) return;
+    const root = document.documentElement;
+    root.style.setProperty('--color-primary', color);
+    
+    const lighten = adjustBrightness(color, 0.25);
+    const darken = adjustBrightness(color, -0.3);
+    root.style.setProperty('--color-primary-light', lighten);
+    root.style.setProperty('--color-primary-dark', darken);
+  };
+
+  const adjustBrightness = (hex: string, percent: number) => {
+    try {
+      let R = parseInt(hex.substring(1, 3), 16);
+      let G = parseInt(hex.substring(3, 5), 16);
+      let B = parseInt(hex.substring(5, 7), 16);
+
+      R = Math.max(0, Math.min(255, Math.round(R * (1 + percent))));
+      G = Math.max(0, Math.min(255, Math.round(G * (1 + percent))));
+      B = Math.max(0, Math.min(255, Math.round(B * (1 + percent))));
+
+      const rHex = R.toString(16).padStart(2, '0');
+      const gHex = G.toString(16).padStart(2, '0');
+      const bHex = B.toString(16).padStart(2, '0');
+
+      return `#${rHex}${gHex}${bHex}`;
+    } catch {
+      return hex;
+    }
+  };
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/settings`);
+        if (response.ok) {
+          const data = await response.json();
+          setSettings(data);
+          applyThemeColor(data.themeColor);
+        }
+      } catch (err) {
+        console.error('Error fetching global settings:', err);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   // Sync to local storage
   useEffect(() => {
@@ -149,6 +222,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         activeProduct,
         isCartOpen,
         isWishlistOpen,
+        settings,
         addToCart,
         removeFromCart,
         updateCartQuantity,
@@ -158,6 +232,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setActiveProduct,
         setIsCartOpen,
         setIsWishlistOpen,
+        updateLocalSettings,
       }}
     >
       {children}

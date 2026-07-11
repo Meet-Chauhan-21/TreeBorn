@@ -2,9 +2,16 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Container } from './Container';
 import logoImg from '../../images/logo.png';
+import { useStore } from '../../context/StoreContext';
 
 export const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
+  const { settings } = useStore();
+
+  const formatWhatsAppLink = (num: string) => {
+    const cleanNum = num.replace(/\D/g, '');
+    return cleanNum.length === 10 ? `91${cleanNum}` : cleanNum;
+  };
 
   const shopLinks = [
     { name: 'Cleansers', path: '#shop?category=cleansers' },
@@ -152,14 +159,21 @@ export const Footer: React.FC = () => {
               ))}
               <li className="text-white/60 font-sans pt-2.5 border-t border-white/10 mt-1">
                 <span className="block text-white/40 text-[9px] uppercase font-bold tracking-wider mb-0.5">Email Support</span>
-                <a href="mailto:dabhisanjay901@gmail.com" className="hover:text-white transition-colors break-all">
-                  dabhisanjay901@gmail.com
+                <a href={`mailto:${settings.email}`} className="hover:text-white transition-colors break-all">
+                  {settings.email}
                 </a>
               </li>
               <li className="text-white/60 font-sans pt-1">
                 <span className="block text-white/40 text-[9px] uppercase font-bold tracking-wider mb-0.5">WhatsApp Support</span>
-                <a href="https://wa.me/918905330954" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">
-                  +91 8905330954
+                <a 
+                  href={`https://wa.me/${formatWhatsAppLink(settings.whatsappNumber)}`} 
+                  target="_blank" 
+                  rel="noreferrer" 
+                  className="hover:text-white transition-colors"
+                >
+                  {settings.whatsappNumber.startsWith('+') || settings.whatsappNumber.startsWith('91') 
+                    ? settings.whatsappNumber 
+                    : `+91 ${settings.whatsappNumber}`}
                 </a>
               </li>
             </ul>

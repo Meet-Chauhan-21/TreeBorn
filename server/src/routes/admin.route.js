@@ -1,5 +1,7 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
+const cloudinary = require('cloudinary').v2;
 const { verifyJWT, authorizeRoles } = require('../middleware/auth.middleware');
 const {
   getAllProductsAdmin,
@@ -10,9 +12,76 @@ const {
 const User = require('../models/user.model');
 const Order = require('../models/order.model');
 const Product = require('../models/product.model');
+const Settings = require('../models/settings.model');
+
+// Configure Multer
+const storage = multer.memoryStorage();
+const upload = multer({
+  storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5 MB max
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only JPG, JPEG, PNG, and WEBP are allowed.'), false);
+    }
+  }
+});
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+// Multer error handling wrapper to return JSON
+const uploadSingleImage = (req, res, next) => {
+  const uploadHandler = upload.single('image');
+  uploadHandler(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({ message: err.message });
+    }
+    next();
+  });
+};
 
 // Admin middleware - apply to all admin routes
 router.use(verifyJWT, authorizeRoles('admin'));
+
+// File Upload Route
+router.post('/upload', uploadSingleImage, async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    const uploadStream = cloudinary.uploader.upload_stream(
+      { 
+        folder: 'TreeBorn/products',
+        resource_type: 'auto'
+      },
+      (error, result) => {
+        if (error) {
+          console.error('Cloudinary stream upload error:', error);
+          return res.status(500).json({ message: 'Cloudinary upload failed', error: error.message });
+        }
+        return res.status(200).json({ 
+          public_id: result.public_id,
+          url: result.secure_url 
+        });
+      }
+    );
+
+    uploadStream.end(req.file.buffer);
+  } catch (error) {
+    console.error('Upload Endpoint Error:', error);
+    return res.status(500).json({ message: 'Internal server upload error', error: error.message });
+  }
+});
 
 // Products admin routes
 router.get('/products', getAllProductsAdmin);
@@ -270,6 +339,42 @@ router.get('/dashboard', async (req, res) => {
   } catch (error) {
     console.error('Get Dashboard Stats Error:', error);
     return res.status(500).json({ message: 'Server error. Failed to fetch dashboard stats.' });
+  }
+});
+
+// Settings Admin Routes
+router.get('/settings', async (req, res) => {
+  try {
+    let settings = await Settings.findOne();
+    if (!settings) {
+      settings = await Settings.create({});
+    }
+    return res.status(200).json({ settings });
+  } catch (error) {
+    console.error('Admin Get Settings Error:', error);
+    return res.status(500).json({ message: 'Server error. Failed to get settings.' });
+  }
+});
+
+router.put('/settings', async (req, res) => {
+  try {
+    const { email, whatsappNumber, themeColor, enableCreditCard, enablePaypal, enableCOD } = req.body;
+    let settings = await Settings.findOne();
+    if (!settings) {
+      settings = new Settings();
+    }
+    settings.email = email !== undefined ? email : settings.email;
+    settings.whatsappNumber = whatsappNumber !== undefined ? whatsappNumber : settings.whatsappNumber;
+    settings.themeColor = themeColor !== undefined ? themeColor : settings.themeColor;
+    settings.enableCreditCard = enableCreditCard !== undefined ? enableCreditCard : settings.enableCreditCard;
+    settings.enablePaypal = enablePaypal !== undefined ? enablePaypal : settings.enablePaypal;
+    settings.enableCOD = enableCOD !== undefined ? enableCOD : settings.enableCOD;
+
+    const updated = await settings.save();
+    return res.status(200).json({ message: 'Settings updated successfully', settings: updated });
+  } catch (error) {
+    console.error('Admin Update Settings Error:', error);
+    return res.status(500).json({ message: 'Server error. Failed to update settings.' });
   }
 });
 

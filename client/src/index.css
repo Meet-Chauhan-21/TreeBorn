@@ -127,3 +127,85 @@ body {
   width: max-content;
   animation: marquee 30s linear infinite;
 }
+
+/* Admin Premium SaaS Theme Overrides (Stripe/Linear/Vercel style) */
+.admin-theme {
+  background-color: #f8fafc !important;
+  color: #334155 !important;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.admin-theme h1,
+.admin-theme h2,
+.admin-theme h3,
+.admin-theme h4,
+.admin-theme h5 {
+  color: #0f172a !important;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.admin-theme p,
+.admin-theme label {
+  color: #64748b !important;
+}
+
+/* Forms: Inputs, Selects, Textareas */
+.admin-theme input:not([type="checkbox"]):not([type="radio"]),
+.admin-theme select,
+.admin-theme textarea {
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #0f172a !important;
+  border-radius: 12px !important;
+  padding: 10px 14px !important;
+  font-size: 14px !important;
+  line-height: 20px !important;
+  transition: all 0.2s ease-in-out !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+}
+
+.admin-theme input:not([type="checkbox"]):not([type="radio"]).pl-11 {
+  padding-left: 2.75rem !important;
+}
+
+.admin-theme input:not([type="checkbox"]):not([type="radio"]).pl-12 {
+  padding-left: 3.25rem !important;
+}
+
+.admin-theme input:focus,
+.admin-theme select:focus,
+.admin-theme textarea:focus {
+  border-color: #6366f1 !important;
+  outline: none !important;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.08) !important;
+}
+
+.admin-theme input::placeholder,
+.admin-theme textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Custom shadow class for SaaS card look */
+.saas-shadow {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Standard thin scrollbar for admin elements */
+.admin-theme ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.admin-theme ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-theme ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 99px;
+}
+
+.admin-theme ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}

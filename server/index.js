@@ -55,11 +55,27 @@ app.get('/', (req, res) => {
   res.status(200).json({ message: 'TreeBorn Backend API is running successfully' });
 });
 
+const Settings = require('./src/models/settings.model');
+
 // API Routes
 app.use('/api/users', userRoutes);
 app.use('/api/users', orderRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/admin', adminRoutes);
+
+// Public Settings Configuration Endpoint
+app.get('/api/settings', async (req, res) => {
+  try {
+    let settings = await Settings.findOne();
+    if (!settings) {
+      settings = await Settings.create({});
+    }
+    return res.status(200).json(settings);
+  } catch (error) {
+    console.error('Fetch Settings Error:', error);
+    return res.status(500).json({ message: 'Failed to fetch settings' });
+  }
+});
 
 // Global Error Handler
 app.use((err, req, res, next) => {

@@ -43,7 +43,7 @@ const formatWhatsAppMessage = (
 
 export const Checkout: React.FC = () => {
   const navigate = useNavigate();
-  const { cart, clearCart } = useStore();
+  const { cart, clearCart, settings } = useStore();
   const { user, placeOrder, loading } = useAuth();
 
   // Load user saved addresses
@@ -85,6 +85,15 @@ export const Checkout: React.FC = () => {
   const [orderId, setOrderId] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'cod'>('card');
   const [whatsappOrderUrl, setWhatsappOrderUrl] = useState('');
+
+  // Synchronize payment selection based on admin settings
+  React.useEffect(() => {
+    if (!settings.enableCreditCard && settings.enableCOD) {
+      setPaymentMethod('cod');
+    } else if (settings.enableCreditCard) {
+      setPaymentMethod('card');
+    }
+  }, [settings]);
 
   // Orders are created server-side and require auth
   React.useEffect(() => {
@@ -253,7 +262,11 @@ export const Checkout: React.FC = () => {
         total,
         paymentMethod
       );
-      const url = `https://wa.me/918905330954?text=${orderMsg}`;
+      const formatWhatsAppLink = (num: string) => {
+        const cleanNum = num.replace(/\D/g, '');
+        return cleanNum.length === 10 ? `91${cleanNum}` : cleanNum;
+      };
+      const url = `https://wa.me/${formatWhatsAppLink(settings.whatsappNumber)}?text=${orderMsg}`;
       setWhatsappOrderUrl(url);
 
       setOrderPlaced(true);
@@ -474,30 +487,44 @@ export const Checkout: React.FC = () => {
                 </div>
 
                 {/* Tabs selector */}
-                <div className="grid grid-cols-2 gap-2 p-1.5 bg-light-gray/60 border border-border-gray/40 rounded-2xl">
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod('card')}
-                    className={`py-3 rounded-xl text-xs sm:text-sm font-display font-semibold transition-all cursor-pointer ${
-                      paymentMethod === 'card'
-                        ? 'bg-primary text-white shadow-sm'
-                        : 'text-dark/70 hover:bg-gray-100 hover:text-dark'
-                    }`}
-                  >
-                    Online Payment
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod('cod')}
-                    className={`py-3 rounded-xl text-xs sm:text-sm font-display font-semibold transition-all cursor-pointer ${
-                      paymentMethod === 'cod'
-                        ? 'bg-primary text-white shadow-sm'
-                        : 'text-dark/70 hover:bg-gray-100 hover:text-dark'
-                    }`}
-                  >
-                    Cash on Delivery (COD)
-                  </button>
-                </div>
+                {settings.enableCreditCard && settings.enableCOD ? (
+                  <div className="grid grid-cols-2 gap-2 p-1.5 bg-light-gray/60 border border-border-gray/40 rounded-2xl">
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod('card')}
+                      className={`py-3 rounded-xl text-xs sm:text-sm font-display font-semibold transition-all cursor-pointer ${
+                        paymentMethod === 'card'
+                          ? 'bg-primary text-white shadow-sm'
+                          : 'text-dark/70 hover:bg-gray-100 hover:text-dark'
+                      }`}
+                    >
+                      Online Payment
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod('cod')}
+                      className={`py-3 rounded-xl text-xs sm:text-sm font-display font-semibold transition-all cursor-pointer ${
+                        paymentMethod === 'cod'
+                          ? 'bg-primary text-white shadow-sm'
+                          : 'text-dark/70 hover:bg-gray-100 hover:text-dark'
+                      }`}
+                    >
+                      Cash on Delivery (COD)
+                    </button>
+                  </div>
+                ) : settings.enableCreditCard ? (
+                  <div className="p-4 bg-primary/5 border border-primary/20 rounded-2xl text-xs font-semibold text-primary">
+                    Active Payment Method: <span className="font-bold">Online Payment</span>
+                  </div>
+                ) : settings.enableCOD ? (
+                  <div className="p-4 bg-primary/5 border border-primary/20 rounded-2xl text-xs font-semibold text-primary">
+                    Active Payment Method: <span className="font-bold">Cash on Delivery (COD)</span>
+                  </div>
+                ) : (
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-2xl text-xs font-semibold text-red-500">
+                    No active payment methods configured by store administrator.
+                  </div>
+                )}
 
                 {paymentMethod === 'card' ? (
                   <motion.div

@@ -9,16 +9,16 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClasses = {
-  primary: 'bg-primary hover:bg-primary-dark text-white shadow-lg shadow-primary/20',
-  secondary: 'bg-gray-100 hover:bg-gray-200 text-gray-900',
-  danger: 'bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/20',
-  ghost: 'hover:bg-gray-100 text-gray-700',
+  primary: 'bg-slate-950 hover:bg-slate-800 text-white shadow-[0_1px_2px_rgba(0,0,0,0.06)] border border-slate-950',
+  secondary: 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-250/70 shadow-2xs',
+  danger: 'bg-rose-600 hover:bg-rose-700 text-white shadow-xs border border-rose-650',
+  ghost: 'hover:bg-slate-50 border border-transparent hover:border-slate-200/60 text-slate-600 hover:text-slate-900',
 };
 
 const sizeClasses = {
-  sm: 'px-3 py-1.5 text-sm',
-  md: 'px-5 py-2.5 text-sm',
-  lg: 'px-6 py-3 text-base',
+  sm: 'px-3 py-1.5 text-xs',
+  md: 'px-4.5 py-2 text-sm',
+  lg: 'px-5.5 py-2.5 text-base',
 };
 
 export const Button: React.FC<ButtonProps> = ({
@@ -32,12 +32,12 @@ export const Button: React.FC<ButtonProps> = ({
 }) => {
   return (
     <button
-      className={`inline-flex items-center gap-2 font-semibold rounded-2xl transition-all duration-200 ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+      className={`inline-flex items-center gap-1.5 font-semibold rounded-xl transition-all duration-150 cursor-pointer ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
       {...props}
     >
-      {Icon && iconPosition === 'left' && <Icon size={18} />}
+      {Icon && iconPosition === 'left' && <Icon size={16} />}
       {children}
-      {Icon && iconPosition === 'right' && <Icon size={18} />}
+      {Icon && iconPosition === 'right' && <Icon size={16} />}
     </button>
   );
 };

@@ -6,7 +6,7 @@ import { useStore } from '../../context/StoreContext';
 export const WhatsAppButton: React.FC = () => {
   const location = useLocation();
   const path = location.pathname;
-  const { products } = useStore();
+  const { products, settings } = useStore();
 
   // Determine message based on current page path
   let message = 'Hello TREEBORN Skincare, I am interested in your botanical formulations. Can you please assist me?';
@@ -19,8 +19,13 @@ export const WhatsAppButton: React.FC = () => {
     }
   }
 
+  const formatWhatsAppLink = (num: string) => {
+    const cleanNum = num.replace(/\D/g, '');
+    return cleanNum.length === 10 ? `91${cleanNum}` : cleanNum;
+  };
+
   const encodedMessage = encodeURIComponent(message);
-  const whatsappUrl = `https://wa.me/918905330954?text=${encodedMessage}`;
+  const whatsappUrl = `https://wa.me/${formatWhatsAppLink(settings.whatsappNumber)}?text=${encodedMessage}`;
 
   return (
     <motion.a

@@ -19,21 +19,21 @@ export const Card: React.FC<CardProps> = ({
   className = '',
 }) => {
   return (
-    <div className={`bg-white rounded-3xl border border-gray-100 shadow-sm ${className}`}>
+    <div className={`bg-white rounded-2xl border border-slate-200/80 saas-shadow ${className}`}>
       {(title || subtitle || action) && (
-        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+        <div className="flex items-center justify-between px-6 py-4.5 border-b border-slate-100">
           <div className="flex items-center gap-3">
             {Icon && (
-              <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
-                <Icon size={20} />
+              <div className="w-10 h-10 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-center text-slate-700">
+                <Icon size={18} />
               </div>
             )}
             <div>
-              {title && <h3 className="text-lg font-bold text-gray-900">{title}</h3>}
-              {subtitle && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
+              {title && <h3 className="text-base font-bold text-slate-900 leading-tight">{title}</h3>}
+              {subtitle && <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>}
             </div>
           </div>
-          {action && <div>{action}</div>}
+          {action && <div className="flex items-center">{action}</div>}
         </div>
       )}
       <div className="p-6">{children}</div>

@@ -95,7 +95,7 @@ const createProduct = async (req, res) => {
       oldPrice: oldPrice || null,
       discount: discount || 0,
       image,
-      hoverImage: hoverImage || (Array.isArray(images) && images[1]) || image,
+      hoverImage: hoverImage || (Array.isArray(images) && (images[1] && typeof images[1] === 'object' ? images[1].url : images[1])) || image,
       images: Array.isArray(images) ? images.filter(Boolean) : [],
       ingredients: ingredients || [],
       benefits: benefits || [],
