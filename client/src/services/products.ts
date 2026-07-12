@@ -16,7 +16,17 @@ const toOptionalNumber = (value: any) => {
 };
 
 const toArray = (value: any) => {
-  if (Array.isArray(value)) return value.filter(Boolean).map(String);
+  if (Array.isArray(value)) {
+    return value
+      .filter(Boolean)
+      .map((item) => {
+        if (typeof item === 'object' && item !== null && item.url) {
+          return String(item.url);
+        }
+        return String(item);
+      })
+      .filter(Boolean);
+  }
   return [];
 };
 

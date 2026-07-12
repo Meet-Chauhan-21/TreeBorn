@@ -147,7 +147,7 @@ const HomepageImages: React.FC = () => {
               </p>
 
               {/* Preview Block */}
-              <div className="relative aspect-[16/10] bg-slate-55 border rounded-2xl overflow-hidden flex items-center justify-center border-slate-100 shadow-inner">
+              <div className="relative aspect-[16/10] bg-slate-50 border rounded-2xl overflow-hidden flex items-center justify-center border-slate-100 shadow-inner group">
                 <img
                   src={images.spotlight}
                   alt="Spotlight Preview"
@@ -156,6 +156,22 @@ const HomepageImages: React.FC = () => {
                     (e.target as any).src = 'https://placehold.co/800x500?text=Spotlight+Image+Preview';
                   }}
                 />
+                {/* Clickable Hover Overlay */}
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-2">
+                  <label className="text-white text-xs font-semibold cursor-pointer px-4 py-2 bg-black/60 rounded-full hover:bg-black/80 transition flex items-center gap-1.5">
+                    <Upload size={14} />
+                    <span>Upload Image</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleImageUpload(file, 'spotlight');
+                      }}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
                 {uploadingField === 'spotlight' && (
                   <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs flex flex-col items-center justify-center text-white gap-2">
                     <RefreshCw size={24} className="animate-spin" />
@@ -200,7 +216,7 @@ const HomepageImages: React.FC = () => {
               </p>
 
               {/* Preview Block */}
-              <div className="relative aspect-[16/10] bg-slate-55 border rounded-2xl overflow-hidden flex items-center justify-center border-slate-100 shadow-inner">
+              <div className="relative aspect-[16/10] bg-slate-50 border rounded-2xl overflow-hidden flex items-center justify-center border-slate-100 shadow-inner group">
                 <img
                   src={images.aboutMain}
                   alt="About Main Preview"
@@ -209,6 +225,22 @@ const HomepageImages: React.FC = () => {
                     (e.target as any).src = 'https://placehold.co/800x500?text=About+Main+Image+Preview';
                   }}
                 />
+                {/* Clickable Hover Overlay */}
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-2">
+                  <label className="text-white text-xs font-semibold cursor-pointer px-4 py-2 bg-black/60 rounded-full hover:bg-black/80 transition flex items-center gap-1.5">
+                    <Upload size={14} />
+                    <span>Upload Image</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleImageUpload(file, 'aboutMain');
+                      }}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
                 {uploadingField === 'aboutMain' && (
                   <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs flex flex-col items-center justify-center text-white gap-2">
                     <RefreshCw size={24} className="animate-spin" />
@@ -253,7 +285,7 @@ const HomepageImages: React.FC = () => {
               </p>
 
               {/* Preview Block */}
-              <div className="relative aspect-[16/10] bg-slate-55 border rounded-2xl overflow-hidden flex items-center justify-center border-slate-100 shadow-inner">
+              <div className="relative aspect-[16/10] bg-slate-50 border rounded-2xl overflow-hidden flex items-center justify-center border-slate-100 shadow-inner group">
                 <img
                   src={images.aboutSecondary}
                   alt="About Secondary Preview"
@@ -262,6 +294,22 @@ const HomepageImages: React.FC = () => {
                     (e.target as any).src = 'https://placehold.co/800x500?text=About+Secondary+Image+Preview';
                   }}
                 />
+                {/* Clickable Hover Overlay */}
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-2">
+                  <label className="text-white text-xs font-semibold cursor-pointer px-4 py-2 bg-black/60 rounded-full hover:bg-black/80 transition flex items-center gap-1.5">
+                    <Upload size={14} />
+                    <span>Upload Image</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleImageUpload(file, 'aboutSecondary');
+                      }}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
                 {uploadingField === 'aboutSecondary' && (
                   <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs flex flex-col items-center justify-center text-white gap-2">
                     <RefreshCw size={24} className="animate-spin" />

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Plus, Edit, Trash2, Folder, AlertTriangle, Eye, EyeOff, Save, X, ArrowUp, ArrowDown, Upload } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, Folder, AlertTriangle, Eye, EyeOff, Save, X, ArrowUp, ArrowDown, Upload, CheckCircle, Package } from 'lucide-react';
 import { toast } from 'sonner';
 import AdminLayout from '../../components/admin/AdminLayout';
 import Card from '../../components/admin/Card';
@@ -243,19 +243,47 @@ const CategoriesList: React.FC = () => {
       `}</style>
 
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 pb-5">
-          <div className="flex items-center gap-4">
-            <div className="bg-white border border-slate-200/80 rounded-2xl px-5 py-2.5 shadow-3xs flex items-center gap-3">
-              <Folder className="text-indigo-650" size={18} />
+        {/* Header Section with Stats Cards */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+          {/* Stats Cards Row */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-1 max-w-3xl">
+            <div className="bg-white border border-slate-100/80 rounded-2xl p-3.5 shadow-3xs flex items-center gap-3 transition-all hover:shadow-2xs">
+              <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100/50 flex items-center justify-center text-indigo-650 shrink-0">
+                <Folder size={16} />
+              </div>
               <div>
-                <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider leading-none">Total Collections</span>
-                <span className="text-lg font-bold text-slate-800 font-display leading-tight">{categories.length}</span>
+                <span className="text-[9px] uppercase font-bold text-slate-400 block tracking-wider leading-none">Total Collections</span>
+                <span className="text-base font-bold text-slate-800 font-display mt-0.5 block leading-none">{categories.length}</span>
+              </div>
+            </div>
+
+            <div className="bg-white border border-slate-100/80 rounded-2xl p-3.5 shadow-3xs flex items-center gap-3 transition-all hover:shadow-2xs">
+              <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-100/50 flex items-center justify-center text-emerald-600 shrink-0">
+                <CheckCircle size={16} />
+              </div>
+              <div>
+                <span className="text-[9px] uppercase font-bold text-slate-400 block tracking-wider leading-none">Active</span>
+                <span className="text-base font-bold text-slate-800 font-display mt-0.5 block leading-none">
+                  {categories.filter(c => c.isActive).length}
+                </span>
+              </div>
+            </div>
+
+            <div className="bg-white border border-slate-100/80 rounded-2xl p-3.5 shadow-3xs flex items-center gap-3 transition-all hover:shadow-2xs">
+              <div className="w-9 h-9 rounded-xl bg-sky-50 border border-sky-100/50 flex items-center justify-center text-sky-650 shrink-0">
+                <Package size={16} />
+              </div>
+              <div>
+                <span className="text-[9px] uppercase font-bold text-slate-400 block tracking-wider leading-none">Total Products</span>
+                <span className="text-base font-bold text-slate-800 font-display mt-0.5 block leading-none">
+                  {categories.reduce((acc, cat) => acc + (cat.count || 0), 0)}
+                </span>
               </div>
             </div>
           </div>
 
-          <Button icon={Plus} onClick={handleAddTrigger} className="py-2.5 px-5 text-xs font-bold shadow-lg shadow-indigo-500/10">
+          {/* Add Category Button on the right */}
+          <Button icon={Plus} onClick={handleAddTrigger} className="self-start lg:self-auto py-2.5 px-5 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/10 h-11 shrink-0">
             Add Category
           </Button>
         </div>
@@ -265,21 +293,19 @@ const CategoriesList: React.FC = () => {
           <div className="flex flex-wrap items-center gap-4 justify-start">
             {/* Search Input Box */}
             <div className="relative w-full sm:max-w-xs md:max-w-sm">
-              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 pointer-events-none">
-                <Search size={16} />
-              </span>
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search categories..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-sans text-xs"
+                className="w-full pl-12 pr-4 py-2 border border-gray-250/70 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-sans text-xs"
               />
             </div>
 
             {/* Sorting controls in a single row */}
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold text-slate-450 uppercase tracking-wider whitespace-nowrap">Sort By:</span>
+              <span className="text-[10px] font-bold text-slate-455 uppercase tracking-wider whitespace-nowrap">Sort By:</span>
               <Select
                 value={sortBy}
                 onChange={(val) => setSortBy(val as any)}
@@ -307,112 +333,122 @@ const CategoriesList: React.FC = () => {
         {/* Category List Loader / Grid */}
         {categoriesLoading ? (
           <div className="flex items-center justify-center min-h-[300px]">
-            <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+            <div className="w-10 h-10 border-4 border-indigo-150 border-t-indigo-650 rounded-full animate-spin" />
           </div>
         ) : sortedCategories.length === 0 ? (
           <Card className="p-12 text-center text-gray-500 font-sans">
-            <Folder className="mx-auto text-slate-350 mb-3" size={40} />
+            <Folder className="mx-auto text-slate-355 mb-3" size={40} />
             <p className="text-sm font-semibold">No categories found matching your query.</p>
             <p className="text-xs text-slate-400 mt-1">Try refining your search terms or create a new category.</p>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sortedCategories.map((category) => (
-              <div
-                key={category.id || category._id}
-                className={`relative group bg-white border rounded-3xl overflow-hidden shadow-2xs hover:shadow-lg transition-all duration-300 flex flex-col justify-between ${
-                  !category.isActive ? 'border-gray-200/60 opacity-75' : 'border-slate-200/80'
-                }`}
-              >
-                {/* Image & Visibility overlay (Clicking navigates to detail page) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {sortedCategories.map((category) => {
+              return (
                 <div
-                  onClick={() => navigate(`/admin/categories/${category.id || category._id}`)}
-                  className="relative aspect-[16/9] w-full bg-slate-100 overflow-hidden border-b border-slate-100 cursor-pointer"
+                  key={category.id || category._id}
+                  className={`relative group bg-white border border-slate-105 rounded-3xl overflow-hidden shadow-3xs hover:shadow-md transition-all duration-305 flex flex-col justify-between border-t-4 border-t-indigo-600 ${
+                    !category.isActive ? 'opacity-80' : ''
+                  }`}
                 >
-                  <img
-                    src={category.image}
-                    alt={category.altText || category.name}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-103"
-                  />
-                  {!category.isActive && (
-                    <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center">
-                      <span className="px-3 py-1 bg-red-650 text-white font-semibold text-[10px] rounded-full uppercase tracking-wider shadow-sm flex items-center gap-1.5">
-                        <EyeOff size={11} /> Disabled
-                      </span>
-                    </div>
-                  )}
-                  {category.isActive && (
-                    <div className="absolute top-3 left-3">
-                      <span className="px-2.5 py-0.5 bg-emerald-650 text-white font-bold text-[9px] rounded-full uppercase tracking-widest shadow-sm">
-                        Active
-                      </span>
-                    </div>
-                  )}
-                  {category.sortOrder !== undefined && (
-                    <div className="absolute top-3 right-3 bg-slate-950/75 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-0.5 rounded-lg shadow-sm">
-                      Order: {category.sortOrder}
-                    </div>
-                  )}
-                </div>
-
-                {/* Body Details */}
-                <div className="p-5 flex-1 flex flex-col justify-between gap-4">
-                  <div 
+                  {/* Image & Visibility overlay (Clicking navigates to detail page) */}
+                  <div
                     onClick={() => navigate(`/admin/categories/${category.id || category._id}`)}
-                    className="space-y-1 cursor-pointer hover:text-indigo-650 transition-colors"
+                    className="relative aspect-[16/9] w-full bg-slate-100 overflow-hidden cursor-pointer"
                   >
-                    <h3 className="font-display font-bold text-lg text-slate-900 line-clamp-1">
-                      {category.name}
-                    </h3>
-                    <p className="text-xs font-mono text-slate-400">/{category.slug}</p>
-                    {category.altText && (
-                      <p className="text-[11px] text-slate-500 italic mt-1.5 pl-1.5 border-l-2 border-slate-200">
-                        Alt: "{category.altText}"
-                      </p>
+                    <img
+                      src={category.image}
+                      alt={category.altText || category.name}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-103"
+                    />
+                    
+                    {/* Visual Accents & Status Badges */}
+                    {!category.isActive && (
+                      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center">
+                        <span className="px-3 py-1 bg-red-650 text-white font-bold text-[9px] rounded-full uppercase tracking-widest shadow-sm flex items-center gap-1.5 animate-pulse">
+                          <EyeOff size={11} /> Disabled
+                        </span>
+                      </div>
+                    )}
+                    
+                    {category.isActive && (
+                      <div className="absolute top-3 left-3">
+                        <span className="px-2.5 py-0.5 bg-emerald-600 text-white font-bold text-[9px] rounded-full uppercase tracking-widest shadow-sm">
+                          Active
+                        </span>
+                      </div>
+                    )}
+                    
+                    {category.sortOrder !== undefined && (
+                      <div className="absolute top-3 right-3 bg-slate-950/75 backdrop-blur-xs text-white text-[9px] font-bold px-2 py-0.5 rounded-lg shadow-sm">
+                        Order: {category.sortOrder}
+                      </div>
                     )}
                   </div>
 
-                  <div className="flex items-center justify-between border-t border-slate-50 pt-4 mt-auto">
-                    {/* Products Counter badge */}
-                    <span className="text-[11px] font-bold font-sans text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg">
-                      {category.count} {category.count === 1 ? 'Product' : 'Products'}
-                    </span>
+                  {/* Body Details */}
+                  <div className="p-5 flex-1 flex flex-col justify-between gap-4">
+                    <div 
+                      onClick={() => navigate(`/admin/categories/${category.id || category._id}`)}
+                      className="space-y-1.5 cursor-pointer"
+                    >
+                      <h3 className="font-display font-bold text-lg text-slate-900 line-clamp-1 group-hover:text-indigo-650 transition-colors">
+                        {category.name}
+                      </h3>
+                      <div className="flex items-center gap-1 text-[10px] font-mono text-slate-400 uppercase tracking-wide">
+                        <span>Path:</span>
+                        <span className="font-semibold text-slate-550">/collections/{category.slug}</span>
+                      </div>
+                      {category.altText && (
+                        <p className="text-[10px] text-slate-450 italic mt-1.5 pl-2 border-l-2 border-slate-200 line-clamp-1">
+                          Alt: "{category.altText}"
+                        </p>
+                      )}
+                    </div>
 
-                    {/* Quick actions row */}
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => handleToggleActive(category)}
-                        className={`p-2 rounded-xl border transition-all cursor-pointer ${
-                          category.isActive
-                            ? 'border-gray-200 text-slate-500 hover:text-red-500 hover:border-red-100 hover:bg-red-50/20'
-                            : 'border-emerald-250 text-emerald-600 bg-emerald-50/10 hover:bg-emerald-50/30'
-                        }`}
-                        title={category.isActive ? 'Disable Category' : 'Enable Category'}
-                      >
-                        {category.isActive ? <EyeOff size={15} /> : <Eye size={15} />}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleEditTrigger(category)}
-                        className="p-2 border border-gray-200 text-slate-500 hover:text-indigo-600 hover:border-indigo-100 hover:bg-indigo-50/20 rounded-xl transition cursor-pointer"
-                        title="Edit Details"
-                      >
-                        <Edit size={15} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteTrigger(category.id || category._id || '')}
-                        className="p-2 border border-gray-200 text-slate-500 hover:text-red-600 hover:border-red-100 hover:bg-red-50/20 rounded-xl transition cursor-pointer"
-                        title="Delete Category"
-                      >
-                        <Trash2 size={15} />
-                      </button>
+                    <div className="flex items-center justify-between border-t border-slate-50 pt-3.5 mt-auto">
+                      {/* Products Counter badge */}
+                      <span className="text-[10px] font-bold font-sans text-indigo-700 bg-indigo-50 border border-indigo-150/50 px-3 py-1 rounded-full flex items-center gap-1 shadow-3xs">
+                        <Package size={11} className="text-indigo-500" />
+                        {category.count || 0} {category.count === 1 ? 'Product' : 'Products'}
+                      </span>
+
+                      {/* Quick actions row */}
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleActive(category)}
+                          className={`p-2 rounded-xl border transition-all cursor-pointer ${
+                            category.isActive
+                              ? 'border-slate-250 text-slate-500 hover:text-red-500 hover:border-red-100 hover:bg-red-50/20'
+                              : 'border-emerald-200 text-emerald-600 bg-emerald-50/10 hover:bg-emerald-50/30 hover:border-emerald-300'
+                          }`}
+                          title={category.isActive ? 'Disable Category' : 'Enable Category'}
+                        >
+                          {category.isActive ? <EyeOff size={14} /> : <Eye size={14} />}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleEditTrigger(category)}
+                          className="p-2 border border-slate-200 text-slate-500 hover:text-indigo-650 hover:border-indigo-100 hover:bg-indigo-50/20 rounded-xl transition cursor-pointer"
+                          title="Edit Details"
+                        >
+                          <Edit size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteTrigger(category.id || category._id || '')}
+                          className="p-2 border border-slate-200 text-slate-500 hover:text-red-600 hover:border-red-100 hover:bg-red-50/20 rounded-xl transition cursor-pointer"
+                          title="Delete Category"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 

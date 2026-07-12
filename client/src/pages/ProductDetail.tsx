@@ -482,7 +482,7 @@ export const ProductDetail: React.FC = () => {
                           ₹{item.price.toFixed(2)}
                         </span>
                         {item.oldPrice && (
-                          <span className="font-display font-medium text-gray-400 text-xs sm:text-sm line-through">
+                          <span className="font-display font-medium text-rose-600 text-xs sm:text-sm line-through">
                             ₹{item.oldPrice.toFixed(2)}
                           </span>
                         )}

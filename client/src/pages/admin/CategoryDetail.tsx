@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Package, Trash2, Edit, AlertCircle, ShoppingBag, Eye, Plus } from 'lucide-react';
+import { ArrowLeft, Package, Trash2, Edit, AlertCircle, ShoppingBag, Eye, Plus, Search, CheckCircle, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import AdminLayout from '../../components/admin/AdminLayout';
 import Card from '../../components/admin/Card';
@@ -20,6 +20,7 @@ const CategoryDetail: React.FC = () => {
   const [category, setCategory] = useState<any | null>(null);
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Delete Modal States
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -103,7 +104,7 @@ const CategoryDetail: React.FC = () => {
         <div className="font-semibold text-slate-800 text-sm">
           ₹{item.price.toFixed(2)}
           {item.oldPrice && (
-            <span className="text-xs text-gray-400 line-through font-normal ml-2 block">
+            <span className="text-xs text-rose-600 line-through font-normal ml-2 block">
               ₹{item.oldPrice.toFixed(2)}
             </span>
           )}
@@ -118,7 +119,7 @@ const CategoryDetail: React.FC = () => {
         const isLowStock = (item.stock || 0) > 0 && (item.stock || 0) <= 10;
         return (
           <div>
-            <span className={`text-sm font-semibold ${isOutOfStock ? 'text-red-650' : 'text-slate-700'}`}>
+            <span className={`text-sm font-semibold ${isOutOfStock ? 'text-red-655' : 'text-slate-700'}`}>
               {item.stock} units
             </span>
             {isOutOfStock && <span className="text-[10px] text-red-500 font-medium block mt-0.5">Out of Stock</span>}
@@ -156,7 +157,7 @@ const CategoryDetail: React.FC = () => {
               setProductToDelete(item._id);
               setDeleteModalOpen(true);
             }}
-            className="p-2 border border-gray-200 text-slate-500 hover:text-red-650 hover:border-red-100 hover:bg-red-50/20 rounded-xl transition cursor-pointer"
+            className="p-2 border border-gray-200 text-slate-500 hover:text-red-655 hover:border-red-100 hover:bg-red-50/20 rounded-xl transition cursor-pointer"
             title="Delete Product"
           >
             <Trash2 size={14} />
@@ -181,64 +182,146 @@ const CategoryDetail: React.FC = () => {
     );
   }
 
+  // Filter products by local search query
+  const filteredProducts = products.filter(
+    (p) =>
+      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (p.sku && p.sku.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
+  // Statistics calculation
+  const totalStock = products.reduce((acc, p) => acc + (p.stock || 0), 0);
+  const outOfStockCount = products.filter((p) => (p.stock || 0) <= 0).length;
+  const lowStockCount = products.filter((p) => (p.stock || 0) > 0 && (p.stock || 0) <= 10).length;
+
   return (
-    <AdminLayout title={category ? `${category.name} Products` : 'Category Detail'}>
-      <div className="space-y-6">
-        {/* Top bar */}
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" icon={ArrowLeft} onClick={() => navigate('/admin/categories')}>
-            Back to Categories
+    <AdminLayout title={category ? `${category.name} Collection` : 'Category Detail'}>
+      <div className="space-y-6 max-w-7xl mx-auto">
+        {/* Navigation Action Bar */}
+        <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-gray-100 shadow-3xs">
+          <Button variant="ghost" icon={ArrowLeft} onClick={() => navigate('/admin/categories')} className="text-gray-650 hover:text-dark">
+            Back to Collections
           </Button>
+          {category && (
+            <Button
+              type="button"
+              icon={Plus}
+              onClick={() => navigate('/admin/products/create', { state: { defaultCategory: category.id || category._id } })}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm shadow-indigo-650/10 text-xs py-2.5 px-4"
+            >
+              Add Product to Collection
+            </Button>
+          )}
         </div>
 
-        {/* Category Brief Info Card */}
+        {/* Category Editorial Hero Banner Card */}
         {category && (
-          <Card className="p-6">
+          <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-3xs relative overflow-hidden">
+            {/* Visual background gradient badge */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50/30 rounded-full blur-3xl -z-10" />
+            
             <div className="flex flex-col md:flex-row items-center gap-6">
-              <img
-                src={category.image}
-                alt={category.altText || category.name}
-                className="w-32 h-20 md:w-44 md:h-28 rounded-2xl object-cover bg-gray-50 border shadow-xs"
-              />
-              <div className="space-y-1.5 text-center md:text-left">
+              <div className="relative group shrink-0">
+                <img
+                  src={category.image}
+                  alt={category.altText || category.name}
+                  className="w-36 h-24 md:w-48 md:h-32 rounded-2xl object-cover bg-gray-50 border shadow-xs transition-transform duration-500 group-hover:scale-103"
+                />
+              </div>
+              <div className="space-y-2 text-center md:text-left flex-1">
                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-2.5">
-                  <h2 className="text-2xl font-bold text-slate-900">{category.name}</h2>
-                  <span className={`px-2.5 py-0.5 text-[10px] font-bold uppercase rounded-full tracking-widest ${
+                  <h2 className="text-2xl md:text-3xl font-display font-bold text-slate-900">{category.name}</h2>
+                  <span className={`px-3 py-0.5 text-[9px] font-bold uppercase rounded-full tracking-widest ${
                     category.isActive ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-red-50 text-red-700 border border-red-100'
                   }`}>
-                    {category.isActive ? 'Active' : 'Inactive'}
+                    {category.isActive ? 'Active Collection' : 'Disabled'}
                   </span>
                 </div>
-                <p className="text-xs font-mono text-slate-400">Slug: /{category.slug} | Order: {category.sortOrder}</p>
-                {category.altText && <p className="text-xs text-slate-500">SEO Alt Text: "{category.altText}"</p>}
+                
+                <p className="text-xs font-mono text-slate-455">
+                  Route slug: <span className="text-slate-600">/collections/{category.slug}</span> | Order key: <span className="font-semibold text-slate-600">{category.sortOrder}</span>
+                </p>
+                {category.altText && (
+                  <p className="text-xs text-slate-500 italic pl-3 border-l-2 border-slate-200">
+                    Alt SEO: "{category.altText}"
+                  </p>
+                )}
               </div>
             </div>
-          </Card>
+          </div>
         )}
 
-        {/* Linked Products Table */}
-        <Card title="Linked Products" icon={Package}>
-          {loading ? (
-            <div className="flex items-center justify-center py-16">
-              <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-            </div>
-          ) : products.length === 0 ? (
-            <div className="text-center py-16 text-gray-500 font-sans space-y-3">
-              <ShoppingBag className="mx-auto text-slate-300" size={40} />
-              <p className="text-sm font-semibold">No products linked to this category yet.</p>
-              <Button icon={Plus} onClick={() => navigate('/admin/products/create')} className="mx-auto text-xs py-2 px-4">
-                Create First Product
-              </Button>
-            </div>
-          ) : (
-            <DataTable columns={columns} data={products} />
-          )}
+        {/* Metrics Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-white border border-slate-100/85 rounded-2xl p-4 shadow-3xs">
+            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider leading-none">Products Linked</span>
+            <span className="text-xl font-bold text-slate-800 font-display mt-2 block leading-none">{products.length} Items</span>
+          </div>
+          
+          <div className="bg-white border border-slate-100/85 rounded-2xl p-4 shadow-3xs">
+            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider leading-none">Total Stock</span>
+            <span className="text-xl font-bold text-indigo-650 font-display mt-2 block leading-none">{totalStock} Units</span>
+          </div>
+
+          <div className="bg-white border border-slate-100/85 rounded-2xl p-4 shadow-3xs">
+            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider leading-none">Low Stock Warning</span>
+            <span className={`text-xl font-bold font-display mt-2 block leading-none ${lowStockCount > 0 ? 'text-amber-600' : 'text-slate-700'}`}>
+              {lowStockCount} Products
+            </span>
+          </div>
+
+          <div className="bg-white border border-slate-100/85 rounded-2xl p-4 shadow-3xs">
+            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider leading-none">Out of Stock</span>
+            <span className={`text-xl font-bold font-display mt-2 block leading-none ${outOfStockCount > 0 ? 'text-red-650 font-extrabold' : 'text-slate-700'}`}>
+              {outOfStockCount} Products
+            </span>
+          </div>
+        </div>
+
+        {/* Linked Products Table Card */}
+        <Card title="Linked Products Inventory" icon={Package}>
+          <div className="space-y-4">
+            
+            {/* Search toolbar inside card */}
+            {products.length > 0 && (
+              <div className="flex justify-between items-center gap-4">
+                <div className="relative w-full sm:max-w-xs">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search products in collection..."
+                    className="w-full pl-12 pr-4 py-2.5 border border-gray-255/70 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-sans text-xs"
+                  />
+                </div>
+              </div>
+            )}
+
+            {loading ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="w-8 h-8 border-4 border-indigo-150 border-t-indigo-650 rounded-full animate-spin" />
+              </div>
+            ) : filteredProducts.length === 0 ? (
+              <div className="text-center py-16 text-gray-500 font-sans space-y-3">
+                <ShoppingBag className="mx-auto text-slate-300" size={40} />
+                <p className="text-sm font-semibold">No products found matching your search.</p>
+                {products.length === 0 && (
+                  <Button icon={Plus} onClick={() => navigate('/admin/products/create', { state: { defaultCategory: id } })} className="mx-auto text-xs py-2 px-4">
+                    Create First Product
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <DataTable columns={columns} data={filteredProducts} />
+            )}
+          </div>
         </Card>
       </div>
 
       {/* Delete Confirmation Modal */}
       {deleteModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl text-center space-y-4 border border-gray-150 animate-scale-in">
             <div className="w-12 h-12 bg-red-50 text-red-650 rounded-full flex items-center justify-center mx-auto shadow-inner">
               <Trash2 size={24} />
