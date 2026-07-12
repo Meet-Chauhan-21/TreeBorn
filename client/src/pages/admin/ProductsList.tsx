@@ -11,6 +11,7 @@ import Pagination from '../../components/admin/Pagination';
 import StatsCard from '../../components/admin/StatsCard';
 import { useAuth } from '../../context/AuthContext';
 import { API_BASE_URL } from '../../config';
+import Select from '../../components/admin/Select';
 
 const ProductsList: React.FC = () => {
   const navigate = useNavigate();
@@ -78,7 +79,10 @@ const ProductsList: React.FC = () => {
 
   const filteredProducts = products.filter((product) => {
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
+    const catName = typeof product.category === 'object' && product.category
+      ? product.category.name
+      : (product.category || '');
+    const matchesCategory = selectedCategory === 'all' || catName === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
@@ -106,7 +110,16 @@ const ProductsList: React.FC = () => {
         </div>
       ),
     },
-    { key: 'category', header: 'Category' },
+    {
+      key: 'category',
+      header: 'Category',
+      render: (item: any) => {
+        const catName = typeof item.category === 'object' && item.category
+          ? item.category.name
+          : (item.category || '');
+        return <span className="text-gray-900">{catName}</span>;
+      }
+    },
     {
       key: 'price',
       header: 'Price',
@@ -158,7 +171,14 @@ const ProductsList: React.FC = () => {
     },
   ];
 
-  const categories = ['all', ...new Set(products.map((p) => p.category))];
+  const categories = [
+    'all',
+    ...new Set(
+      products.map((p) =>
+        typeof p.category === 'object' && p.category ? p.category.name : (p.category || '')
+      )
+    ),
+  ].filter(Boolean);
 
   return (
     <AdminLayout>
@@ -192,8 +212,8 @@ const ProductsList: React.FC = () => {
         </div>
 
         <Card>
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-            <div className="relative w-full md:w-80">
+          <div className="flex flex-wrap items-center justify-start gap-4 mb-6">
+            <div className="relative w-full md:w-72">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <input
                 type="text"
@@ -206,31 +226,30 @@ const ProductsList: React.FC = () => {
                 className="w-full pl-12 pr-4 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-600/5 focus:border-indigo-500 text-slate-800 placeholder-slate-400 text-sm h-10"
               />
             </div>
-            <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+            <div className="flex items-center gap-2.5">
               <Filter size={18} className="text-slate-400" />
-              <select
+              <Select
                 value={selectedCategory}
-                onChange={(e) => {
-                  setSelectedCategory(e.target.value);
+                onChange={(val) => {
+                  setSelectedCategory(val);
                   setCurrentPage(1);
                 }}
-                className="px-4 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-600/5 focus:border-indigo-500 text-slate-800 text-sm cursor-pointer h-10"
-              >
-                {categories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat === 'all' ? 'All Categories' : cat}
-                  </option>
-                ))}
-              </select>
-              <Button 
-                icon={Plus} 
-                size="sm" 
-                onClick={() => navigate('/admin/products/create')}
-                className="h-10 px-4 rounded-xl flex items-center justify-center font-semibold text-sm whitespace-nowrap"
-              >
-                Add Product
-              </Button>
+                hClass="h-10"
+                className="w-36"
+                options={categories.map((cat) => ({
+                  value: cat,
+                  label: cat === 'all' ? 'All Categories' : cat,
+                }))}
+              />
             </div>
+            <Button 
+              icon={Plus} 
+              size="sm" 
+              onClick={() => navigate('/admin/products/create')}
+              className="h-10 px-4 rounded-xl flex items-center justify-center font-semibold text-sm whitespace-nowrap"
+            >
+              Add Product
+            </Button>
           </div>
 
           <DataTable

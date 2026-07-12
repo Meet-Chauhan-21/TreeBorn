@@ -1,4 +1,3 @@
-import { PRODUCTS as FALLBACK_PRODUCTS } from '../data/mockData';
 import type { Product } from '../types';
 
 import { API_BASE_URL } from '../config';
@@ -24,7 +23,8 @@ const toArray = (value: any) => {
 export const normalizeProduct = (product: ProductPayload): Product => ({
   id: product._id || product.id,
   name: product.name || '',
-  category: product.category || '',
+  category: typeof product.category === 'object' && product.category ? product.category.name : (product.category || ''),
+  categoryId: typeof product.category === 'object' && product.category ? (product.category._id || product.category.id) : (product.category || ''),
   description: product.description || '',
   rating: toNumber(product.rating, 0),
   reviewsCount: toNumber(product.reviewsCount, 0),
@@ -41,6 +41,7 @@ export const normalizeProduct = (product: ProductPayload): Product => ({
   status: product.status,
   stock: toOptionalNumber(product.stock),
   sku: product.sku,
+  volume: product.volume || '50ml',
   isNewArrival: Boolean(product.isNewArrival ?? product.isNew),
   createdAt: product.createdAt,
   updatedAt: product.updatedAt,
@@ -48,7 +49,7 @@ export const normalizeProduct = (product: ProductPayload): Product => ({
 
 export const normalizeProducts = (products: ProductPayload[] = []) => products.map(normalizeProduct);
 
-export const fallbackProducts = FALLBACK_PRODUCTS;
+export const fallbackProducts = [];
 
 export const fetchPublicProducts = async (): Promise<Product[]> => {
   const response = await fetch(`${API_BASE_URL}/products?limit=100`);

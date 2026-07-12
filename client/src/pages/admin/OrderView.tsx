@@ -8,6 +8,7 @@ import Button from '../../components/admin/Button';
 import StatusBadge from '../../components/admin/StatusBadge';
 import { useAuth } from '../../context/AuthContext';
 import { API_BASE_URL } from '../../config';
+import Select from '../../components/admin/Select';
 
 const statusOptions = ['Placed', 'Processing', 'Delivered', 'Cancelled'];
 
@@ -107,15 +108,13 @@ const OrderView: React.FC = () => {
             Back
           </Button>
           <div className="flex items-center gap-3">
-            <select
+            <Select
               value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              className="px-4 py-2.5 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20"
-            >
-              {statusOptions.map((option) => (
-                <option key={option} value={option}>{option}</option>
-              ))}
-            </select>
+              onChange={setStatus}
+              hClass="h-10"
+              className="w-48"
+              options={statusOptions.map((option) => ({ value: option, label: option }))}
+            />
             <Button type="button" icon={Save} onClick={handleStatusSave} disabled={saving}>
               {saving ? 'Saving...' : 'Save Status'}
             </Button>

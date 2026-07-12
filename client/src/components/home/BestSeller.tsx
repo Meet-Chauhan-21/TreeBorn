@@ -8,12 +8,27 @@ import { fallbackProducts } from '../../services/products';
 import { useStore } from '../../context/StoreContext';
 
 export const BestSeller: React.FC = () => {
-  const { products } = useStore();
+  const { products, settings } = useStore();
   const catalog = products.length > 0 ? products : fallbackProducts;
-  const bestseller = catalog.find((p) => p.isBestSeller) || catalog[0];
+
+  const defaultBestSeller = {
+    id: '',
+    name: 'Restorative Peptide Serum',
+    description: 'A concentrated multi-peptide serum designed to target visible signs of aging, restore firmness, and deeply hydrate the skin.',
+    rating: 4.9,
+    reviewsCount: 148,
+    price: 85.00,
+    oldPrice: 110.00,
+    ingredients: ['Copper Tripeptide-1', 'Hyaluronic Acid Matrix', 'Organic Centella Asiatica'],
+    benefits: ['Plumps fine lines & wrinkles', 'Improves skin elasticity & firmness', 'Boosts natural collagen production'],
+  };
+
+  const bestseller = catalog.find((p) => p.isBestSeller) || catalog[0] || defaultBestSeller;
 
   const handleAddToCart = () => {
-    toast.success(`${bestseller.name} added to shopping bag.`);
+    if (bestseller) {
+      toast.success(`${bestseller.name} added to shopping bag.`);
+    }
   };
 
   return (
@@ -34,8 +49,8 @@ export const BestSeller: React.FC = () => {
               className="relative aspect-square sm:aspect-4/3 lg:aspect-square rounded-3xl overflow-hidden shadow-2xl border-4 border-white"
             >
               <img
-                src="https://images.unsplash.com/photo-1617897903246-719242758050?q=80&w=800&auto=format&fit=crop"
-                alt="Peptide Serum Application"
+                src={settings.homepageImages?.spotlight || "https://images.unsplash.com/photo-1617897903246-719242758050?q=80&w=800&auto=format&fit=crop"}
+                alt={bestseller?.name || "Peptide Serum Application"}
                 className="w-full h-full object-cover object-center transform hover:scale-105 transition-transform duration-1000"
               />
             </motion.div>

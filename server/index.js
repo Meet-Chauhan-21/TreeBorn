@@ -57,11 +57,44 @@ app.get('/', (req, res) => {
 
 const Settings = require('./src/models/settings.model');
 
+const Category = require('./src/models/category.model');
+const Product = require('./src/models/product.model');
+
 // API Routes
 app.use('/api/users', userRoutes);
 app.use('/api/users', orderRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/admin', adminRoutes);
+
+// Public Categories Configuration Endpoint
+app.get('/api/categories', async (req, res) => {
+  try {
+    const categories = await Category.find().sort({ sortOrder: 1, name: 1 });
+    
+    // Dynamically calculate the product count for each category
+    const categoriesWithCount = await Promise.all(
+      categories.map(async (cat) => {
+        const count = await Product.countDocuments({ category: cat._id, status: 'active' });
+        return {
+          id: cat._id,
+          _id: cat._id,
+          name: cat.name,
+          slug: cat.slug,
+          image: cat.image,
+          altText: cat.altText,
+          isActive: cat.isActive,
+          sortOrder: cat.sortOrder,
+          count: count
+        };
+      })
+    );
+    
+    return res.status(200).json(categoriesWithCount);
+  } catch (error) {
+    console.error('Fetch Categories Error:', error);
+    return res.status(500).json({ message: 'Failed to fetch categories' });
+  }
+});
 
 // Public Settings Configuration Endpoint
 app.get('/api/settings', async (req, res) => {

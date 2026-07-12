@@ -16,6 +16,12 @@ import UserView from '../pages/admin/UserView';
 import UsersList from '../pages/admin/UsersList';
 import OrdersList from '../pages/admin/OrdersList';
 import Settings from '../pages/admin/Settings';
+import PrivacyPolicy from '../pages/PrivacyPolicy';
+import TermsConditions from '../pages/TermsConditions';
+import LegalPages from '../pages/admin/LegalPages';
+import CategoriesList from '../pages/admin/CategoriesList';
+import CategoryDetail from '../pages/admin/CategoryDetail';
+import HomepageImages from '../pages/admin/HomepageImages';
 
 export const router = createBrowserRouter([
   {
@@ -48,6 +54,14 @@ export const router = createBrowserRouter([
       {
         path: '/google-login-mock',
         element: <GoogleLoginMock />,
+      },
+      {
+        path: '/privacy-policy',
+        element: <PrivacyPolicy />,
+      },
+      {
+        path: '/terms-conditions',
+        element: <TermsConditions />,
       },
     ],
   },
@@ -90,6 +104,22 @@ export const router = createBrowserRouter([
   {
     path: '/admin/settings',
     element: <Settings />,
+  },
+  {
+    path: '/admin/categories',
+    element: <CategoriesList />,
+  },
+  {
+    path: '/admin/categories/:id',
+    element: <CategoryDetail />,
+  },
+  {
+    path: '/admin/homepage-images',
+    element: <HomepageImages />,
+  },
+  {
+    path: '/admin/legal',
+    element: <LegalPages />,
   },
 ]);
 

@@ -1,5 +1,6 @@
 import React from 'react';
 import Button from './Button';
+import Select from './Select';
 
 interface PaginationProps {
   currentPage: number;
@@ -80,20 +81,20 @@ export const Pagination: React.FC<PaginationProps> = ({
         {onRecordsPerPageChange && (
           <div className="flex items-center gap-2">
             <span className="text-xs text-slate-500 whitespace-nowrap">Show:</span>
-            <select
-              value={recordsPerPage}
-              onChange={(e) => {
-                onRecordsPerPageChange(Number(e.target.value));
-                onPageChange(1);
-              }}
-              className="px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 cursor-pointer focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/5 shadow-2xs"
-            >
-              {[10, 15, 30, 50].map((limit) => (
-                <option key={limit} value={limit}>
-                  {limit}
-                </option>
-              ))}
-            </select>
+            <div className="w-16 text-left">
+              <Select
+                value={String(recordsPerPage)}
+                onChange={(val) => {
+                  onRecordsPerPageChange(Number(val));
+                  onPageChange(1);
+                }}
+                hClass="h-8 px-2"
+                options={[10, 15, 30, 50].map((limit) => ({
+                  value: String(limit),
+                  label: String(limit),
+                }))}
+              />
+            </div>
           </div>
         )}
       </div>

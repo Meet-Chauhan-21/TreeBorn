@@ -8,9 +8,9 @@ const productSchema = new mongoose.Schema(
       trim: true
     },
     category: {
-      type: String,
-      required: [true, 'Category is required'],
-      trim: true
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Category',
+      required: [true, 'Category is required']
     },
     description: {
       type: String,
@@ -87,6 +87,10 @@ const productSchema = new mongoose.Schema(
       type: String,
       enum: ['active', 'inactive'],
       default: 'active'
+    },
+    volume: {
+      type: String,
+      default: '100ml'
     }
   },
   {

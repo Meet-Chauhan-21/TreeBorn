@@ -21,7 +21,7 @@ export const ProductModal: React.FC = () => {
   // Reset modal local state when active product changes
   useEffect(() => {
     if (activeProduct) {
-      setSelectedSize('50ml');
+      setSelectedSize(activeProduct.volume || '50ml');
       setQuantity(1);
       setActiveTab('desc');
     }
@@ -33,8 +33,6 @@ export const ProductModal: React.FC = () => {
 
   // Compute price based on size
   const getPrice = () => {
-    if (selectedSize === '30ml') return activeProduct.price - 12;
-    if (selectedSize === '100ml') return activeProduct.price + 35;
     return activeProduct.price;
   };
 
@@ -45,8 +43,6 @@ export const ProductModal: React.FC = () => {
     setIsCartOpen(true);
     toast.success(`${activeProduct.name} (${selectedSize}) added to bag.`);
   };
-
-  const sizes = ['30ml', '50ml', '100ml'];
 
   return (
     <AnimatePresence>
@@ -126,8 +122,8 @@ export const ProductModal: React.FC = () => {
                 <span className="text-2xl font-display font-bold text-dark">
                   ₹{getPrice().toFixed(2)}
                 </span>
-                {activeProduct.oldPrice && selectedSize === '50ml' && (
-                  <span className="text-base text-gray-400 font-medium line-through font-display">
+                {activeProduct.oldPrice && (
+                  <span className="text-base text-rose-600 font-medium line-through font-display">
                     ₹{activeProduct.oldPrice.toFixed(2)}
                   </span>
                 )}
@@ -197,21 +193,11 @@ export const ProductModal: React.FC = () => {
 
               {/* Size Selector */}
               <div className="space-y-2">
-                <span className="text-xs font-semibold text-dark/80 font-display">Select Volume:</span>
+                <span className="text-xs font-semibold text-dark/80 font-display">Volume:</span>
                 <div className="flex gap-2.5">
-                  {sizes.map((sz) => (
-                    <button
-                      key={sz}
-                      onClick={() => setSelectedSize(sz)}
-                      className={`px-4 py-2 border rounded-full text-xs font-medium font-sans tracking-wide transition-all cursor-pointer ${
-                        selectedSize === sz
-                          ? 'border-primary bg-primary text-white'
-                          : 'border-border-gray bg-white text-dark hover:border-dark'
-                      }`}
-                    >
-                      {sz}
-                    </button>
-                  ))}
+                  <span className="px-4 py-2 border border-primary bg-primary text-white rounded-full text-xs font-medium font-sans tracking-wide">
+                    {activeProduct.volume || '50ml'}
+                  </span>
                 </div>
               </div>
             </div>

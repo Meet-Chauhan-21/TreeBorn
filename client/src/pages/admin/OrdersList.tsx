@@ -10,6 +10,7 @@ import Pagination from '../../components/admin/Pagination';
 import StatsCard from '../../components/admin/StatsCard';
 import { useAuth } from '../../context/AuthContext';
 import { API_BASE_URL } from '../../config';
+import Select from '../../components/admin/Select';
 
 const OrderStatusSelect: React.FC<{
   orderId: string;
@@ -48,27 +49,21 @@ const OrderStatusSelect: React.FC<{
     }
   };
 
-  const currentStatus = status.toLowerCase();
-  const bgClass =
-    currentStatus === 'placed' || currentStatus === 'completed' ? 'bg-blue-50/80 text-blue-750 border-blue-200/50' :
-      currentStatus === 'delivered' ? 'bg-emerald-50/80 text-emerald-750 border-emerald-200/50' :
-        currentStatus === 'processing' ? 'bg-violet-50/80 text-violet-750 border-violet-200/50' :
-          currentStatus === 'cancelled' ? 'bg-rose-50/80 text-rose-750 border-rose-200/50' : 'bg-slate-50/80 text-slate-700 border-slate-200/50';
+
 
   return (
-    <select
-      value={status}
-      disabled={updating}
-      onChange={(e) => handleStatusChange(e.target.value)}
-      onClick={(e) => e.stopPropagation()}
-      className={`px-2.5 py-1 text-xs border rounded-lg cursor-pointer focus:outline-none focus:ring-4 focus:ring-indigo-600/5 ${bgClass} ${updating ? 'opacity-55 cursor-not-allowed' : ''} transition-all font-semibold`}
-    >
-      {['Placed', 'Processing', 'Delivered', 'Cancelled'].map((opt) => (
-        <option key={opt} value={opt} className="bg-white text-slate-800 font-normal">
-          {opt}
-        </option>
-      ))}
-    </select>
+    <div className="w-32 text-left" onClick={(e) => e.stopPropagation()}>
+      <Select
+        value={status}
+        disabled={updating}
+        onChange={handleStatusChange}
+        hClass="h-8 px-2"
+        options={['Placed', 'Processing', 'Delivered', 'Cancelled'].map((opt) => ({
+          value: opt,
+          label: opt,
+        }))}
+      />
+    </div>
   );
 };
 
@@ -81,7 +76,7 @@ const OrdersList: React.FC = () => {
 
   // Pagination States
   const [currentPage, setCurrentPage] = useState(1);
-  const [recordsPerPage] = useState(15);
+  const [recordsPerPage, setRecordsPerPage] = useState(15);
 
   // Delete States
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -250,7 +245,7 @@ const OrdersList: React.FC = () => {
         </div>
 
         <Card>
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-start gap-4 mb-6">
             <div className="relative w-full md:w-80">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <input
@@ -264,20 +259,22 @@ const OrdersList: React.FC = () => {
                 className="w-full pl-11 pr-4 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-600/5 focus:border-indigo-500 placeholder-slate-400 text-sm h-10"
               />
             </div>
-            <select
+            <Select
               value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
+              onChange={(val) => {
+                setStatusFilter(val);
                 setCurrentPage(1);
               }}
-              className="w-full md:w-48 px-4 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-600/5 focus:border-indigo-500 text-slate-800 text-sm cursor-pointer h-10"
-            >
-              <option value="all">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="processing">Processing</option>
-              <option value="delivered">Delivered</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
+              hClass="h-10"
+              className="w-full md:w-48 text-left"
+              options={[
+                { value: 'all', label: 'All Status' },
+                { value: 'pending', label: 'Pending' },
+                { value: 'processing', label: 'Processing' },
+                { value: 'delivered', label: 'Delivered' },
+                { value: 'cancelled', label: 'Cancelled' },
+              ]}
+            />
           </div>
 
           <DataTable
@@ -294,6 +291,10 @@ const OrdersList: React.FC = () => {
             totalRecords={filteredOrders.length}
             recordsPerPage={recordsPerPage}
             onPageChange={setCurrentPage}
+            onRecordsPerPageChange={(limit) => {
+              setRecordsPerPage(limit);
+              setCurrentPage(1);
+            }}
             indexOfFirstRecord={indexOfFirstRecord}
             indexOfLastRecord={indexOfLastRecord}
           />

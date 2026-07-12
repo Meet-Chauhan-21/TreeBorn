@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Search, Bell, LogOut, Menu, X, Globe, PanelLeftOpen } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 
 interface HeaderProps {
@@ -10,23 +9,31 @@ interface HeaderProps {
   setCollapsed: (collapsed: boolean) => void;
   setMobileMenuOpen: (open: boolean) => void;
   mobileMenuOpen: boolean;
+  onLogout: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ title, collapsed, setCollapsed, setMobileMenuOpen, mobileMenuOpen }) => {
-  const { user, logout } = useAuth();
+export const Header: React.FC<HeaderProps> = ({
+  title,
+  collapsed,
+  setCollapsed,
+  setMobileMenuOpen,
+  mobileMenuOpen,
+  onLogout,
+}) => {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const handleLogout = () => {
-    logout();
-    toast.success('Logged out successfully');
-    navigate('/login');
+    setDropdownOpen(false);
+    onLogout();
   };
 
   return (
     <header
-      className={`fixed top-0 right-0 h-20 bg-white/80 backdrop-blur-md border-b border-slate-200/80 z-20 flex items-center justify-between px-8 transition-all duration-300 ${collapsed ? 'left-20' : 'left-64'
-        }`}
+      className={`fixed top-0 right-0 h-20 bg-white/80 backdrop-blur-md border-b border-slate-200/80 z-20 flex items-center justify-between px-8 transition-all duration-300 ${
+        collapsed ? 'left-20' : 'left-64'
+      }`}
     >
       <div className="flex items-center gap-2">
         {collapsed && (

@@ -4,8 +4,10 @@ import { Droplet, Trees, Recycle } from 'lucide-react';
 import { Container } from '../layout/Container';
 import { SectionTitle } from '../layout/SectionTitle';
 import { WHY_CHOOSE_US } from '../../data/mockData';
+import { useStore } from '../../context/StoreContext';
 
 export const WhyChooseUs: React.FC = () => {
+  const { settings } = useStore();
   return (
     <section id="about" className="py-24 bg-white relative overflow-hidden">
       {/* Subtle brand graphic blur shapes */}
@@ -110,7 +112,7 @@ export const WhyChooseUs: React.FC = () => {
           <div className="lg:col-span-6 relative order-1 lg:order-2">
             <div className="relative aspect-[4/5] rounded-3xl overflow-hidden bg-light-gray border border-border-gray/30 shadow-md">
               <img
-                src="https://images.unsplash.com/photo-1540555700478-4be289fbecef?q=80&w=800&auto=format&fit=crop"
+                src={settings.homepageImages?.about?.main || "https://images.unsplash.com/photo-1540555700478-4be289fbecef?q=80&w=800&auto=format&fit=crop"}
                 alt="Apothecary laboratory formulation"
                 className="w-full h-full object-cover"
               />
@@ -125,7 +127,7 @@ export const WhyChooseUs: React.FC = () => {
               className="absolute -bottom-8 -left-8 w-1/2 aspect-square rounded-2xl overflow-hidden border-4 border-white shadow-xl bg-light-gray hidden sm:block z-10"
             >
               <img
-                src="https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?q=80&w=600&auto=format&fit=crop"
+                src={settings.homepageImages?.about?.secondary || "https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?q=80&w=600&auto=format&fit=crop"}
                 alt="Pure plant extracts"
                 className="w-full h-full object-cover"
               />

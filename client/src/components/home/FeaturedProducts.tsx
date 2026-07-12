@@ -80,7 +80,7 @@ export const FeaturedProducts: React.FC = () => {
         {/* Products Grid */}
         <motion.div
           layout
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10"
+          className="flex flex-wrap justify-center gap-x-6 gap-y-10"
         >
           <AnimatePresence mode="popLayout">
             {filteredProducts.map((product, idx) => {
@@ -94,7 +94,7 @@ export const FeaturedProducts: React.FC = () => {
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ duration: 0.5, delay: idx * 0.05 }}
                   key={product.id}
-                  className="group flex flex-col h-full bg-white relative"
+                  className="group flex flex-col h-full bg-white relative w-full sm:w-[280px] md:w-[300px] lg:w-[230px] xl:w-[270px] max-w-[320px]"
                 >
                   {/* Image Frame */}
                   <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-light-gray mb-4 border border-border-gray/30">

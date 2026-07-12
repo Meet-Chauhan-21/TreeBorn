@@ -2,6 +2,7 @@ export interface Product {
   id: string;
   name: string;
   category: string;
+  categoryId?: string;
   description: string;
   rating: number;
   reviewsCount: number;
@@ -19,16 +20,23 @@ export interface Product {
   status?: 'active' | 'inactive' | string;
   stock?: number;
   sku?: string;
+  volume?: string;
   createdAt?: string;
   updatedAt?: string;
 }
 
 export interface Category {
   id: string;
+  _id?: string;
   name: string;
   slug: string;
   image: string;
+  altText?: string;
+  isActive?: boolean;
+  sortOrder?: number;
   count: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Testimonial {

@@ -7,7 +7,10 @@ import {
   Users,
   Settings,
   PanelLeftClose,
-  TreeDeciduous
+  TreeDeciduous,
+  FileText,
+  Folder,
+  Image
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -21,6 +24,9 @@ const menuItems = [
   { icon: ShoppingCart, label: 'Orders', path: '/admin/orders' },
   { icon: Users, label: 'Users', path: '/admin/users' },
   { icon: Settings, label: 'Settings', path: '/admin/settings' },
+  { icon: Folder, label: 'Categories', path: '/admin/categories' },
+  { icon: Image, label: 'Homepage Images', path: '/admin/homepage-images' },
+  { icon: FileText, label: 'Legal Pages', path: '/admin/legal' },
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => {

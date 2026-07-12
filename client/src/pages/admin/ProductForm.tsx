@@ -10,6 +10,8 @@ import Button from '../../components/admin/Button';
 import { useAuth } from '../../context/AuthContext';
 import { fetchPublicProductById } from '../../services/products';
 import { API_BASE_URL } from '../../config';
+import Select from '../../components/admin/Select';
+import { useStore } from '../../context/StoreContext';
 
 const ProductForm: React.FC = () => {
   const navigate = useNavigate();
@@ -55,7 +57,8 @@ const ProductForm: React.FC = () => {
     rating: Yup.number().typeError('Rating must be a number').min(0, 'Min rating is 0').max(5, 'Max rating is 5').nullable(),
     reviewsCount: Yup.number().typeError('Reviews count must be an integer').integer('Must be an integer').min(0).nullable(),
     ingredientsText: Yup.string().nullable(),
-    benefitsText: Yup.string().nullable()
+    benefitsText: Yup.string().nullable(),
+    volume: Yup.string().required('Product volume is required'),
   });
 
   const formik = useFormik({
@@ -77,6 +80,7 @@ const ProductForm: React.FC = () => {
       reviewsCount: '',
       ingredientsText: '',
       benefitsText: '',
+      volume: '50ml',
     },
     validationSchema,
     onSubmit: async (values) => {
@@ -208,7 +212,7 @@ const ProductForm: React.FC = () => {
             formik.setValues({
               name: product.name,
               description: product.description,
-              category: product.category,
+              category: product.categoryId || product.category,
               price: product.price.toString(),
               oldPrice: product.oldPrice?.toString() || '',
               discount: product.discount?.toString() || '',
@@ -223,6 +227,7 @@ const ProductForm: React.FC = () => {
               reviewsCount: product.reviewsCount.toString(),
               ingredientsText: product.ingredients?.join('\n') || '',
               benefitsText: product.benefits?.join('\n') || '',
+              volume: product.volume || '50ml',
             });
 
             const formattedImages = (product.images || []).map((img: any) => {
@@ -244,7 +249,8 @@ const ProductForm: React.FC = () => {
     }
   }, [isEdit, id, accessToken]);
 
-  const categories = ['Cleansers', 'Toners', 'Serums', 'Moisturizers', 'Face Oils', 'Masks'];
+  const { categories } = useStore();
+  const activeCategories = categories.filter((c) => c.isActive);
 
   if (loading) {
     return (
@@ -386,24 +392,35 @@ const ProductForm: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">Category</label>
-                      <select
-                        name="category"
+                      <Select
                         value={formik.values.category}
-                        onChange={formik.handleChange}
-                        onBlur={formik.handleBlur}
-                        className={`w-full px-4 py-3 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 ${formik.touched.category && formik.errors.category ? 'border-red-500 focus:border-red-500' : 'border-gray-200 focus:border-indigo-500'
-                          }`}
-                      >
-                        <option value="">Select category</option>
-                        {categories.map((cat) => (
-                          <option key={cat} value={cat}>{cat}</option>
-                        ))}
-                      </select>
+                        onChange={(val) => formik.setFieldValue('category', val)}
+                        error={Boolean(formik.touched.category && formik.errors.category)}
+                        placeholder="Select category"
+                        options={activeCategories.map(cat => ({ value: cat._id || cat.id, label: cat.name }))}
+                      />
                       {formik.touched.category && formik.errors.category && (
                         <p className="text-red-500 text-xs mt-1.5 font-medium pl-1">{formik.errors.category}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Volume</label>
+                      <input
+                        type="text"
+                        name="volume"
+                        value={formik.values.volume}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        className={`w-full px-4 py-3 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 ${formik.touched.volume && formik.errors.volume ? 'border-red-500 focus:border-red-500' : 'border-gray-200 focus:border-indigo-500'
+                          }`}
+                        placeholder="e.g. 50ml, 100ml"
+                      />
+                      {formik.touched.volume && formik.errors.volume && (
+                        <p className="text-red-500 text-xs mt-1.5 font-medium pl-1">{formik.errors.volume}</p>
                       )}
                     </div>
 
@@ -524,17 +541,15 @@ const ProductForm: React.FC = () => {
 
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Status</label>
-                    <select
-                      name="status"
+                    <Select
                       value={formik.values.status}
-                      onChange={formik.handleChange}
-                      onBlur={formik.handleBlur}
-                      className={`w-full px-4 py-3 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 ${formik.touched.status && formik.errors.status ? 'border-red-500 focus:border-red-500' : 'border-gray-200 focus:border-indigo-500'
-                        }`}
-                    >
-                      <option value="active">Active</option>
-                      <option value="inactive">Inactive</option>
-                    </select>
+                      onChange={(val) => formik.setFieldValue('status', val)}
+                      error={Boolean(formik.touched.status && formik.errors.status)}
+                      options={[
+                        { value: 'active', label: 'Active' },
+                        { value: 'inactive', label: 'Inactive' }
+                      ]}
+                    />
                     {formik.touched.status && formik.errors.status && (
                       <p className="text-red-500 text-xs mt-1.5 font-medium pl-1">{formik.errors.status}</p>
                     )}

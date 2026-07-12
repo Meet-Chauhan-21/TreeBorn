@@ -14,9 +14,20 @@ export const Hero: React.FC = () => {
 
   const catalog = products.length > 0 ? products : fallbackProducts;
 
+  const defaultProduct = {
+    id: '',
+    name: 'Restorative Peptide Serum',
+    description: 'A concentrated multi-peptide serum designed to target visible signs of aging, restore firmness, and deeply hydrate the skin.',
+    price: 85.00,
+    rating: 4.9,
+    reviewsCount: 148,
+    image: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=600&auto=format&fit=crop',
+    hoverImage: 'https://images.unsplash.com/photo-1617897903246-719242758050?q=80&w=600&auto=format&fit=crop'
+  };
+
   const heroProducts = [
     {
-      product: catalog[0] || catalog[0],
+      product: catalog[0] || defaultProduct,
       tagline: 'Dermatologist Approved Active formulas',
       titleHighlight: 'Botanicals',
       titleText1: 'Scientific',
@@ -24,7 +35,7 @@ export const Hero: React.FC = () => {
       bgGlow: 'bg-primary/5',
     },
     {
-      product: catalog[1] || catalog[0],
+      product: catalog[1] || catalog[0] || defaultProduct,
       tagline: 'Ceramide-Infused Skin Defense',
       titleHighlight: 'Barrier',
       titleText1: 'Deep Cellular',
@@ -32,7 +43,7 @@ export const Hero: React.FC = () => {
       bgGlow: 'bg-secondary/5',
     },
     {
-      product: catalog[2] || catalog[0],
+      product: catalog[2] || catalog[0] || defaultProduct,
       tagline: 'Cold-Pressed Botanical Elixir',
       titleHighlight: 'Radiance',
       titleText1: 'Pure Recovery',

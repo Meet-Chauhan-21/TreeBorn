@@ -128,6 +128,7 @@ const ProductView: React.FC = () => {
               <div className="space-y-4 text-sm text-gray-600">
                 <div className="flex items-center gap-3"><Tag size={16} className="text-primary" /> SKU: {product.sku || 'N/A'}</div>
                 <div className="flex items-center gap-3"><Package size={16} className="text-primary" /> Stock: {product.stock ?? 0}</div>
+                <div className="flex items-center gap-3"><Tag size={16} className="text-primary" /> Volume: {product.volume || '50ml'}</div>
                 <div className="flex items-center gap-3"><ShieldCheck size={16} className="text-primary" /> Status: {product.status || 'active'}</div>
                 <div className="flex items-center gap-3"><Truck size={16} className="text-primary" /> Discount: {product.discount ?? 0}%</div>
               </div>

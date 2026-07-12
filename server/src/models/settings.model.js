@@ -25,6 +25,56 @@ const settingsSchema = new mongoose.Schema(
     enableCOD: {
       type: Boolean,
       default: true
+    },
+    homepageImages: {
+      spotlight: {
+        type: String,
+        default: 'https://images.unsplash.com/photo-1617897903246-719242758050?q=80&w=800&auto=format&fit=crop'
+      },
+      about: {
+        main: {
+          type: String,
+          default: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?q=80&w=800&auto=format&fit=crop'
+        },
+        secondary: {
+          type: String,
+          default: 'https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?q=80&w=600&auto=format&fit=crop'
+        }
+      }
+    },
+    privacyPolicy: {
+      type: [
+        {
+          title: { type: String, required: true },
+          content: { type: [String], default: [] }
+        }
+      ],
+      default: [
+        {
+          title: 'Introduction',
+          content: [
+            'We value your privacy and are committed to protecting your personal data.',
+            'This policy details how we collect, process, and protect your information.'
+          ]
+        }
+      ]
+    },
+    termsConditions: {
+      type: [
+        {
+          title: { type: String, required: true },
+          content: { type: [String], default: [] }
+        }
+      ],
+      default: [
+        {
+          title: 'General Terms',
+          content: [
+            'By accessing or purchasing from TreeBorn, you agree to comply with our Terms & Conditions.',
+            'We reserve the right to update these terms at any time.'
+          ]
+        }
+      ]
     }
   },
   {

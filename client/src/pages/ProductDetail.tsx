@@ -15,7 +15,7 @@ export const ProductDetail: React.FC = () => {
   const navigate = useNavigate();
   const { addToCart, toggleWishlist, isInWishlist, setIsCartOpen, products, productsLoading } = useStore();
 
-  const [selectedSize, setSelectedSize] = useState('50ml');
+  const [selectedSize, setSelectedSize] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<'desc' | 'ingredients' | 'benefits' | 'shipping'>('desc');
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
@@ -27,7 +27,7 @@ export const ProductDetail: React.FC = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
     if (product) {
-      setSelectedSize('50ml');
+      setSelectedSize(product.volume || '50ml');
       setQuantity(1);
       setActiveTab('desc');
       setSelectedImageIndex(0);
@@ -68,10 +68,8 @@ export const ProductDetail: React.FC = () => {
 
   const isWishlisted = isInWishlist(product.id);
 
-  // Compute price based on size
+  // Compute price
   const getPrice = () => {
-    if (selectedSize === '30ml') return product.price - 12;
-    if (selectedSize === '100ml') return product.price + 35;
     return product.price;
   };
 
@@ -92,9 +90,9 @@ export const ProductDetail: React.FC = () => {
   };
 
   const galleryImages = [
-    ...(product.images || []),
     product.image,
     product.hoverImage,
+    ...(product.images || []),
   ].filter((image, index, list) => Boolean(image) && list.indexOf(image) === index);
 
   // Find similar products in the same category, excluding active product
@@ -105,8 +103,6 @@ export const ProductDetail: React.FC = () => {
   // Fallback: If no similar products in same category, show other bestsellers
   const backupSimilar = products.filter((p) => p.id !== product.id).slice(0, 4);
   const displaySimilar = similarProducts.length > 0 ? similarProducts : backupSimilar;
-
-  const sizes = ['30ml', '50ml', '100ml'];
 
   return (
     <>
@@ -147,8 +143,8 @@ export const ProductDetail: React.FC = () => {
               </div>
               
               {/* Product close-ups thumbnails for premium feel */}
-              <div className="grid grid-cols-3 gap-4">
-                {galleryImages.slice(0, 3).map((image, index) => (
+              <div className="grid grid-cols-4 sm:grid-cols-5 gap-3.5">
+                {galleryImages.map((image, index) => (
                   <button
                     key={image}
                     type="button"
@@ -159,11 +155,6 @@ export const ProductDetail: React.FC = () => {
                     <img src={image} alt={`${product.name} view ${index + 1}`} className="w-full h-full object-cover object-center" />
                   </button>
                 ))}
-                {galleryImages.length < 3 && (
-                  <div className="aspect-square rounded-2xl overflow-hidden bg-accent-sage/30 border border-border-gray/25 shadow-xs flex items-center justify-center text-center p-3 text-[10px] font-display font-semibold text-primary">
-                    Botanical Extract Core
-                  </div>
-                )}
               </div>
             </div>
 
@@ -201,8 +192,8 @@ export const ProductDetail: React.FC = () => {
                   <span className="text-3xl font-display font-bold text-dark">
                     ₹{getPrice().toFixed(2)}
                   </span>
-                  {product.oldPrice && selectedSize === '50ml' && (
-                    <span className="text-lg text-gray-400 font-medium line-through font-display">
+                  {product.oldPrice && (
+                    <span className="text-lg text-rose-600 font-medium line-through font-display">
                       ₹{product.oldPrice.toFixed(2)}
                     </span>
                   )}
@@ -212,26 +203,14 @@ export const ProductDetail: React.FC = () => {
                   {product.description}
                 </p>
 
-                {/* Size Selector */}
-                <div className="space-y-3.5 pt-2">
-                  <span className="text-xs font-semibold text-dark/80 font-display uppercase tracking-wider block">
-                    Select volume:
+                {/* Volume Display */}
+                <div className="pt-2 flex items-center gap-2">
+                  <span className="text-xs font-semibold text-slate-500 font-display uppercase tracking-wider">
+                    Volume:
                   </span>
-                  <div className="flex gap-2.5">
-                    {sizes.map((sz) => (
-                      <button
-                        key={sz}
-                        onClick={() => setSelectedSize(sz)}
-                        className={`px-5 py-2.5 border rounded-full text-xs font-medium font-sans tracking-wide transition-all cursor-pointer ${
-                          selectedSize === sz
-                            ? 'border-primary bg-primary text-white shadow-sm'
-                            : 'border-border-gray bg-white text-dark hover:border-dark'
-                        }`}
-                      >
-                        {sz}
-                      </button>
-                    ))}
-                  </div>
+                  <span className="px-3.5 py-1 bg-slate-100 border border-slate-200/50 rounded-full text-xs font-semibold text-slate-700 font-sans">
+                    {product.volume || '50ml'}
+                  </span>
                 </div>
 
                 {/* Premium Trust Indicators */}
@@ -451,7 +430,7 @@ export const ProductDetail: React.FC = () => {
                       <div className="absolute inset-x-0 bottom-4 px-4 translate-y-6 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 z-10">
                         <Button
                           onClick={() => {
-                            addToCart(item, 1, '50ml');
+                            addToCart(item, 1, item.volume || '50ml');
                             setIsCartOpen(true);
                             toast.success(`${item.name} added to bag.`);
                           }}

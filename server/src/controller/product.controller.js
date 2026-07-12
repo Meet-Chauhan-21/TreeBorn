@@ -1,4 +1,6 @@
 const Product = require('../models/product.model');
+const Category = require('../models/category.model');
+const mongoose = require('mongoose');
 
 // @desc    Get all products
 // @route   GET /api/products
@@ -16,11 +18,20 @@ const getAllProducts = async (req, res) => {
       query.name = { $regex: search, $options: 'i' };
     }
     if (category && category !== 'all') {
-      query.category = category;
+      if (mongoose.Types.ObjectId.isValid(category)) {
+        query.category = category;
+      } else {
+        const foundCat = await Category.findOne({ $or: [{ slug: category }, { name: category }] });
+        if (foundCat) {
+          query.category = foundCat._id;
+        } else {
+          query.category = new mongoose.Types.ObjectId();
+        }
+      }
     }
 
     const [products, total] = await Promise.all([
-      Product.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Product.find(query).populate('category').sort({ createdAt: -1 }).skip(skip).limit(limit),
       Product.countDocuments(query)
     ]);
 
@@ -41,7 +52,7 @@ const getAllProducts = async (req, res) => {
 // @access  Public
 const getProductById = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findById(req.params.id).populate('category');
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
@@ -75,11 +86,21 @@ const createProduct = async (req, res) => {
       isNewArrival,
       stock,
       sku,
-      status
+      status,
+      volume
     } = req.body;
 
     if (!name || !category || !description || price === undefined || price === null || image === undefined || image === '' || stock === undefined || stock === null || sku === undefined || sku === '') {
       return res.status(400).json({ message: 'Please provide all required fields.' });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(category)) {
+      return res.status(400).json({ message: 'Invalid category selection.' });
+    }
+
+    const categoryExists = await Category.findById(category);
+    if (!categoryExists) {
+      return res.status(400).json({ message: 'Selected category does not exist.' });
     }
 
     const skuExists = await Product.findOne({ sku });
@@ -105,7 +126,8 @@ const createProduct = async (req, res) => {
       isNewArrival: isNewArrival || false,
       stock,
       sku,
-      status: status || 'active'
+      status: status || 'active',
+      volume: volume || '50ml'
     });
 
     return res.status(201).json({
@@ -146,13 +168,24 @@ const updateProduct = async (req, res) => {
       isNewArrival,
       stock,
       sku,
-      status
+      status,
+      volume
     } = req.body;
 
     if (sku && sku !== product.sku) {
       const skuExists = await Product.findOne({ sku });
       if (skuExists) {
         return res.status(400).json({ message: 'SKU already exists.' });
+      }
+    }
+
+    if (category) {
+      if (!mongoose.Types.ObjectId.isValid(category)) {
+        return res.status(400).json({ message: 'Invalid category selection.' });
+      }
+      const categoryExists = await Category.findById(category);
+      if (!categoryExists) {
+        return res.status(400).json({ message: 'Selected category does not exist.' });
       }
     }
 
@@ -174,6 +207,7 @@ const updateProduct = async (req, res) => {
     product.stock = stock !== undefined ? stock : product.stock;
     product.sku = sku || product.sku;
     product.status = status || product.status;
+    product.volume = volume !== undefined ? volume : product.volume;
 
     const updatedProduct = await product.save();
 
@@ -220,14 +254,23 @@ const getAllProductsAdmin = async (req, res) => {
       query.name = { $regex: search, $options: 'i' };
     }
     if (category && category !== 'all') {
-      query.category = category;
+      if (mongoose.Types.ObjectId.isValid(category)) {
+        query.category = category;
+      } else {
+        const foundCat = await Category.findOne({ $or: [{ slug: category }, { name: category }] });
+        if (foundCat) {
+          query.category = foundCat._id;
+        } else {
+          query.category = new mongoose.Types.ObjectId();
+        }
+      }
     }
     if (status && status !== 'all') {
       query.status = status;
     }
 
     const [products, total] = await Promise.all([
-      Product.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Product.find(query).populate('category').sort({ createdAt: -1 }).skip(skip).limit(limit),
       Product.countDocuments(query)
     ]);
 

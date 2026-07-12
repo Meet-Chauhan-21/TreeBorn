@@ -13,6 +13,7 @@ const User = require('../models/user.model');
 const Order = require('../models/order.model');
 const Product = require('../models/product.model');
 const Settings = require('../models/settings.model');
+const Category = require('../models/category.model');
 
 // Configure Multer
 const storage = multer.memoryStorage();
@@ -358,7 +359,7 @@ router.get('/settings', async (req, res) => {
 
 router.put('/settings', async (req, res) => {
   try {
-    const { email, whatsappNumber, themeColor, enableCreditCard, enablePaypal, enableCOD } = req.body;
+    const { email, whatsappNumber, themeColor, enableCreditCard, enablePaypal, enableCOD, privacyPolicy, termsConditions, homepageImages } = req.body;
     let settings = await Settings.findOne();
     if (!settings) {
       settings = new Settings();
@@ -369,12 +370,106 @@ router.put('/settings', async (req, res) => {
     settings.enableCreditCard = enableCreditCard !== undefined ? enableCreditCard : settings.enableCreditCard;
     settings.enablePaypal = enablePaypal !== undefined ? enablePaypal : settings.enablePaypal;
     settings.enableCOD = enableCOD !== undefined ? enableCOD : settings.enableCOD;
+    settings.privacyPolicy = privacyPolicy !== undefined ? privacyPolicy : settings.privacyPolicy;
+    settings.termsConditions = termsConditions !== undefined ? termsConditions : settings.termsConditions;
+    settings.homepageImages = homepageImages !== undefined ? homepageImages : settings.homepageImages;
 
     const updated = await settings.save();
     return res.status(200).json({ message: 'Settings updated successfully', settings: updated });
   } catch (error) {
     console.error('Admin Update Settings Error:', error);
     return res.status(500).json({ message: 'Server error. Failed to update settings.' });
+  }
+});
+
+// Category Admin Routes
+router.post('/categories', async (req, res) => {
+  try {
+    const { name, slug, image, altText, isActive, sortOrder } = req.body;
+    if (!name || !slug || !image) {
+      return res.status(400).json({ message: 'Name, slug, and image are required.' });
+    }
+
+    const nameExists = await Category.findOne({ name });
+    if (nameExists) {
+      return res.status(400).json({ message: 'Category name already exists.' });
+    }
+
+    const slugExists = await Category.findOne({ slug });
+    if (slugExists) {
+      return res.status(400).json({ message: 'Category slug already exists.' });
+    }
+
+    const category = await Category.create({
+      name,
+      slug,
+      image,
+      altText: altText || '',
+      isActive: isActive !== undefined ? isActive : true,
+      sortOrder: sortOrder !== undefined ? Number(sortOrder) : 0
+    });
+
+    return res.status(201).json({ message: 'Category created successfully', category });
+  } catch (error) {
+    console.error('Admin Create Category Error:', error);
+    return res.status(500).json({ message: 'Server error. Failed to create category.' });
+  }
+});
+
+router.put('/categories/:id', async (req, res) => {
+  try {
+    const { name, slug, image, altText, isActive, sortOrder } = req.body;
+    const category = await Category.findById(req.params.id);
+    if (!category) {
+      return res.status(404).json({ message: 'Category not found.' });
+    }
+
+    if (name && name !== category.name) {
+      const nameExists = await Category.findOne({ name });
+      if (nameExists) {
+        return res.status(400).json({ message: 'Category name already exists.' });
+      }
+      category.name = name;
+    }
+
+    if (slug && slug !== category.slug) {
+      const slugExists = await Category.findOne({ slug });
+      if (slugExists) {
+        return res.status(400).json({ message: 'Category slug already exists.' });
+      }
+      category.slug = slug;
+    }
+
+    category.image = image !== undefined ? image : category.image;
+    category.altText = altText !== undefined ? altText : category.altText;
+    category.isActive = isActive !== undefined ? isActive : category.isActive;
+    category.sortOrder = sortOrder !== undefined ? Number(sortOrder) : category.sortOrder;
+
+    const updated = await category.save();
+    return res.status(200).json({ message: 'Category updated successfully', category: updated });
+  } catch (error) {
+    console.error('Admin Update Category Error:', error);
+    return res.status(500).json({ message: 'Server error. Failed to update category.' });
+  }
+});
+
+router.delete('/categories/:id', async (req, res) => {
+  try {
+    const productCount = await Product.countDocuments({ category: req.params.id });
+    if (productCount > 0) {
+      return res.status(400).json({
+        message: `Cannot delete category. It is currently linked to ${productCount} ${productCount === 1 ? 'product' : 'products'}.`
+      });
+    }
+
+    const category = await Category.findByIdAndDelete(req.params.id);
+    if (!category) {
+      return res.status(404).json({ message: 'Category not found.' });
+    }
+    return res.status(200).json({ message: 'Category deleted successfully' });
+  } catch (error) {
+    console.error('Admin Delete Category Error:', error);
+    return res.status(500).json({ message: 'Server error. Failed to delete category.' });
   }
 });
 

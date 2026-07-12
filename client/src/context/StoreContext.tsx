@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { Product } from '../types';
+import type { Product, Category } from '../types';
 import { fallbackProducts, fetchPublicProducts } from '../services/products';
 import { API_BASE_URL } from '../config';
 
@@ -10,6 +10,13 @@ export interface AppSettings {
   enableCreditCard: boolean;
   enablePaypal: boolean;
   enableCOD: boolean;
+  homepageImages?: {
+    spotlight: string;
+    about: {
+      main: string;
+      secondary: string;
+    };
+  };
 }
 
 export interface CartItem {
@@ -23,6 +30,8 @@ interface StoreContextType {
   wishlist: Product[];
   products: Product[];
   productsLoading: boolean;
+  categories: Category[];
+  categoriesLoading: boolean;
   activeProduct: Product | null;
   isCartOpen: boolean;
   isWishlistOpen: boolean;
@@ -37,6 +46,7 @@ interface StoreContextType {
   setIsCartOpen: (open: boolean) => void;
   setIsWishlistOpen: (open: boolean) => void;
   updateLocalSettings: (newSettings: AppSettings) => void;
+  refreshCategories: () => Promise<void>;
 }
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
@@ -49,6 +59,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const [products, setProducts] = useState<Product[]>(fallbackProducts);
   const [productsLoading, setProductsLoading] = useState(true);
+
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
 
   const [wishlist, setWishlist] = useState<Product[]>(() => {
     const saved = localStorage.getItem('treeborn_wishlist');
@@ -65,7 +78,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     themeColor: '#581C87',
     enableCreditCard: true,
     enablePaypal: true,
-    enableCOD: true
+    enableCOD: true,
+    homepageImages: {
+      spotlight: 'https://images.unsplash.com/photo-1617897903246-719242758050?q=80&w=800&auto=format&fit=crop',
+      about: {
+        main: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?q=80&w=800&auto=format&fit=crop',
+        secondary: 'https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?q=80&w=600&auto=format&fit=crop'
+      }
+    }
   });
 
   const updateLocalSettings = (newSettings: AppSettings) => {
@@ -104,6 +124,20 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
+  const refreshCategories = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/categories`);
+      if (response.ok) {
+        const data = await response.json();
+        setCategories(data);
+      }
+    } catch (err) {
+      console.error('Error refreshing categories:', err);
+    } finally {
+      setCategoriesLoading(false);
+    }
+  };
+
   useEffect(() => {
     const fetchSettings = async () => {
       try {
@@ -118,6 +152,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
     };
     fetchSettings();
+    refreshCategories();
   }, []);
 
   // Sync to local storage
@@ -219,6 +254,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         wishlist,
         products,
         productsLoading,
+        categories,
+        categoriesLoading,
         activeProduct,
         isCartOpen,
         isWishlistOpen,
@@ -233,6 +270,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setIsCartOpen,
         setIsWishlistOpen,
         updateLocalSettings,
+        refreshCategories,
       }}
     >
       {children}

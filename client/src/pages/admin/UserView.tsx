@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Mail, Phone, CalendarDays, ShoppingBag, UserRound } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, CalendarDays, ShoppingBag, UserRound, MapPin } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import AdminLayout from '../../components/admin/AdminLayout';
 import Card from '../../components/admin/Card';
@@ -117,6 +117,31 @@ const UserView: React.FC = () => {
                 <div className="flex items-center justify-between"><span>Orders</span><span className="font-semibold text-gray-900">{user.orders || 0}</span></div>
                 <div className="flex items-center justify-between"><span>Phone</span><span className="font-semibold text-gray-900">{user.phone}</span></div>
               </div>
+            </Card>
+
+            <Card title="Saved Addresses" icon={MapPin}>
+              {user.addresses && user.addresses.length > 0 ? (
+                <div className="space-y-4">
+                  {user.addresses.map((addr: any, index: number) => (
+                    <div key={addr._id || index} className="p-3.5 rounded-xl border border-slate-100 bg-slate-50/50 text-xs text-slate-650 space-y-1 relative">
+                      {addr.isDefault && (
+                        <span className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold uppercase tracking-wider text-[8px] border border-emerald-100">
+                          Default
+                        </span>
+                      )}
+                      <p className="font-bold text-slate-800 text-sm pr-12">{addr.name}</p>
+                      <p className="font-medium">{addr.phone}</p>
+                      <p className="leading-relaxed">{addr.street}</p>
+                      <p className="font-medium text-slate-700">
+                        {addr.district}, {addr.state} - {addr.zip}
+                      </p>
+                      <p className="text-slate-400 font-semibold uppercase tracking-wider text-[8px]">{addr.country}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-slate-400 text-center py-4 font-sans">No saved addresses found.</p>
+              )}
             </Card>
           </div>
         </div>
