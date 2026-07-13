@@ -39,8 +39,10 @@ const HomepageImages: React.FC = () => {
         setSpotlightText({
           name: settings.homepageImages?.spotlightName || 'Restorative Peptide Serum',
           description: settings.homepageImages?.spotlightDescription || 'A concentrated multi-peptide serum designed to target visible signs of aging, restore firmness, and deeply hydrate the skin.',
-          price: (settings.homepageImages?.spotlightPrice !== undefined ? settings.homepageImages.spotlightPrice : 85).toString(),
-          oldPrice: (settings.homepageImages?.spotlightOldPrice !== undefined ? settings.homepageImages.spotlightOldPrice : 110).toString(),
+          price: (settings.homepageImages?.spotlightPrice ?? 85).toString(),
+          oldPrice: settings.homepageImages?.spotlightOldPrice === null
+            ? ''
+            : (settings.homepageImages?.spotlightOldPrice ?? 110).toString(),
         });
       }
       setLoading(false);
