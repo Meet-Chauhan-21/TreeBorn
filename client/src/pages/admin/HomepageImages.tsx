@@ -7,6 +7,7 @@ import Button from '../../components/admin/Button';
 import { useAuth } from '../../context/AuthContext';
 import { useStore } from '../../context/StoreContext';
 import { API_BASE_URL } from '../../config';
+import { getPublicIdFromUrl, deleteCloudinaryAsset } from '../../services/cloudinary';
 
 const HomepageImages: React.FC = () => {
   const { accessToken } = useAuth();
@@ -20,6 +21,13 @@ const HomepageImages: React.FC = () => {
     aboutSecondary: '',
   });
 
+  const [spotlightText, setSpotlightText] = useState({
+    name: '',
+    description: '',
+    price: '',
+    oldPrice: '',
+  });
+
   useEffect(() => {
     const loadSettings = () => {
       if (settings) {
@@ -27,6 +35,12 @@ const HomepageImages: React.FC = () => {
           spotlight: settings.homepageImages?.spotlight || 'https://images.unsplash.com/photo-1617897903246-719242758050?q=80&w=800&auto=format&fit=crop',
           aboutMain: settings.homepageImages?.about?.main || 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?q=80&w=800&auto=format&fit=crop',
           aboutSecondary: settings.homepageImages?.about?.secondary || 'https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?q=80&w=600&auto=format&fit=crop',
+        });
+        setSpotlightText({
+          name: settings.homepageImages?.spotlightName || 'Restorative Peptide Serum',
+          description: settings.homepageImages?.spotlightDescription || 'A concentrated multi-peptide serum designed to target visible signs of aging, restore firmness, and deeply hydrate the skin.',
+          price: (settings.homepageImages?.spotlightPrice !== undefined ? settings.homepageImages.spotlightPrice : 85).toString(),
+          oldPrice: (settings.homepageImages?.spotlightOldPrice !== undefined ? settings.homepageImages.spotlightOldPrice : 110).toString(),
         });
       }
       setLoading(false);
@@ -63,6 +77,11 @@ const HomepageImages: React.FC = () => {
 
       if (response.ok) {
         const data = await response.json();
+        const oldUrl = images[field];
+        const oldPublicId = getPublicIdFromUrl(oldUrl);
+        if (oldPublicId && accessToken) {
+          await deleteCloudinaryAsset(oldPublicId, accessToken);
+        }
         setImages((prev) => ({ ...prev, [field]: data.url }));
         toast.success(`${field === 'spotlight' ? 'Spotlight' : 'About Section'} image uploaded successfully!`);
       } else {
@@ -85,6 +104,10 @@ const HomepageImages: React.FC = () => {
         ...settings,
         homepageImages: {
           spotlight: images.spotlight,
+          spotlightName: spotlightText.name,
+          spotlightDescription: spotlightText.description,
+          spotlightPrice: parseFloat(spotlightText.price) || 0,
+          spotlightOldPrice: spotlightText.oldPrice ? parseFloat(spotlightText.oldPrice) : null,
           about: {
             main: images.aboutMain,
             secondary: images.aboutSecondary,
@@ -203,6 +226,55 @@ const HomepageImages: React.FC = () => {
                     <Upload size={14} />
                     Upload
                   </label>
+                </div>
+
+                {/* Product Text Details */}
+                <div className="space-y-4 pt-3 border-t border-slate-100 mt-2">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Spotlight Product Name</label>
+                    <input
+                      type="text"
+                      value={spotlightText.name}
+                      onChange={(e) => setSpotlightText({ ...spotlightText, name: e.target.value })}
+                      placeholder="e.g. Restorative Peptide Serum"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-sans text-sm animate-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Description</label>
+                    <textarea
+                      value={spotlightText.description}
+                      onChange={(e) => setSpotlightText({ ...spotlightText, description: e.target.value })}
+                      placeholder="Enter product description..."
+                      rows={3}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-sans text-sm resize-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">Price (₹)</label>
+                      <input
+                        type="number"
+                        value={spotlightText.price}
+                        onChange={(e) => setSpotlightText({ ...spotlightText, price: e.target.value })}
+                        placeholder="85.00"
+                        className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-sans text-sm"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">Compare At Price (₹)</label>
+                      <input
+                        type="number"
+                        value={spotlightText.oldPrice}
+                        onChange={(e) => setSpotlightText({ ...spotlightText, oldPrice: e.target.value })}
+                        placeholder="110.00"
+                        className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-sans text-sm"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

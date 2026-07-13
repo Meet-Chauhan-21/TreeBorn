@@ -9,6 +9,49 @@ import Container from '../components/layout/Container';
 import Button from '../components/layout/Button';
 import WhatsAppButton from '../components/layout/WhatsAppButton';
 import { useStore } from '../context/StoreContext';
+const renderVideoPlayer = (url: string) => {
+  if (!url) return null;
+
+  const ytRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+  const ytMatch = url.match(ytRegex);
+  if (ytMatch && ytMatch[1]) {
+    return (
+      <iframe
+        className="w-full h-full aspect-video border-0"
+        src={`https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1&mute=1&rel=0`}
+        title="Product Video"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+      />
+    );
+  }
+
+  const vimeoRegex = /(?:vimeo\.com\/|player\.vimeo\.com\/video\/)(\d+)/;
+  const vimeoMatch = url.match(vimeoRegex);
+  if (vimeoMatch && vimeoMatch[1]) {
+    return (
+      <iframe
+        className="w-full h-full aspect-video border-0"
+        src={`https://player.vimeo.com/video/${vimeoMatch[1]}?autoplay=1&muted=1`}
+        title="Product Video"
+        allow="autoplay; fullscreen; picture-in-picture"
+        allowFullScreen
+      />
+    );
+  }
+
+  return (
+    <video
+      src={url}
+      className="w-full h-full object-contain"
+      controls
+      autoPlay
+      muted
+      playsInline
+      preload="metadata"
+    />
+  );
+};
 
 export const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -95,6 +138,11 @@ export const ProductDetail: React.FC = () => {
     ...(product.images || []),
   ].filter((image, index, list) => Boolean(image) && list.indexOf(image) === index);
 
+  const mediaItems = [
+    ...galleryImages.map((url) => ({ type: 'image', url })),
+    ...(product.video ? [{ type: 'video', url: product.video }] : []),
+  ];
+
   // Find similar products in the same category, excluding active product
   const similarProducts = products.filter(
     (p) => p.category === product.category && p.id !== product.id
@@ -135,24 +183,41 @@ export const ProductDetail: React.FC = () => {
                     Save {product.discount}%
                   </span>
                 )}
-                <img
-                  src={galleryImages[selectedImageIndex] || product.image}
-                  alt={product.name}
-                  className="w-full h-full object-cover object-center transform group-hover:scale-105 transition-transform duration-1000"
-                />
+                {mediaItems[selectedImageIndex]?.type === 'video' ? (
+                  <div className="w-full h-full bg-black flex items-center justify-center relative">
+                    {renderVideoPlayer(mediaItems[selectedImageIndex].url)}
+                  </div>
+                ) : (
+                  <img
+                    src={mediaItems[selectedImageIndex]?.url || product.image}
+                    alt={product.name}
+                    className="w-full h-full object-cover object-center transform group-hover:scale-105 transition-transform duration-1000"
+                  />
+                )}
               </div>
               
               {/* Product close-ups thumbnails for premium feel */}
               <div className="grid grid-cols-4 sm:grid-cols-5 gap-3.5">
-                {galleryImages.map((image, index) => (
+                {mediaItems.map((item, index) => (
                   <button
-                    key={image}
+                    key={index}
                     type="button"
                     onClick={() => setSelectedImageIndex(index)}
-                    className={`aspect-square rounded-2xl overflow-hidden bg-light-gray border shadow-xs cursor-pointer transition-opacity ${selectedImageIndex === index ? 'border-primary opacity-100' : 'border-border-gray/25 opacity-80 hover:opacity-100'}`}
-                    aria-label={`View product image ${index + 1}`}
+                    className={`aspect-square rounded-2xl overflow-hidden bg-light-gray border shadow-xs cursor-pointer transition-opacity relative ${selectedImageIndex === index ? 'border-primary opacity-100' : 'border-border-gray/25 opacity-80 hover:opacity-100'}`}
+                    aria-label={`View product media ${index + 1}`}
                   >
-                    <img src={image} alt={`${product.name} view ${index + 1}`} className="w-full h-full object-cover object-center" />
+                    {item.type === 'video' ? (
+                      <div className="w-full h-full flex flex-col items-center justify-center bg-slate-900 text-white relative">
+                        <div className="absolute inset-0 bg-black/45 flex items-center justify-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 text-white drop-shadow-xs">
+                            <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm14.024-.983a.75.75 0 01-.014 1.258l-5.587 3.725A.75.75 0 019.5 15.382V7.915a.75.75 0 011.173-.623l5.6 3.724z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <span className="text-[8px] font-bold uppercase tracking-widest mt-7 text-white/90">Video</span>
+                      </div>
+                    ) : (
+                      <img src={item.url} alt={`${product.name} view ${index + 1}`} className="w-full h-full object-cover object-center" />
+                    )}
                   </button>
                 ))}
               </div>
@@ -429,7 +494,9 @@ export const ProductDetail: React.FC = () => {
                       {/* Quick Add Overlay */}
                       <div className="absolute inset-x-0 bottom-4 px-4 translate-y-6 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 z-10">
                         <Button
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
                             addToCart(item, 1, item.volume || '50ml');
                             setIsCartOpen(true);
                             toast.success(`${item.name} added to bag.`);

@@ -21,6 +21,7 @@ export interface Product {
   stock?: number;
   sku?: string;
   volume?: string;
+  video?: string;
   createdAt?: string;
   updatedAt?: string;
 }

@@ -12,6 +12,10 @@ export interface AppSettings {
   enableCOD: boolean;
   homepageImages?: {
     spotlight: string;
+    spotlightName?: string;
+    spotlightDescription?: string;
+    spotlightPrice?: number;
+    spotlightOldPrice?: number | null;
     about: {
       main: string;
       secondary: string;
@@ -81,6 +85,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     enableCOD: true,
     homepageImages: {
       spotlight: 'https://images.unsplash.com/photo-1617897903246-719242758050?q=80&w=800&auto=format&fit=crop',
+      spotlightName: 'Restorative Peptide Serum',
+      spotlightDescription: 'A concentrated multi-peptide serum designed to target visible signs of aging, restore firmness, and deeply hydrate the skin.',
+      spotlightPrice: 85,
+      spotlightOldPrice: 110,
       about: {
         main: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?q=80&w=800&auto=format&fit=crop',
         secondary: 'https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?q=80&w=600&auto=format&fit=crop'
@@ -196,9 +204,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       );
 
       if (existingIdx > -1) {
-        const newCart = [...prevCart];
-        newCart[existingIdx].quantity += quantity;
-        return newCart;
+        return prevCart.map((item, idx) =>
+          idx === existingIdx
+            ? { ...item, quantity: item.quantity + quantity }
+            : item
+        );
       }
 
       return [...prevCart, { product, quantity, selectedSize: size }];

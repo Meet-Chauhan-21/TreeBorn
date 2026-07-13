@@ -91,6 +91,10 @@ const productSchema = new mongoose.Schema(
     volume: {
       type: String,
       default: '100ml'
+    },
+    video: {
+      type: String,
+      default: ''
     }
   },
   {

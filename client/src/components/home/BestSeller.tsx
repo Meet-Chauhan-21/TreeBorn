@@ -8,27 +8,44 @@ import { fallbackProducts } from '../../services/products';
 import { useStore } from '../../context/StoreContext';
 
 export const BestSeller: React.FC = () => {
-  const { products, settings } = useStore();
+  const { products, settings, addToCart, setIsCartOpen } = useStore();
   const catalog = products.length > 0 ? products : fallbackProducts;
 
   const defaultBestSeller = {
-    id: '',
-    name: 'Restorative Peptide Serum',
-    description: 'A concentrated multi-peptide serum designed to target visible signs of aging, restore firmness, and deeply hydrate the skin.',
+    id: 'mock-spotlight',
+    name: settings.homepageImages?.spotlightName || 'Restorative Peptide Serum',
+    description: settings.homepageImages?.spotlightDescription || 'A concentrated multi-peptide serum designed to target visible signs of aging, restore firmness, and deeply hydrate the skin.',
     rating: 4.9,
     reviewsCount: 148,
-    price: 85.00,
-    oldPrice: 110.00,
+    price: settings.homepageImages?.spotlightPrice !== undefined ? settings.homepageImages.spotlightPrice : 85.00,
+    oldPrice: settings.homepageImages?.spotlightOldPrice !== undefined ? settings.homepageImages.spotlightOldPrice : 110.00,
     ingredients: ['Copper Tripeptide-1', 'Hyaluronic Acid Matrix', 'Organic Centella Asiatica'],
     benefits: ['Plumps fine lines & wrinkles', 'Improves skin elasticity & firmness', 'Boosts natural collagen production'],
   };
 
-  const bestseller = catalog.find((p) => p.isBestSeller) || catalog[0] || defaultBestSeller;
+  const activeBestseller = catalog.find((p) => p.isBestSeller) || catalog[0];
+
+  const bestseller = {
+    ...defaultBestSeller,
+    id: activeBestseller?.id || defaultBestSeller.id,
+    name: settings.homepageImages?.spotlightName || activeBestseller?.name || defaultBestSeller.name,
+    description: settings.homepageImages?.spotlightDescription || activeBestseller?.description || defaultBestSeller.description,
+    price: settings.homepageImages?.spotlightPrice !== undefined ? settings.homepageImages.spotlightPrice : (activeBestseller?.price || defaultBestSeller.price),
+    oldPrice: settings.homepageImages?.spotlightOldPrice !== undefined ? settings.homepageImages.spotlightOldPrice : (activeBestseller?.oldPrice || defaultBestSeller.oldPrice),
+    ingredients: activeBestseller?.ingredients?.length ? activeBestseller.ingredients : defaultBestSeller.ingredients,
+    benefits: activeBestseller?.benefits?.length ? activeBestseller.benefits : defaultBestSeller.benefits,
+    volume: activeBestseller?.volume || '50ml',
+    image: settings.homepageImages?.spotlight || activeBestseller?.image || '',
+    hoverImage: activeBestseller?.hoverImage || '',
+    category: activeBestseller?.category || 'Skincare',
+    rating: activeBestseller?.rating || 4.9,
+    reviewsCount: activeBestseller?.reviewsCount || 148,
+  };
 
   const handleAddToCart = () => {
-    if (bestseller) {
-      toast.success(`${bestseller.name} added to shopping bag.`);
-    }
+    addToCart(bestseller as any, 1, bestseller.volume || '50ml');
+    setIsCartOpen(true);
+    toast.success(`${bestseller.name} added to shopping bag.`);
   };
 
   return (
@@ -133,6 +150,12 @@ export const BestSeller: React.FC = () => {
                 Key Actives:
               </h4>
               <div className="flex flex-wrap gap-2">
+                <span className="text-xs text-purple-700 bg-purple-100/40 backdrop-blur-md border border-purple-200/50 px-3 py-1.5 rounded-full font-sans font-bold shadow-3xs select-none">
+                  ✨ Bio-Active Botanical Infusion
+                </span>
+                <span className="text-xs text-emerald-700 bg-emerald-100/40 backdrop-blur-md border border-emerald-200/50 px-3 py-1.5 rounded-full font-sans font-bold shadow-3xs select-none">
+                  🌿 100% Natural Adaptogens
+                </span>
                 {bestseller.ingredients?.map((ing) => (
                   <span
                     key={ing}

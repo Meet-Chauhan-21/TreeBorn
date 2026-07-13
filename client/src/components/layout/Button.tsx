@@ -19,6 +19,7 @@ export const Button: React.FC<ButtonProps> = ({
   rightIcon,
   className = '',
   href,
+  type = 'button',
   ...props
 }) => {
   const baseStyles = 'inline-flex items-center justify-center font-display font-medium rounded-full transition-all duration-300 focus:outline-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed';
@@ -67,6 +68,7 @@ export const Button: React.FC<ButtonProps> = ({
 
   return (
     <motion.button
+      type={type}
       whileHover={{ y: -1 }}
       whileTap={{ scale: 0.98 }}
       className={combinedClass}

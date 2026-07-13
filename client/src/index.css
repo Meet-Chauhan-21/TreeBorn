@@ -181,6 +181,28 @@ body {
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.08) !important;
 }
 
+/* Fix validation styling overrides in admin-theme */
+.admin-theme .text-red-500 {
+  color: #ef4444 !important;
+}
+
+.admin-theme .border-red-500 {
+  border-color: #ef4444 !important;
+}
+
+.admin-theme input:not([type="checkbox"]):not([type="radio"]).border-red-500,
+.admin-theme select.border-red-500,
+.admin-theme textarea.border-red-500 {
+  border-color: #ef4444 !important;
+}
+
+.admin-theme input:not([type="checkbox"]):not([type="radio"]).border-red-500:focus,
+.admin-theme select.border-red-500:focus,
+.admin-theme textarea.border-red-500:focus {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.08) !important;
+}
+
 .admin-theme input::placeholder,
 .admin-theme textarea::placeholder {
   color: #94a3b8 !important;

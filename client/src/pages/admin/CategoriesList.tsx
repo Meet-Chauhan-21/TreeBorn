@@ -9,6 +9,7 @@ import Select from '../../components/admin/Select';
 import { useAuth } from '../../context/AuthContext';
 import { useStore } from '../../context/StoreContext';
 import { API_BASE_URL } from '../../config';
+import { getPublicIdFromUrl, deleteCloudinaryAsset } from '../../services/cloudinary';
 
 const CategoriesList: React.FC = () => {
   const { accessToken } = useAuth();
@@ -512,7 +513,13 @@ const CategoriesList: React.FC = () => {
                           />
                           <button
                             type="button"
-                            onClick={() => setFormData(prev => ({ ...prev, image: '' }))}
+                            onClick={async () => {
+                              const publicId = getPublicIdFromUrl(formData.image);
+                              if (publicId && accessToken) {
+                                await deleteCloudinaryAsset(publicId, accessToken);
+                              }
+                              setFormData(prev => ({ ...prev, image: '' }));
+                            }}
                             className="absolute top-2 right-2 p-1.5 rounded-full bg-red-600 hover:bg-red-700 text-white shadow-md transition-colors cursor-pointer focus:outline-none z-20"
                             title="Clear Image"
                           >

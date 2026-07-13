@@ -52,6 +52,7 @@ export const normalizeProduct = (product: ProductPayload): Product => ({
   stock: toOptionalNumber(product.stock),
   sku: product.sku,
   volume: product.volume || '50ml',
+  video: product.video || '',
   isNewArrival: Boolean(product.isNewArrival ?? product.isNew),
   createdAt: product.createdAt,
   updatedAt: product.updatedAt,

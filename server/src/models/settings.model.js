@@ -31,6 +31,22 @@ const settingsSchema = new mongoose.Schema(
         type: String,
         default: 'https://images.unsplash.com/photo-1617897903246-719242758050?q=80&w=800&auto=format&fit=crop'
       },
+      spotlightName: {
+        type: String,
+        default: 'Restorative Peptide Serum'
+      },
+      spotlightDescription: {
+        type: String,
+        default: 'A concentrated multi-peptide serum designed to target visible signs of aging, restore firmness, and deeply hydrate the skin.'
+      },
+      spotlightPrice: {
+        type: Number,
+        default: 85
+      },
+      spotlightOldPrice: {
+        type: Number,
+        default: 110
+      },
       about: {
         main: {
           type: String,

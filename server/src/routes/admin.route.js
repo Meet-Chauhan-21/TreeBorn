@@ -50,6 +50,31 @@ const uploadSingleImage = (req, res, next) => {
   });
 };
 
+const uploadVideo = multer({
+  storage,
+  limits: {
+    fileSize: 30 * 1024 * 1024 // 30 MB max
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only MP4, WebM, OGG, and QuickTime videos are allowed.'), false);
+    }
+  }
+});
+
+const uploadSingleVideo = (req, res, next) => {
+  const uploadHandler = uploadVideo.single('video');
+  uploadHandler(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({ message: err.message });
+    }
+    next();
+  });
+};
+
 // Admin middleware - apply to all admin routes
 router.use(verifyJWT, authorizeRoles('admin'));
 
@@ -81,6 +106,60 @@ router.post('/upload', uploadSingleImage, async (req, res) => {
   } catch (error) {
     console.error('Upload Endpoint Error:', error);
     return res.status(500).json({ message: 'Internal server upload error', error: error.message });
+  }
+});
+
+// File Video Upload Route
+router.post('/upload-video', uploadSingleVideo, async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    const uploadStream = cloudinary.uploader.upload_stream(
+      { 
+        folder: 'TreeBorn/videos',
+        resource_type: 'video'
+      },
+      (error, result) => {
+        if (error) {
+          console.error('Cloudinary stream upload error:', error);
+          return res.status(500).json({ message: 'Cloudinary upload failed', error: error.message });
+        }
+        return res.status(200).json({ 
+          public_id: result.public_id,
+          url: result.secure_url 
+        });
+      }
+    );
+
+    uploadStream.end(req.file.buffer);
+  } catch (error) {
+    console.error('Upload Video Endpoint Error:', error);
+    return res.status(500).json({ message: 'Internal server upload error', error: error.message });
+  }
+});
+
+// Delete Asset from Cloudinary Route
+router.post('/cloudinary/delete', async (req, res) => {
+  try {
+    const { public_id, resource_type } = req.body;
+    if (!public_id) {
+      return res.status(400).json({ message: 'public_id is required' });
+    }
+
+    const result = await cloudinary.uploader.destroy(public_id, {
+      resource_type: resource_type || 'image'
+    });
+
+    if (result.result === 'ok' || result.result === 'not found') {
+      return res.status(200).json({ message: 'Asset deleted from Cloudinary', result });
+    } else {
+      return res.status(400).json({ message: 'Cloudinary deletion failed', result });
+    }
+  } catch (error) {
+    console.error('Cloudinary Delete Error:', error);
+    return res.status(500).json({ message: 'Internal server deletion error', error: error.message });
   }
 });
 

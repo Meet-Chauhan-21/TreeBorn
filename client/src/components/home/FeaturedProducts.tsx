@@ -29,7 +29,9 @@ export const FeaturedProducts: React.FC = () => {
     }
   };
 
-  const handleAddToCart = (product: Product) => {
+  const handleAddToCart = (e: React.MouseEvent, product: Product) => {
+    e.preventDefault();
+    e.stopPropagation();
     addToCart(product, 1, '50ml');
     setIsCartOpen(true);
     toast.success(`${product.name} added to shopping bag.`);
@@ -147,7 +149,7 @@ export const FeaturedProducts: React.FC = () => {
                     {/* Quick Add Overlay */}
                     <div className="absolute inset-x-0 bottom-4 px-4 translate-y-6 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 z-10">
                       <Button
-                        onClick={() => handleAddToCart(product)}
+                        onClick={(e) => handleAddToCart(e, product)}
                         variant="primary"
                         size="sm"
                         className="w-full shadow-lg"

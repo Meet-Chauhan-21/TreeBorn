@@ -12,6 +12,7 @@ import { fetchPublicProductById } from '../../services/products';
 import { API_BASE_URL } from '../../config';
 import Select from '../../components/admin/Select';
 import { useStore } from '../../context/StoreContext';
+import { getPublicIdFromUrl, deleteCloudinaryAsset } from '../../services/cloudinary';
 
 const ProductForm: React.FC = () => {
   const navigate = useNavigate();
@@ -59,6 +60,7 @@ const ProductForm: React.FC = () => {
     ingredientsText: Yup.string().nullable(),
     benefitsText: Yup.string().nullable(),
     volume: Yup.string().required('Product volume is required'),
+    video: Yup.string().nullable(),
   });
 
   const formik = useFormik({
@@ -81,6 +83,7 @@ const ProductForm: React.FC = () => {
       ingredientsText: '',
       benefitsText: '',
       volume: '50ml',
+      video: '',
     },
     validationSchema,
     onSubmit: async (values) => {
@@ -165,12 +168,29 @@ const ProductForm: React.FC = () => {
         const publicId = data.public_id;
 
         if (field === 'image') {
+          const oldUrl = formik.values.image;
+          const oldPublicId = getPublicIdFromUrl(oldUrl);
+          if (oldPublicId && accessToken) {
+            await deleteCloudinaryAsset(oldPublicId, accessToken);
+          }
           formik.setFieldValue('image', uploadedUrl);
           toast.success('Product image uploaded successfully');
         } else if (field === 'hoverImage') {
+          const oldUrl = formik.values.hoverImage;
+          const oldPublicId = getPublicIdFromUrl(oldUrl);
+          if (oldPublicId && accessToken) {
+            await deleteCloudinaryAsset(oldPublicId, accessToken);
+          }
           formik.setFieldValue('hoverImage', uploadedUrl);
           toast.success('Hover image uploaded successfully');
         } else if (typeof field === 'number') {
+          const oldImg = galleryImages[field];
+          if (oldImg) {
+            const oldPublicId = oldImg.public_id || getPublicIdFromUrl(oldImg.url);
+            if (oldPublicId && accessToken) {
+              await deleteCloudinaryAsset(oldPublicId, accessToken);
+            }
+          }
           setGalleryImages(prev => {
             const updated = [...prev];
             updated[field] = { public_id: publicId, url: uploadedUrl };
@@ -194,13 +214,106 @@ const ProductForm: React.FC = () => {
     setGalleryImages(prev => [...prev, { public_id: '', url: '' }]);
   };
 
-  const handleRemoveGalleryImage = (index: number) => {
+  const handleRemoveGalleryImage = async (index: number) => {
+    const img = galleryImages[index];
+    const publicId = img.public_id || getPublicIdFromUrl(img.url);
+    if (publicId && accessToken) {
+      await deleteCloudinaryAsset(publicId, accessToken);
+    }
     setGalleryImages(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleClearImage = (field: 'image' | 'hoverImage') => {
+  const handleClearImage = async (field: 'image' | 'hoverImage') => {
+    const url = formik.values[field];
+    const publicId = getPublicIdFromUrl(url);
+    if (publicId && accessToken) {
+      await deleteCloudinaryAsset(publicId, accessToken);
+    }
     formik.setFieldValue(field, '');
     toast.info(`${field === 'image' ? 'Product' : 'Hover'} image cleared.`);
+  };
+
+  const handleVideoUpload = async (file: File) => {
+    if (!file) return;
+
+    const allowedTypes = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Invalid video format. Only MP4, WebM, OGG, and MOV are supported.');
+      return;
+    }
+
+    if (file.size > 30 * 1024 * 1024) {
+      toast.error('Video file size must be less than 30MB.');
+      return;
+    }
+
+    setUploadingField('video');
+    const uploadFormData = new FormData();
+    uploadFormData.append('video', file);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/upload-video`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        },
+        body: uploadFormData
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const oldUrl = formik.values.video;
+        const oldPublicId = getPublicIdFromUrl(oldUrl);
+        if (oldPublicId && accessToken) {
+          await deleteCloudinaryAsset(oldPublicId, accessToken, 'video');
+        }
+        formik.setFieldValue('video', data.url);
+        toast.success('Video uploaded successfully');
+      } else {
+        const errData = await response.json();
+        toast.error(errData.message || 'Video upload failed');
+      }
+    } catch (error) {
+      console.error('Video Upload Error:', error);
+      toast.error('Video upload failed');
+    } finally {
+      setUploadingField(null);
+    }
+  };
+
+  const renderVideoPreview = (url: string) => {
+    const ytRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+    const ytMatch = url.match(ytRegex);
+    if (ytMatch && ytMatch[1]) {
+      return (
+        <iframe
+          className="w-full h-full border-0"
+          src={`https://www.youtube.com/embed/${ytMatch[1]}`}
+          title="Video Preview"
+        />
+      );
+    }
+
+    const vimeoRegex = /(?:vimeo\.com\/|player\.vimeo\.com\/video\/)(\d+)/;
+    const vimeoMatch = url.match(vimeoRegex);
+    if (vimeoMatch && vimeoMatch[1]) {
+      return (
+        <iframe
+          className="w-full h-full border-0"
+          src={`https://player.vimeo.com/video/${vimeoMatch[1]}`}
+          title="Video Preview"
+        />
+      );
+    }
+
+    return (
+      <video
+        src={url}
+        className="w-full h-full object-contain bg-black"
+        controls
+        playsInline
+      />
+    );
   };
 
   useEffect(() => {
@@ -228,6 +341,7 @@ const ProductForm: React.FC = () => {
               ingredientsText: product.ingredients?.join('\n') || '',
               benefitsText: product.benefits?.join('\n') || '',
               volume: product.volume || '50ml',
+              video: product.video || '',
             });
 
             const formattedImages = (product.images || []).map((img: any) => {
@@ -716,6 +830,84 @@ const ProductForm: React.FC = () => {
                     </svg>
                     <span>Add More Image</span>
                   </button>
+                </div>
+              </Card>
+
+              <Card title="Product Video (Optional)">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Video URL</label>
+                    <input
+                      type="text"
+                      name="video"
+                      value={formik.values.video}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      className={`w-full px-4 py-3 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 ${
+                        formik.touched.video && formik.errors.video ? 'border-red-500 focus:border-red-500' : 'border-gray-200 focus:border-indigo-500'
+                      }`}
+                      placeholder="Paste YouTube, Vimeo, or direct video URL"
+                    />
+                  </div>
+
+                  <div className="relative">
+                    <div className="relative flex py-2 items-center">
+                      <div className="flex-grow border-t border-gray-200"></div>
+                      <span className="flex-shrink mx-4 text-gray-400 text-xs font-semibold uppercase tracking-wider">Or Upload Video</span>
+                      <div className="flex-grow border-t border-gray-200"></div>
+                    </div>
+                  </div>
+
+                  <div className="border-2 border-dashed border-gray-200 rounded-2xl p-4 text-center hover:border-indigo-500/50 transition-colors relative bg-gray-50/10 overflow-hidden min-h-[140px] flex flex-col items-center justify-center">
+                    {formik.values.video ? (
+                      <div className="relative w-full h-full group flex flex-col items-center justify-center">
+                        <div className="w-full aspect-video max-h-32 bg-black rounded-lg overflow-hidden border border-gray-150">
+                          {renderVideoPreview(formik.values.video)}
+                        </div>
+                        
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const url = formik.values.video;
+                            const publicId = getPublicIdFromUrl(url);
+                            if (publicId && accessToken) {
+                              await deleteCloudinaryAsset(publicId, accessToken, 'video');
+                            }
+                            formik.setFieldValue('video', '');
+                          }}
+                          className="absolute top-2 right-2 p-1.5 rounded-full bg-red-600 hover:bg-red-700 text-white shadow-md transition-colors cursor-pointer focus:outline-none z-20"
+                          title="Clear Video"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="flex flex-col items-center justify-center cursor-pointer w-full py-4">
+                        <span className="w-10 h-10 rounded-full bg-indigo-50 text-indigo-650 flex items-center justify-center mb-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+                          </svg>
+                        </span>
+                        <span className="text-xs font-semibold text-gray-700">Click to upload product video</span>
+                        <span className="text-[10px] text-gray-400 mt-1">MP4, WebM up to 30MB</span>
+                        <input
+                          type="file"
+                          accept="video/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            if (e.target.files?.[0]) {
+                              handleVideoUpload(e.target.files[0]);
+                            }
+                          }}
+                        />
+                      </label>
+                    )}
+                    {uploadingField === 'video' && (
+                      <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-10">
+                        <div className="w-6 h-6 border-2 border-indigo-100 border-t-indigo-600 rounded-full animate-spin" />
+                      </div>
+                    )}
+                  </div>
                 </div>
               </Card>
 

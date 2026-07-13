@@ -87,7 +87,8 @@ const createProduct = async (req, res) => {
       stock,
       sku,
       status,
-      volume
+      volume,
+      video
     } = req.body;
 
     if (!name || !category || !description || price === undefined || price === null || image === undefined || image === '' || stock === undefined || stock === null || sku === undefined || sku === '') {
@@ -127,7 +128,8 @@ const createProduct = async (req, res) => {
       stock,
       sku,
       status: status || 'active',
-      volume: volume || '50ml'
+      volume: volume || '50ml',
+      video: video || ''
     });
 
     return res.status(201).json({
@@ -169,7 +171,8 @@ const updateProduct = async (req, res) => {
       stock,
       sku,
       status,
-      volume
+      volume,
+      video
     } = req.body;
 
     if (sku && sku !== product.sku) {
@@ -208,6 +211,7 @@ const updateProduct = async (req, res) => {
     product.sku = sku || product.sku;
     product.status = status || product.status;
     product.volume = volume !== undefined ? volume : product.volume;
+    product.video = video !== undefined ? video : product.video;
 
     const updatedProduct = await product.save();
 
