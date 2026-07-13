@@ -8,7 +8,7 @@ const settingsSchema = new mongoose.Schema(
     },
     whatsappNumber: {
       type: String,
-      default: '8905330954'
+      default: '9023374410'
     },
     themeColor: {
       type: String,

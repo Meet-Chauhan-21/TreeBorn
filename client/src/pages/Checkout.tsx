@@ -20,23 +20,34 @@ const formatWhatsAppMessage = (
   totalAmount: number,
   paymentMethod: string
 ) => {
-  let message = `🌿 *NEW ORDER FROM TREEBORN* 🌿\n\n`;
-  message += `*Order Number:* ${orderNumber}\n`;
-  message += `*Customer:* ${shippingAddress.name}\n`;
-  message += `*Phone:* ${shippingAddress.phone}\n`;
-  message += `*Payment Method:* ${paymentMethod === 'cod' ? 'Cash on Delivery (COD)' : 'Prepaid Card'}\n\n`;
+  let message = `━━━━━━━━━━━━━━━━━━━━━\n`;
+  message += `🌿 *TREEBORN - NEW ORDER* 🌿\n`;
+  message += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
   
-  message += `📦 *Products Ordered:*\n`;
+  message += `📦 *Order Details:*\n`;
+  message += `• *Order ID:* #${orderNumber}\n`;
+  message += `• *Customer:* ${shippingAddress.name}\n`;
+  message += `• *Mobile:* ${shippingAddress.phone}\n`;
+  message += `• *Payment Method:* ${paymentMethod === 'cod' ? 'Cash on Delivery (COD)' : 'Online Payment'}\n\n`;
+  
+  message += `🛍️ *Items Ordered:*\n`;
   cartItems.forEach((item, index) => {
-    message += `${index + 1}. *${item.product.name}* (Size: ${item.selectedSize}) - Qty: ${item.quantity} - Rs. ${(item.product.price * item.quantity).toFixed(2)}\n`;
+    message += `${index + 1}. *${item.product.name}*\n`;
+    message += `   ▫️ Qty: ${item.quantity}\n`;
+    message += `   ▫️ Price: Rs. ${(item.product.price * item.quantity).toFixed(2)}\n`;
   });
+  message += `\n`;
   
-  message += `\n💵 *Total Amount Paid:* Rs. ${totalAmount.toFixed(2)}\n\n`;
+  message += `💵 *Total Amount:* Rs. ${totalAmount.toFixed(2)}\n\n`;
+  
   message += `📍 *Shipping Address:*\n`;
-  message += `${shippingAddress.street},\n`;
-  message += `${shippingAddress.district}, ${shippingAddress.state},\n`;
-  message += `${shippingAddress.country} - ${shippingAddress.zip}\n\n`;
-  message += `Thank you for shopping! 🌱`;
+  message += `🏠 ${shippingAddress.street},\n`;
+  message += `🏙️ ${shippingAddress.district}, ${shippingAddress.state},\n`;
+  message += `🇮🇳 ${shippingAddress.country} - ${shippingAddress.zip}\n\n`;
+  
+  message += `━━━━━━━━━━━━━━━━━━━━━\n`;
+  message += `Thank you for choosing TreeBorn! 🌱\n`;
+  message += `━━━━━━━━━━━━━━━━━━━━━`;
   
   return encodeURIComponent(message);
 };
@@ -44,7 +55,7 @@ const formatWhatsAppMessage = (
 export const Checkout: React.FC = () => {
   const navigate = useNavigate();
   const { cart, clearCart, settings } = useStore();
-  const { user, placeOrder, loading } = useAuth();
+  const { user, placeOrder, loading, addAddress } = useAuth();
 
   // Load user saved addresses
   const savedAddresses = user?.addresses || [];
@@ -252,6 +263,15 @@ export const Checkout: React.FC = () => {
       setIsSubmitting(false);
 
       if (!result) return;
+
+      // Save the new address to the user's saved addresses
+      if (useNewAddress && addAddress) {
+        try {
+          await addAddress(shippingAddress);
+        } catch (addrErr) {
+          console.error('Failed to save new address during checkout:', addrErr);
+        }
+      }
 
       setOrderId(result.order.orderNumber);
 

@@ -212,7 +212,7 @@ export const Login: React.FC = () => {
                 </div>
 
                 {/* Google Sign-in Button */}
-                <div className="w-full flex justify-center [&>div]:w-full">
+                <div className="w-full flex justify-center">
                   <GoogleLogin
                     onSuccess={async (credentialResponse) => {
                       if (credentialResponse.credential) {
@@ -222,9 +222,6 @@ export const Login: React.FC = () => {
                     onError={() => {
                       toast.error('Google Sign-In failed.');
                     }}
-                    theme="outline"
-                    shape="rectangular"
-                    width="100%"
                   />
                 </div>
 

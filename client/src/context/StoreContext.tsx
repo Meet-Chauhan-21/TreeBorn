@@ -78,7 +78,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const [settings, setSettings] = useState<AppSettings>({
     email: 'dabhisanjay901@gmail.com',
-    whatsappNumber: '8905330954',
+    whatsappNumber: '9023374410',
     themeColor: '#581C87',
     enableCreditCard: true,
     enablePaypal: true,

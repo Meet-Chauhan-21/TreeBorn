@@ -9,7 +9,7 @@ export const WhatsAppButton: React.FC = () => {
   const { products, settings } = useStore();
 
   // Determine message based on current page path
-  let message = 'Hello TREEBORN Skincare, I am interested in your botanical formulations. Can you please assist me?';
+  let message = 'Hello TreeBorn, I am interested in your products. Could you please assist me with my inquiry? Thank you! 🌿';
 
   if (path.startsWith('/product/')) {
     const productId = path.split('/product/')[1];

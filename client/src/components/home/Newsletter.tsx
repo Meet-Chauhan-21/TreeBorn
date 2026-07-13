@@ -40,9 +40,30 @@ export const Newsletter: React.FC = () => {
       // Simulate API delay
       setTimeout(() => {
         setIsLoading(false);
-        toast.success(`Thank you, ${values.name}! Your message has been sent successfully. Our botanical formulation team will reach out soon.`);
+        
+        // Format a professional WhatsApp message
+        let textMsg = `━━━━━━━━━━━━━━━━━━━━━\n`;
+        textMsg += `🌿 *TREEBORN - CONTACT INQUIRY* 🌿\n`;
+        textMsg += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
+        textMsg += `Hello TreeBorn Team, I would like to get in touch with you regarding your products/formulations. Here are my details:\n\n`;
+        textMsg += `👤 *Name:* ${values.name}\n`;
+        textMsg += `📧 *Email:* ${values.email}\n\n`;
+        textMsg += `💬 *Message:*\n"${values.message}"\n\n`;
+        textMsg += `━━━━━━━━━━━━━━━━━━━━━\n`;
+        textMsg += `Please review and get back. Thank you!`;
+
+        const encodedMessage = encodeURIComponent(textMsg);
+        const whatsappUrl = `https://wa.me/${formatWhatsAppLink(settings.whatsappNumber)}?text=${encodedMessage}`;
+
+        try {
+          window.open(whatsappUrl, '_blank');
+        } catch (e) {
+          console.error('Popup blocked by browser:', e);
+        }
+
+        toast.success(`Thank you, ${values.name}! Your inquiry has been prepared for WhatsApp.`);
         resetForm();
-      }, 1200);
+      }, 1000);
     },
   });
 

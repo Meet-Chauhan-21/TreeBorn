@@ -102,6 +102,9 @@ app.get('/api/settings', async (req, res) => {
     let settings = await Settings.findOne();
     if (!settings) {
       settings = await Settings.create({});
+    } else if (settings.whatsappNumber === '8905330954') {
+      settings.whatsappNumber = '9023374410';
+      await settings.save();
     }
     return res.status(200).json(settings);
   } catch (error) {
