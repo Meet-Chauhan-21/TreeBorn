@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Package, Trash2, Edit, AlertCircle, ShoppingBag, Eye, Plus, Search, CheckCircle, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Package, Trash2, Edit, AlertCircle, ShoppingBag, Eye, Plus, Search} from 'lucide-react';
 import { toast } from 'sonner';
 import AdminLayout from '../../components/admin/AdminLayout';
 import Card from '../../components/admin/Card';
