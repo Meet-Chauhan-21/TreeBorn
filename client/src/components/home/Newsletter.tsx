@@ -6,6 +6,7 @@ import { Mail, Phone, MapPin, Clock, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { Container } from '../layout/Container';
 import { useStore } from '../../context/StoreContext';
+import { API_BASE_URL } from '../../config';
 
 export const Newsletter: React.FC = () => {
   const { settings } = useStore();
@@ -37,10 +38,25 @@ export const Newsletter: React.FC = () => {
     validationSchema,
     onSubmit: async (values, { resetForm }) => {
       setIsLoading(true);
-      // Simulate API delay
-      setTimeout(() => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/users/contact-us`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            name: values.name,
+            email: values.email,
+            message: values.message
+          })
+        });
+
         setIsLoading(false);
-        
+
+        if (!response.ok) {
+          console.warn('Backend notification failed, proceeding with WhatsApp');
+        }
+
         // Format a professional WhatsApp message
         let textMsg = `━━━━━━━━━━━━━━━━━━━━━\n`;
         textMsg += `🌿 *TREEBORN - CONTACT INQUIRY* 🌿\n`;
@@ -63,7 +79,15 @@ export const Newsletter: React.FC = () => {
 
         toast.success(`Thank you, ${values.name}! Your inquiry has been prepared for WhatsApp.`);
         resetForm();
-      }, 1000);
+      } catch (error) {
+        setIsLoading(false);
+        console.error('Error submitting contact form to backend:', error);
+        // Fallback: still let them WhatsApp if network fails
+        toast.info('Prepared message for WhatsApp.');
+        const textMsg = `👤 Name: ${values.name}\n📧 Email: ${values.email}\n💬 Message: ${values.message}`;
+        window.open(`https://wa.me/${formatWhatsAppLink(settings.whatsappNumber)}?text=${encodeURIComponent(textMsg)}`, '_blank');
+        resetForm();
+      }
     },
   });
 
@@ -131,7 +155,7 @@ export const Newsletter: React.FC = () => {
                 <div>
                   <h4 className="text-xs font-bold uppercase text-slate-400 tracking-wider">Registered Address</h4>
                   <p className="text-sm font-semibold text-slate-800 mt-0.5 leading-relaxed">
-                    10, GURUKRUPA SOCIETY, NEAR ARCHANA SOCIETY, DABHOLI ROAD, KATARGAM SURAT GUJARAT 395004 India
+                    {settings.address || '10, GURUKRUPA SOCIETY, NEAR ARCHANA SOCIETY, DABHOLI ROAD, KATARGAM SURAT GUJARAT 395004 India'}
                   </p>
                 </div>
               </div>

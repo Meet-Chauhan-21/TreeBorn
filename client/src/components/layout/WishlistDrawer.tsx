@@ -15,7 +15,7 @@ export const WishlistDrawer: React.FC = () => {
   } = useStore();
 
   const handleMoveToCart = (product: any) => {
-    addToCart(product, 1, '50ml');
+    addToCart(product, 1, product.volume || '50ml');
     setIsWishlistOpen(false);
     setIsCartOpen(true);
     toast.success(`${product.name} added to shopping bag!`);

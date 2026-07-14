@@ -10,6 +10,10 @@ export interface AppSettings {
   enableCreditCard: boolean;
   enablePaypal: boolean;
   enableCOD: boolean;
+  shopName?: string;
+  address?: string;
+  gstNumber?: string;
+  logo?: string;
   homepageImages?: {
     spotlight: string;
     spotlightName?: string;
@@ -83,6 +87,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     enableCreditCard: true,
     enablePaypal: true,
     enableCOD: true,
+    shopName: 'TREEBORN Skincare',
+    address: '10, GURUKRUPA SOCIETY, NEAR ARCHANA SOCIETY, DABHOLI ROAD, KATARGAM SURAT GUJARAT 395004 India',
+    gstNumber: '24AAAAA0000A1Z5',
+    logo: 'https://images.unsplash.com/photo-1617897903246-719242758050?q=80&w=200&auto=format&fit=crop',
     homepageImages: {
       spotlight: 'https://images.unsplash.com/photo-1617897903246-719242758050?q=80&w=800&auto=format&fit=crop',
       spotlightName: 'Restorative Peptide Serum',
@@ -197,10 +205,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
   }, []);
 
-  const addToCart = (product: Product, quantity: number, size = '50ml') => {
+  const addToCart = (product: Product, quantity: number, size?: string) => {
+    const finalSize = size || product.volume || '50ml';
     setCart((prevCart) => {
       const existingIdx = prevCart.findIndex(
-        (item) => item.product.id === product.id && item.selectedSize === size
+        (item) => item.product.id === product.id && item.selectedSize === finalSize
       );
 
       if (existingIdx > -1) {
@@ -211,7 +220,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         );
       }
 
-      return [...prevCart, { product, quantity, selectedSize: size }];
+      return [...prevCart, { product, quantity, selectedSize: finalSize }];
     });
   };
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, ShoppingCart, Clock, TrendingUp, Trash2, CheckCircle } from 'lucide-react';
+import { Search, ShoppingCart, Clock, TrendingUp, Trash2, CheckCircle, RotateCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import AdminLayout from '../../components/admin/AdminLayout';
@@ -58,7 +58,7 @@ const OrderStatusSelect: React.FC<{
         disabled={updating}
         onChange={handleStatusChange}
         hClass="h-8 px-2"
-        options={['Placed', 'Processing', 'Delivered', 'Cancelled'].map((opt) => ({
+        options={['Placed', 'Processing', 'Shipped', 'Delivered', 'Cancelled'].map((opt) => ({
           value: opt,
           label: opt,
         }))}
@@ -112,27 +112,30 @@ const OrdersList: React.FC = () => {
   };
 
   const { accessToken } = useAuth();
+  const [reloading, setReloading] = useState(false);
+
+  const fetchOrders = async (showToast = false) => {
+    if (!accessToken) return;
+    if (showToast) setReloading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/orders`, {
+        headers: { 'Authorization': `Bearer ${accessToken}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setOrders(data.orders);
+        if (showToast) toast.success('Orders reloaded successfully');
+      }
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      if (showToast) toast.error('Failed to reload orders');
+    } finally {
+      setLoading(false);
+      setReloading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchOrders = async () => {
-      if (!accessToken) return;
-
-      try {
-        const response = await fetch(`${API_BASE_URL}/admin/orders`, {
-          headers: { 'Authorization': `Bearer ${accessToken}` }
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setOrders(data.orders);
-        }
-      } catch (error) {
-        console.error('Error fetching orders:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchOrders();
   }, [accessToken]);
 
@@ -271,10 +274,19 @@ const OrdersList: React.FC = () => {
                 { value: 'all', label: 'All Status' },
                 { value: 'pending', label: 'Pending' },
                 { value: 'processing', label: 'Processing' },
+                { value: 'shipped', label: 'Shipped' },
                 { value: 'delivered', label: 'Delivered' },
                 { value: 'cancelled', label: 'Cancelled' },
               ]}
             />
+            <button
+              onClick={() => fetchOrders(true)}
+              disabled={reloading}
+              className="p-2.5 bg-white border border-slate-200 rounded-xl text-slate-500 hover:text-slate-800 transition-all cursor-pointer shadow-3xs flex items-center justify-center h-10 w-10 shrink-0 focus:outline-none focus:ring-2 focus:ring-primary/20"
+              title="Reload Orders"
+            >
+              <RotateCw size={18} className={reloading ? 'animate-spin' : ''} />
+            </button>
           </div>
 
           <DataTable

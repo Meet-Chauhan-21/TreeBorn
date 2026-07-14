@@ -1,19 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const cloudinary = require('cloudinary').v2;
 const { verifyJWT, authorizeRoles } = require('../middleware/auth.middleware');
-const {
-  getAllProductsAdmin,
-  createProduct,
-  updateProduct,
-  deleteProduct
-} = require('../controller/product.controller');
-const User = require('../models/user.model');
-const Order = require('../models/order.model');
-const Product = require('../models/product.model');
-const Settings = require('../models/settings.model');
-const Category = require('../models/category.model');
+
+// Import Admin Controllers
+const dashboardController = require('../controller/admin/dashboard.controller');
+const productController = require('../controller/admin/product.controller');
+const orderController = require('../controller/admin/order.controller');
+const userController = require('../controller/admin/user.controller');
 
 // Configure Multer
 const storage = multer.memoryStorage();
@@ -30,13 +24,6 @@ const upload = multer({
       cb(new Error('Invalid file type. Only JPG, JPEG, PNG, and WEBP are allowed.'), false);
     }
   }
-});
-
-// Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
 // Multer error handling wrapper to return JSON
@@ -78,478 +65,44 @@ const uploadSingleVideo = (req, res, next) => {
 // Admin middleware - apply to all admin routes
 router.use(verifyJWT, authorizeRoles('admin'));
 
-// File Upload Route
-router.post('/upload', uploadSingleImage, async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ message: 'No file uploaded' });
-    }
+// Dashboard endpoints
+router.get('/dashboard', dashboardController.getDashboardStats);
 
-    const uploadStream = cloudinary.uploader.upload_stream(
-      { 
-        folder: 'TreeBorn/products',
-        resource_type: 'auto'
-      },
-      (error, result) => {
-        if (error) {
-          console.error('Cloudinary stream upload error:', error);
-          return res.status(500).json({ message: 'Cloudinary upload failed', error: error.message });
-        }
-        return res.status(200).json({ 
-          public_id: result.public_id,
-          url: result.secure_url 
-        });
-      }
-    );
+// Settings endpoints
+router.get('/settings', dashboardController.getSettings);
+router.put('/settings', dashboardController.updateSettings);
 
-    uploadStream.end(req.file.buffer);
-  } catch (error) {
-    console.error('Upload Endpoint Error:', error);
-    return res.status(500).json({ message: 'Internal server upload error', error: error.message });
-  }
-});
+// Notifications (Bell Icon)
+router.get('/notifications', dashboardController.getNotifications);
+router.put('/notifications/:id/read', dashboardController.markNotificationRead);
+router.delete('/notifications', dashboardController.clearNotifications);
 
-// File Video Upload Route
-router.post('/upload-video', uploadSingleVideo, async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ message: 'No file uploaded' });
-    }
+// Upload endpoints
+router.post('/upload', uploadSingleImage, productController.uploadImage);
+router.post('/upload-video', uploadSingleVideo, productController.uploadVideo);
+router.post('/cloudinary/delete', productController.deleteCloudinaryAsset);
 
-    const uploadStream = cloudinary.uploader.upload_stream(
-      { 
-        folder: 'TreeBorn/videos',
-        resource_type: 'video'
-      },
-      (error, result) => {
-        if (error) {
-          console.error('Cloudinary stream upload error:', error);
-          return res.status(500).json({ message: 'Cloudinary upload failed', error: error.message });
-        }
-        return res.status(200).json({ 
-          public_id: result.public_id,
-          url: result.secure_url 
-        });
-      }
-    );
+// Product CRUD endpoints
+router.get('/products', productController.getAllProductsAdmin);
+router.post('/products', productController.createProduct);
+router.put('/products/:id', productController.updateProduct);
+router.delete('/products/:id', productController.deleteProduct);
 
-    uploadStream.end(req.file.buffer);
-  } catch (error) {
-    console.error('Upload Video Endpoint Error:', error);
-    return res.status(500).json({ message: 'Internal server upload error', error: error.message });
-  }
-});
+// Category CRUD endpoints
+router.post('/categories', productController.createCategory);
+router.put('/categories/:id', productController.updateCategory);
+router.delete('/categories/:id', productController.deleteCategory);
 
-// Delete Asset from Cloudinary Route
-router.post('/cloudinary/delete', async (req, res) => {
-  try {
-    const { public_id, resource_type } = req.body;
-    if (!public_id) {
-      return res.status(400).json({ message: 'public_id is required' });
-    }
+// Order endpoints
+router.get('/orders', orderController.getAllOrders);
+router.get('/orders/:id', orderController.getOrderById);
+router.put('/orders/:id/status', orderController.updateOrderStatus);
+router.delete('/orders/:id', orderController.deleteOrder);
 
-    const result = await cloudinary.uploader.destroy(public_id, {
-      resource_type: resource_type || 'image'
-    });
-
-    if (result.result === 'ok' || result.result === 'not found') {
-      return res.status(200).json({ message: 'Asset deleted from Cloudinary', result });
-    } else {
-      return res.status(400).json({ message: 'Cloudinary deletion failed', result });
-    }
-  } catch (error) {
-    console.error('Cloudinary Delete Error:', error);
-    return res.status(500).json({ message: 'Internal server deletion error', error: error.message });
-  }
-});
-
-// Products admin routes
-router.get('/products', getAllProductsAdmin);
-router.post('/products', createProduct);
-router.put('/products/:id', updateProduct);
-router.delete('/products/:id', deleteProduct);
-
-// Users admin routes
-router.get('/users', async (req, res) => {
-  try {
-    const page = Math.max(parseInt(req.query.page || '1', 10), 1);
-    const limit = Math.min(Math.max(parseInt(req.query.limit || '50', 10), 1), 100);
-    const skip = (page - 1) * limit;
-    const search = req.query.search || '';
-
-    let query = { role: 'user' };
-    if (search) {
-      query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } }
-      ];
-    }
-
-    const [users, total] = await Promise.all([
-      User.find(query).select('-password -refreshToken').sort({ createdAt: -1 }).skip(skip).limit(limit),
-      User.countDocuments(query)
-    ]);
-
-    // Get order count for each user
-    const usersWithOrderCount = await Promise.all(
-      users.map(async (user) => {
-        const orderCount = await Order.countDocuments({ user: user._id });
-        return {
-          ...user.toObject(),
-          orders: orderCount
-        };
-      })
-    );
-
-    return res.status(200).json({
-      users: usersWithOrderCount,
-      total,
-      page,
-      limit
-    });
-  } catch (error) {
-    console.error('Get Admin Users Error:', error);
-    return res.status(500).json({ message: 'Server error. Failed to fetch users.' });
-  }
-});
-
-router.get('/users/:id', async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id).select('-password -refreshToken');
-    if (!user || user.role !== 'user') {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    const orders = await Order.find({ user: user._id }).sort({ createdAt: -1 }).limit(10);
-    const orderCount = await Order.countDocuments({ user: user._id });
-
-    return res.status(200).json({
-      user: {
-        ...user.toObject(),
-        orders: orderCount,
-        recentOrders: orders
-      }
-    });
-  } catch (error) {
-    console.error('Get Admin User Error:', error);
-    return res.status(500).json({ message: 'Server error. Failed to fetch user.' });
-  }
-});
-
-router.delete('/users/:id', async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    if (user.role === 'admin') {
-      return res.status(400).json({ message: 'Cannot delete admin user.' });
-    }
-    await User.findByIdAndDelete(req.params.id);
-    return res.status(200).json({ message: 'User deleted successfully' });
-  } catch (error) {
-    console.error('Delete Admin User Error:', error);
-    return res.status(500).json({ message: 'Server error. Failed to delete user.' });
-  }
-});
-
-// Orders admin routes
-router.get('/orders', async (req, res) => {
-  try {
-    const page = Math.max(parseInt(req.query.page || '1', 10), 1);
-    const limit = Math.min(Math.max(parseInt(req.query.limit || '50', 10), 1), 100);
-    const skip = (page - 1) * limit;
-    const search = req.query.search || '';
-    const status = req.query.status || '';
-
-    let query = {};
-    if (search) {
-      query.$or = [
-        { orderNumber: { $regex: search, $options: 'i' } },
-        { 'shippingAddress.name': { $regex: search, $options: 'i' } }
-      ];
-    }
-    if (status && status !== 'all') {
-      query.status = status;
-    }
-
-    const [orders, total] = await Promise.all([
-      Order.find(query).populate('user', 'name email').sort({ createdAt: -1 }).skip(skip).limit(limit),
-      Order.countDocuments(query)
-    ]);
-
-    return res.status(200).json({
-      orders,
-      total,
-      page,
-      limit
-    });
-  } catch (error) {
-    console.error('Get Admin Orders Error:', error);
-    return res.status(500).json({ message: 'Server error. Failed to fetch orders.' });
-  }
-});
-
-router.get('/orders/:id', async (req, res) => {
-  try {
-    const order = await Order.findById(req.params.id).populate('user', 'name email phone');
-    if (!order) {
-      return res.status(404).json({ message: 'Order not found' });
-    }
-
-    return res.status(200).json({ order });
-  } catch (error) {
-    console.error('Get Admin Order Error:', error);
-    return res.status(500).json({ message: 'Server error. Failed to fetch order.' });
-  }
-});
-
-router.put('/orders/:id/status', async (req, res) => {
-  try {
-    const { status } = req.body;
-    const allowedStatuses = ['Placed', 'Processing', 'Delivered', 'Cancelled'];
-
-    if (!allowedStatuses.includes(status)) {
-      return res.status(400).json({ message: 'Invalid order status.' });
-    }
-
-    const order = await Order.findById(req.params.id);
-    if (!order) {
-      return res.status(404).json({ message: 'Order not found' });
-    }
-
-    order.status = status;
-    const updatedOrder = await order.save();
-
-    return res.status(200).json({
-      message: 'Order status updated successfully',
-      order: updatedOrder
-    });
-  } catch (error) {
-    console.error('Update Order Status Error:', error);
-    return res.status(500).json({ message: 'Server error. Failed to update order status.' });
-  }
-});
-
-router.put('/users/:id', async (req, res) => {
-  try {
-    const { name, email, phone, role } = req.body;
-    const user = await User.findById(req.params.id);
-
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    user.name = name || user.name;
-    user.email = email ? email.toLowerCase() : user.email;
-    user.phone = phone || user.phone;
-    user.role = role === 'admin' ? 'admin' : 'user';
-
-    const updatedUser = await user.save();
-
-    return res.status(200).json({
-      message: 'User updated successfully',
-      user: updatedUser
-    });
-  } catch (error) {
-    console.error('Update Admin User Error:', error);
-    return res.status(500).json({ message: 'Server error. Failed to update user.' });
-  }
-});
-
-// Dashboard stats
-router.get('/dashboard', async (req, res) => {
-  try {
-    const [
-      totalUsers,
-      totalProducts,
-      totalOrders,
-      totalRevenue,
-      recentOrders,
-      topProducts
-    ] = await Promise.all([
-      User.countDocuments({ role: 'user' }),
-      Product.countDocuments({ status: 'active' }),
-      Order.countDocuments(),
-      Order.aggregate([
-        { $match: { 'payment.status': 'paid' } },
-        { $group: { _id: null, total: { $sum: '$totals.total' } } }
-      ]),
-      Order.find().populate('user', 'name').sort({ createdAt: -1 }).limit(5),
-      Order.aggregate([
-        { $unwind: '$items' },
-        {
-          $group: {
-            _id: '$items.productId',
-            name: { $first: '$items.name' },
-            sales: { $sum: '$items.quantity' },
-            revenue: { $sum: { $multiply: ['$items.quantity', '$items.price'] } }
-          }
-        },
-        { $sort: { sales: -1 } },
-        { $limit: 5 }
-      ])
-    ]);
-
-    const revenue = totalRevenue.length > 0 ? totalRevenue[0].total : 0;
-
-    // Get monthly revenue data for chart
-    const monthlyRevenue = await Order.aggregate([
-      { $match: { 'payment.status': 'paid' } },
-      {
-        $group: {
-          _id: { $month: '$createdAt' },
-          revenue: { $sum: '$totals.total' },
-          orders: { $sum: 1 }
-        }
-      },
-      { $sort: { _id: 1 } }
-    ]);
-
-    return res.status(200).json({
-      stats: {
-        revenue,
-        orders: totalOrders,
-        products: totalProducts,
-        users: totalUsers
-      },
-      recentOrders,
-      topProducts
-    });
-  } catch (error) {
-    console.error('Get Dashboard Stats Error:', error);
-    return res.status(500).json({ message: 'Server error. Failed to fetch dashboard stats.' });
-  }
-});
-
-// Settings Admin Routes
-router.get('/settings', async (req, res) => {
-  try {
-    let settings = await Settings.findOne();
-    if (!settings) {
-      settings = await Settings.create({});
-    }
-    return res.status(200).json({ settings });
-  } catch (error) {
-    console.error('Admin Get Settings Error:', error);
-    return res.status(500).json({ message: 'Server error. Failed to get settings.' });
-  }
-});
-
-router.put('/settings', async (req, res) => {
-  try {
-    const { email, whatsappNumber, themeColor, enableCreditCard, enablePaypal, enableCOD, privacyPolicy, termsConditions, homepageImages } = req.body;
-    let settings = await Settings.findOne();
-    if (!settings) {
-      settings = new Settings();
-    }
-    settings.email = email !== undefined ? email : settings.email;
-    settings.whatsappNumber = whatsappNumber !== undefined ? whatsappNumber : settings.whatsappNumber;
-    settings.themeColor = themeColor !== undefined ? themeColor : settings.themeColor;
-    settings.enableCreditCard = enableCreditCard !== undefined ? enableCreditCard : settings.enableCreditCard;
-    settings.enablePaypal = enablePaypal !== undefined ? enablePaypal : settings.enablePaypal;
-    settings.enableCOD = enableCOD !== undefined ? enableCOD : settings.enableCOD;
-    settings.privacyPolicy = privacyPolicy !== undefined ? privacyPolicy : settings.privacyPolicy;
-    settings.termsConditions = termsConditions !== undefined ? termsConditions : settings.termsConditions;
-    settings.homepageImages = homepageImages !== undefined ? homepageImages : settings.homepageImages;
-
-    const updated = await settings.save();
-    return res.status(200).json({ message: 'Settings updated successfully', settings: updated });
-  } catch (error) {
-    console.error('Admin Update Settings Error:', error);
-    return res.status(500).json({ message: 'Server error. Failed to update settings.' });
-  }
-});
-
-// Category Admin Routes
-router.post('/categories', async (req, res) => {
-  try {
-    const { name, slug, image, altText, isActive, sortOrder } = req.body;
-    if (!name || !slug || !image) {
-      return res.status(400).json({ message: 'Name, slug, and image are required.' });
-    }
-
-    const nameExists = await Category.findOne({ name });
-    if (nameExists) {
-      return res.status(400).json({ message: 'Category name already exists.' });
-    }
-
-    const slugExists = await Category.findOne({ slug });
-    if (slugExists) {
-      return res.status(400).json({ message: 'Category slug already exists.' });
-    }
-
-    const category = await Category.create({
-      name,
-      slug,
-      image,
-      altText: altText || '',
-      isActive: isActive !== undefined ? isActive : true,
-      sortOrder: sortOrder !== undefined ? Number(sortOrder) : 0
-    });
-
-    return res.status(201).json({ message: 'Category created successfully', category });
-  } catch (error) {
-    console.error('Admin Create Category Error:', error);
-    return res.status(500).json({ message: 'Server error. Failed to create category.' });
-  }
-});
-
-router.put('/categories/:id', async (req, res) => {
-  try {
-    const { name, slug, image, altText, isActive, sortOrder } = req.body;
-    const category = await Category.findById(req.params.id);
-    if (!category) {
-      return res.status(404).json({ message: 'Category not found.' });
-    }
-
-    if (name && name !== category.name) {
-      const nameExists = await Category.findOne({ name });
-      if (nameExists) {
-        return res.status(400).json({ message: 'Category name already exists.' });
-      }
-      category.name = name;
-    }
-
-    if (slug && slug !== category.slug) {
-      const slugExists = await Category.findOne({ slug });
-      if (slugExists) {
-        return res.status(400).json({ message: 'Category slug already exists.' });
-      }
-      category.slug = slug;
-    }
-
-    category.image = image !== undefined ? image : category.image;
-    category.altText = altText !== undefined ? altText : category.altText;
-    category.isActive = isActive !== undefined ? isActive : category.isActive;
-    category.sortOrder = sortOrder !== undefined ? Number(sortOrder) : category.sortOrder;
-
-    const updated = await category.save();
-    return res.status(200).json({ message: 'Category updated successfully', category: updated });
-  } catch (error) {
-    console.error('Admin Update Category Error:', error);
-    return res.status(500).json({ message: 'Server error. Failed to update category.' });
-  }
-});
-
-router.delete('/categories/:id', async (req, res) => {
-  try {
-    const productCount = await Product.countDocuments({ category: req.params.id });
-    if (productCount > 0) {
-      return res.status(400).json({
-        message: `Cannot delete category. It is currently linked to ${productCount} ${productCount === 1 ? 'product' : 'products'}.`
-      });
-    }
-
-    const category = await Category.findByIdAndDelete(req.params.id);
-    if (!category) {
-      return res.status(404).json({ message: 'Category not found.' });
-    }
-    return res.status(200).json({ message: 'Category deleted successfully' });
-  } catch (error) {
-    console.error('Admin Delete Category Error:', error);
-    return res.status(500).json({ message: 'Server error. Failed to delete category.' });
-  }
-});
+// User endpoints
+router.get('/users', userController.getAllUsers);
+router.get('/users/:id', userController.getUserById);
+router.put('/users/:id', userController.updateUser);
+router.delete('/users/:id', userController.deleteUser);
 
 module.exports = router;

@@ -162,7 +162,7 @@ export const Category: React.FC = () => {
   const handleAddToCart = (e: React.MouseEvent, product: Product) => {
     e.preventDefault();
     e.stopPropagation();
-    addToCart(product, 1, '50ml');
+    addToCart(product, 1, product.volume || '50ml');
     setIsCartOpen(true);
     toast.success(`${product.name} added to shopping bag.`);
   };

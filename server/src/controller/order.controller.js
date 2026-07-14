@@ -86,6 +86,44 @@ const createOrder = async (req, res) => {
       status: 'Placed'
     });
 
+    // Create notification for admin
+    try {
+      const Notification = require('../models/notification.model');
+      await Notification.create({
+        type: 'new_order',
+        title: 'New Order Placed',
+        message: `Order #${order.orderNumber} placed by ${shippingAddress.name} for ₹${totals.total.toFixed(2)}`,
+        link: `/admin/orders/${order._id}`
+      });
+    } catch (notificationError) {
+      console.error('Failed to create order notification:', notificationError);
+    }
+
+    // Handle stock decrement and low stock notification if applicable
+    try {
+      const Product = require('../models/product.model');
+      const Notification = require('../models/notification.model');
+      for (const item of order.items) {
+        const product = await Product.findById(item.productId);
+        if (product) {
+          if (product.stock !== undefined && product.stock !== null) {
+            product.stock = Math.max(0, product.stock - item.quantity);
+            await product.save();
+            if (product.stock <= 10) {
+              await Notification.create({
+                type: 'low_stock',
+                title: 'Low Stock Alert',
+                message: `Product "${product.name}" has low stock (${product.stock} units remaining).`,
+                link: `/admin/products/${product._id}`
+              });
+            }
+          }
+        }
+      }
+    } catch (stockError) {
+      console.error('Failed to decrement stock / create low stock notification:', stockError);
+    }
+
     return res.status(201).json({
       message: 'Order created successfully',
       order

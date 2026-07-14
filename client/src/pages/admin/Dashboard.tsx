@@ -231,7 +231,11 @@ const Dashboard: React.FC = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <Card title="Recent Orders" className="lg:col-span-2">
-            <DataTable columns={orderColumns} data={recentOrders} />
+            <DataTable
+              columns={orderColumns}
+              data={recentOrders}
+              onRowClick={(item: any) => navigate(`/admin/orders/${item._id}`)}
+            />
           </Card>
 
           <Card title="Recent Activity">
@@ -257,7 +261,11 @@ const Dashboard: React.FC = () => {
         <Card title="Top Selling Products">
           <div className="space-y-3">
             {topProducts.map((product, index) => (
-              <div key={product._id || index} className="flex items-center justify-between p-3.5 bg-slate-50/60 border border-slate-100 rounded-xl hover:bg-slate-50 transition-colors">
+              <div
+                key={product._id || index}
+                onClick={() => navigate(`/admin/products/${product._id}`)}
+                className="flex items-center justify-between p-3.5 bg-slate-50/60 border border-slate-100 rounded-xl hover:bg-slate-100 hover:border-slate-200 transition-all cursor-pointer shadow-3xs hover:scale-[1.01]"
+              >
                 <div className="flex items-center gap-4">
                   <div className="w-8 h-8 bg-slate-100 border border-slate-200/50 rounded-lg flex items-center justify-center text-slate-800 font-bold text-xs shadow-3xs">
                     {index + 1}

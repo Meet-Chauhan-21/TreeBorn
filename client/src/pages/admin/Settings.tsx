@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Palette, CreditCard } from 'lucide-react';
+import { Save, Palette, CreditCard, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
 import AdminLayout from '../../components/admin/AdminLayout';
 import Card from '../../components/admin/Card';
@@ -7,11 +7,13 @@ import Button from '../../components/admin/Button';
 import { useAuth } from '../../context/AuthContext';
 import { useStore } from '../../context/StoreContext';
 import { API_BASE_URL } from '../../config';
+import { getPublicIdFromUrl, deleteCloudinaryAsset } from '../../services/cloudinary';
 
 const Settings: React.FC = () => {
   const { accessToken } = useAuth();
   const { updateLocalSettings } = useStore();
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
 
   const [formData, setFormData] = useState({
     email: '',
@@ -19,7 +21,11 @@ const Settings: React.FC = () => {
     themeColor: '#581C87',
     enableCreditCard: true,
     enablePaypal: true,
-    enableCOD: true
+    enableCOD: true,
+    shopName: '',
+    address: '',
+    gstNumber: '',
+    logo: ''
   });
 
   const presetColors = [
@@ -66,7 +72,11 @@ const Settings: React.FC = () => {
               themeColor: data.settings.themeColor || '#581C87',
               enableCreditCard: data.settings.enableCreditCard !== false,
               enablePaypal: data.settings.enablePaypal !== false,
-              enableCOD: data.settings.enableCOD !== false
+              enableCOD: data.settings.enableCOD !== false,
+              shopName: data.settings.shopName || '',
+              address: data.settings.address || '',
+              gstNumber: data.settings.gstNumber || '',
+              logo: data.settings.logo || ''
             });
           }
         }
@@ -78,6 +88,76 @@ const Settings: React.FC = () => {
     };
     fetchSettings();
   }, [accessToken]);
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Invalid file type. Only JPG, JPEG, PNG, and WEBP are supported.');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File size must be less than 5MB.');
+      return;
+    }
+
+    setUploading(true);
+    const uploadFormData = new FormData();
+    uploadFormData.append('image', file);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/upload`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        },
+        body: uploadFormData
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const uploadedUrl = data.url;
+
+        // If there was an old logo, delete it
+        if (formData.logo) {
+          const oldPublicId = getPublicIdFromUrl(formData.logo);
+          if (oldPublicId && accessToken) {
+            await deleteCloudinaryAsset(oldPublicId, accessToken);
+          }
+        }
+
+        setFormData(prev => ({ ...prev, logo: uploadedUrl }));
+        toast.success('Logo uploaded successfully');
+      } else {
+        toast.error('Failed to upload logo to Cloudinary');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Error uploading logo');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemoveLogo = async () => {
+    if (!formData.logo) return;
+    
+    const publicId = getPublicIdFromUrl(formData.logo);
+    if (publicId && accessToken) {
+      toast.loading('Deleting logo from Cloudinary...', { id: 'delete-logo' });
+      const success = await deleteCloudinaryAsset(publicId, accessToken);
+      if (success) {
+        toast.success('Logo deleted from Cloudinary', { id: 'delete-logo' });
+      } else {
+        toast.error('Failed to delete logo from Cloudinary, cleared locally', { id: 'delete-logo' });
+      }
+    }
+    
+    setFormData(prev => ({ ...prev, logo: '' }));
+  };
 
   const handleSave = async () => {
     if (!accessToken) return;
@@ -145,6 +225,76 @@ const Settings: React.FC = () => {
                       className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-sans text-sm"
                       placeholder="9023374410"
                     />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4 mt-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Shop Name</label>
+                    <input
+                      type="text"
+                      value={formData.shopName}
+                      onChange={(e) => setFormData({ ...formData, shopName: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-sans text-sm"
+                      placeholder="TREEBORN Skincare"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">GST Number</label>
+                    <input
+                      type="text"
+                      value={formData.gstNumber}
+                      onChange={(e) => setFormData({ ...formData, gstNumber: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-sans text-sm"
+                      placeholder="24AAAAA0000A1Z5"
+                    />
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Store Address</label>
+                  <textarea
+                    value={formData.address}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-sans text-sm min-h-[80px]"
+                    placeholder="Store address..."
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 items-center">
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Store Logo</label>
+                    <div className="flex items-center gap-3">
+                      <label className="flex items-center gap-2 px-4 py-3 bg-white border border-gray-200 rounded-2xl cursor-pointer hover:bg-slate-50 transition-colors shadow-3xs text-slate-700 font-sans text-sm border-dashed">
+                        <Upload size={16} className={uploading ? 'animate-spin' : ''} />
+                        <span>{uploading ? 'Uploading...' : 'Upload Logo Image'}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleLogoUpload}
+                          disabled={uploading}
+                          className="hidden"
+                        />
+                      </label>
+                      
+                      {formData.logo && (
+                        <button
+                          type="button"
+                          onClick={handleRemoveLogo}
+                          className="flex items-center gap-1.5 px-4 py-3 border border-red-200 text-red-650 rounded-2xl hover:bg-red-50 transition-all font-sans text-sm cursor-pointer shadow-3xs focus:outline-none"
+                        >
+                          <X size={15} />
+                          <span>Cancel / Remove</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-3">Logo Preview</label>
+                    <div className="h-14 w-36 border border-gray-200 rounded-2xl bg-slate-50/50 flex items-center justify-center overflow-hidden shadow-3xs p-1">
+                      {formData.logo ? (
+                        <img src={formData.logo} alt="Store Logo Preview" className="h-full w-auto object-contain" />
+                      ) : (
+                        <span className="text-[10px] text-gray-400 font-sans">No logo uploaded</span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

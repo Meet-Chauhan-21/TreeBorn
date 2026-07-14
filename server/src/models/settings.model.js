@@ -26,6 +26,22 @@ const settingsSchema = new mongoose.Schema(
       type: Boolean,
       default: true
     },
+    shopName: {
+      type: String,
+      default: 'TREEBORN Skincare'
+    },
+    address: {
+      type: String,
+      default: '10, GURUKRUPA SOCIETY, NEAR ARCHANA SOCIETY, DABHOLI ROAD, KATARGAM SURAT GUJARAT 395004 India'
+    },
+    gstNumber: {
+      type: String,
+      default: '24AAAAA0000A1Z5'
+    },
+    logo: {
+      type: String,
+      default: 'https://images.unsplash.com/photo-1617897903246-719242758050?q=80&w=200&auto=format&fit=crop'
+    },
     homepageImages: {
       spotlight: {
         type: String,

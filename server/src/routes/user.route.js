@@ -6,13 +6,19 @@ const {
   loginUser, 
   logoutUser, 
   refreshAccessToken, 
+  googleSignIn
+} = require('../controller/user/auth.controller');
+
+const {
   getUserProfile,
-  updateUserProfile,
+  updateUserProfile
+} = require('../controller/user/profile.controller');
+
+const {
   addUserAddress,
   updateUserAddress,
-  deleteUserAddress,
-  googleSignIn
-} = require('../controller/user.controller');
+  deleteUserAddress
+} = require('../controller/user/address.controller');
 const { verifyJWT, authorizeRoles } = require('../middleware/auth.middleware');
 
 // Rate limiting configuration for Google Login (max 10 requests per 15 minutes)
@@ -30,6 +36,25 @@ router.post('/login', loginUser);
 router.post('/refresh', refreshAccessToken);
 router.post('/logout', logoutUser); // Clear cookie and invalidate session
 router.post('/google', googleRateLimiter, googleSignIn);
+router.post('/contact-us', async (req, res) => {
+  try {
+    const { name, email, message } = req.body;
+    if (!name || !email || !message) {
+      return res.status(400).json({ message: 'Name, email, and message are required.' });
+    }
+    const Notification = require('../models/notification.model');
+    await Notification.create({
+      type: 'contact_submit',
+      title: 'New Contact Inquiry',
+      message: `${name} (${email}) sent: "${message.substring(0, 60)}${message.length > 60 ? '...' : ''}"`,
+      link: '/admin'
+    });
+    return res.status(201).json({ message: 'Contact inquiry registered successfully.' });
+  } catch (error) {
+    console.error('Contact submit error:', error);
+    return res.status(500).json({ message: 'Server error. Submission failed.' });
+  }
+});
 
 // Protected routes (User & Admin)
 router.get('/profile', verifyJWT, getUserProfile);
