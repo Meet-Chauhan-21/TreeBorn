@@ -70,7 +70,7 @@ export const Newsletter: React.FC = () => {
   return (
     <section id="contact" className="py-24 bg-white relative overflow-hidden font-sans border-t border-slate-100">
       <Container>
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
 
           {/* Left Column: Details */}
           <motion.div
@@ -129,9 +129,9 @@ export const Newsletter: React.FC = () => {
                   <MapPin size={18} />
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold uppercase text-slate-400 tracking-wider">Formulation Labs</h4>
+                  <h4 className="text-xs font-bold uppercase text-slate-400 tracking-wider">Registered Address</h4>
                   <p className="text-sm font-semibold text-slate-800 mt-0.5 leading-relaxed">
-                    TreeBorn Skincare Labs, 100 Zero-Waste Parkway, Portland, OR 97201
+                    10, GURUKRUPA SOCIETY, NEAR ARCHANA SOCIETY, DABHOLI ROAD, KATARGAM SURAT GUJARAT 395004 India
                   </p>
                 </div>
               </div>
@@ -150,13 +150,13 @@ export const Newsletter: React.FC = () => {
             </div>
           </motion.div>
 
-          {/* Right Column: Clean Form (Yup + Formik Validation, Narrower container w-full max-w-md lg:ml-auto) */}
+          {/* Right Column: Clean Form (Yup + Formik Validation, Centered container w-full max-w-lg lg:mx-auto lg:pt-6) */}
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.8 }}
-            className="lg:col-span-7 max-w-md lg:ml-auto w-full"
+            className="lg:col-span-7 max-w-lg lg:mx-auto w-full lg:pt-6"
           >
             <form onSubmit={formik.handleSubmit} className="space-y-6">
               <div className="space-y-1">

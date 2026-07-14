@@ -81,7 +81,7 @@ export const Hero: React.FC = () => {
   };
 
   return (
-    <section className="relative min-h-[95vh] sm:min-h-screen pt-28 pb-16 flex items-center overflow-hidden bg-gradient-to-tr from-light-gray via-white to-accent-sage/20">
+    <section className="relative min-h-[550px] sm:min-h-[600px] md:min-h-[650px] lg:min-h-[750px] xl:min-h-screen pt-24 pb-12 sm:pt-28 sm:pb-16 lg:pt-32 lg:pb-20 flex items-center overflow-hidden bg-gradient-to-tr from-light-gray via-white to-accent-sage/20">
       {/* Background Ambient Glows */}
       <AnimatePresence mode="wait">
         <motion.div

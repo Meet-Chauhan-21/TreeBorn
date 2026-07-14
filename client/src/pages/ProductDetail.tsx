@@ -295,7 +295,7 @@ export const ProductDetail: React.FC = () => {
                 </div>
 
                 {/* Action buttons */}
-                <div className="flex items-center gap-4 pt-6 border-t border-border-gray/40">
+                <div className="flex items-center gap-2 sm:gap-4 pt-6 border-t border-border-gray/40">
                   {/* Quantity counters */}
                   <div className="flex items-center border border-border-gray/60 rounded-full bg-light-gray overflow-hidden">
                     <button
@@ -316,7 +316,7 @@ export const ProductDetail: React.FC = () => {
                   {/* Add to Bag CTA */}
                   <button
                     onClick={handleAddToCart}
-                    className="flex-grow bg-primary hover:bg-primary-light active:scale-[0.99] text-white py-4 px-6 rounded-full font-display font-semibold text-xs tracking-wider uppercase flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all duration-300"
+                    className="flex-grow bg-primary hover:bg-primary-light active:scale-[0.99] text-white py-4 px-3 sm:px-6 rounded-full font-display font-semibold text-[10px] sm:text-xs tracking-wider uppercase flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer shadow-md transition-all duration-300 whitespace-nowrap"
                   >
                     <ShoppingBag size={14} />
                     <span>Add to Bag</span>

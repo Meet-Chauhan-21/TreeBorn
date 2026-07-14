@@ -179,12 +179,12 @@ export const Navbar: React.FC = () => {
           {/* Logo Frame with Spacer to prevent layout shift */}
           <Link
             to="/"
-            className="font-display font-medium text-primary flex items-center focus:outline-none relative z-50 h-8 w-36 sm:w-44 md:w-48"
+            className="font-display font-medium text-primary flex items-center focus:outline-none relative z-50 h-8 w-36 sm:w-40 lg:w-56 xl:w-64"
           >
             <div className={`transition-all duration-500 flex items-center gap-1 whitespace-nowrap ${
               isScrolled
                 ? 'absolute left-0 top-1/2 -translate-y-1/2 scale-100'
-                : 'absolute left-0 top-1/2 -translate-y-1/2 scale-120 sm:scale-130 md:scale-135 origin-left'
+                : 'absolute left-0 top-1/2 -translate-y-1/2 scale-115 sm:scale-120 lg:scale-125 origin-left'
             }`}>
               <img 
                 src={logoImg} 
@@ -202,7 +202,7 @@ export const Navbar: React.FC = () => {
           </Link>
 
           {/* Desktop Navigation Links */}
-          <nav className="hidden md:flex items-center space-x-8">
+          <nav className="hidden lg:flex items-center space-x-6 xl:space-x-8">
             {navLinks.map((link) => (
               <Link
                 key={link.name}
@@ -223,7 +223,7 @@ export const Navbar: React.FC = () => {
           </nav>
 
           {/* Desktop Icons */}
-          <div className="hidden md:flex items-center space-x-6">
+          <div className="hidden lg:flex items-center space-x-4 xl:space-x-6">
             <button
               onClick={() => setIsSearchOpen(true)}
               className="text-dark hover:text-primary transition-colors cursor-pointer focus:outline-none"
@@ -278,7 +278,7 @@ export const Navbar: React.FC = () => {
           </div>
 
           {/* Mobile Menu & Cart Buttons */}
-          <div className="flex md:hidden items-center space-x-3.5">
+          <div className="flex lg:hidden items-center space-x-3.5">
             <button
               onClick={() => setIsWishlistOpen(true)}
               className="text-dark hover:text-primary transition-colors relative cursor-pointer focus:outline-none"
@@ -324,7 +324,7 @@ export const Navbar: React.FC = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-md md:hidden"
+            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-md lg:hidden"
             onClick={() => setIsMobileMenuOpen(false)}
           >
             <motion.div

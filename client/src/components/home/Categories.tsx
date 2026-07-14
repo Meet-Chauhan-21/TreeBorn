@@ -1,8 +1,11 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Container } from '../layout/Container';
 import { SectionTitle } from '../layout/SectionTitle';
 import { useStore } from '../../context/StoreContext';
+
+const MotionLink = motion(Link);
 
 export const Categories: React.FC = () => {
   const { categories, categoriesLoading } = useStore();
@@ -28,8 +31,8 @@ export const Categories: React.FC = () => {
         ) : (
           <div className="flex flex-wrap justify-center gap-5">
             {activeCategories.map((category, idx) => (
-              <motion.a
-                href={`#shop?category=${category.slug}`}
+              <MotionLink
+                to={`/category/${category.slug}`}
                 key={category.id || category._id}
                 initial={{ opacity: 0, scale: 0.95 }}
                 whileInView={{ opacity: 1, scale: 1 }}
@@ -64,7 +67,7 @@ export const Categories: React.FC = () => {
                     </span>
                   </div>
                 </div>
-              </motion.a>
+              </MotionLink>
             ))}
           </div>
         )}
