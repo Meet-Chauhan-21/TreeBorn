@@ -73,6 +73,7 @@ const OrdersList: React.FC = () => {
   const [orders, setOrders] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [dateFilter, setDateFilter] = useState('');
 
   // Pagination States
   const [currentPage, setCurrentPage] = useState(1);
@@ -143,7 +144,18 @@ const OrdersList: React.FC = () => {
     const matchesSearch = order.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (order.user?.name || '').toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || order.status.toLowerCase() === statusFilter;
-    return matchesSearch && matchesStatus;
+    
+    let matchesDate = true;
+    if (dateFilter && order.createdAt) {
+      const orderDate = new Date(order.createdAt);
+      const year = orderDate.getFullYear();
+      const month = String(orderDate.getMonth() + 1).padStart(2, '0');
+      const day = String(orderDate.getDate()).padStart(2, '0');
+      const localDateStr = `${year}-${month}-${day}`;
+      matchesDate = localDateStr === dateFilter;
+    }
+    
+    return matchesSearch && matchesStatus && matchesDate;
   });
 
   // Pagination Calculations
@@ -279,6 +291,29 @@ const OrdersList: React.FC = () => {
                 { value: 'cancelled', label: 'Cancelled' },
               ]}
             />
+            <div className="relative w-full md:w-48">
+              <input
+                type="date"
+                value={dateFilter}
+                onChange={(e) => {
+                  setDateFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-full px-4 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-600/5 focus:border-indigo-500 text-sm h-10 text-slate-705 font-sans cursor-pointer"
+              />
+              {dateFilter && (
+                <button
+                  onClick={() => {
+                    setDateFilter('');
+                    setCurrentPage(1);
+                  }}
+                  className="absolute right-8 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-650 text-xs font-semibold px-1"
+                  title="Clear Date"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
             <button
               onClick={() => fetchOrders(true)}
               disabled={reloading}

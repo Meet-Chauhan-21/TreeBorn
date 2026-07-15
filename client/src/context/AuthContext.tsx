@@ -1,58 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { API_BASE_URL } from '../config';
+import type { Address, OrderItem, Order, User } from '../types';
 
 const API_BASE = `${API_BASE_URL}/users`;
-
-export interface Address {
-  _id?: string;
-  name: string;
-  phone: string;
-  street: string;
-  country: string;
-  state: string;
-  district: string;
-  zip: string;
-  isDefault?: boolean;
-}
-
-export interface OrderItem {
-  productId: string;
-  name: string;
-  quantity: number;
-  price: number;
-  selectedSize?: string;
-}
-
-export interface Order {
-  _id?: string;
-  orderNumber: string;
-  status: string;
-  items: OrderItem[];
-  shippingAddress?: Omit<Address, '_id'>;
-  totals: {
-    subtotal: number;
-    shipping: number;
-    tax: number;
-    total: number;
-  };
-  payment?: {
-    method: string;
-    status: string;
-    cardName?: string;
-    cardLast4?: string;
-  };
-  createdAt?: string;
-}
-
-export interface User {
-  id?: string;
-  name: string;
-  email: string;
-  phone?: string;
-  role?: string;
-  addresses?: Address[];
-}
 
 interface AuthContextType {
   user: User | null;

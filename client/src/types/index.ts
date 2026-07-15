@@ -63,3 +63,94 @@ export interface WhyChooseItem {
   description: string;
   icon: string; // matches name in lucide-react
 }
+
+export interface CountryData {
+  name: string;
+  code: string;
+  states: {
+    name: string;
+    districts: string[];
+  }[];
+}
+
+export interface AppSettings {
+  email: string;
+  whatsappNumber: string;
+  themeColor: string;
+  enableCreditCard: boolean;
+  enablePaypal: boolean;
+  enableCOD: boolean;
+  shopName?: string;
+  address?: string;
+  gstNumber?: string;
+  logo?: string;
+  homepageImages?: {
+    spotlight: string;
+    spotlightName?: string;
+    spotlightDescription?: string;
+    spotlightPrice?: number;
+    spotlightOldPrice?: number | null;
+    about: {
+      main: string;
+      secondary: string;
+    };
+  };
+}
+
+export interface CartItem {
+  product: Product;
+  quantity: number;
+  selectedSize: string;
+}
+
+export interface Address {
+  _id?: string;
+  name: string;
+  phone: string;
+  street: string;
+  country: string;
+  state: string;
+  district: string;
+  zip: string;
+  isDefault?: boolean;
+}
+
+export interface OrderItem {
+  productId: string;
+  name: string;
+  quantity: number;
+  price: number;
+  selectedSize?: string;
+}
+
+export interface Order {
+  _id?: string;
+  orderNumber: string;
+  status: string;
+  items: OrderItem[];
+  shippingAddress?: Omit<Address, '_id'>;
+  totals: {
+    subtotal: number;
+    shipping: number;
+    tax: number;
+    total: number;
+  };
+  payment?: {
+    method: string;
+    status: string;
+    cardName?: string;
+    cardLast4?: string;
+  };
+  createdAt?: string;
+  user?: User; // added optionally just in case some components reference it
+}
+
+export interface User {
+  id?: string;
+  name: string;
+  email: string;
+  phone?: string;
+  role?: string;
+  addresses?: Address[];
+}
+

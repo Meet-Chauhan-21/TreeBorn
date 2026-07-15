@@ -146,9 +146,6 @@ export const Login: React.FC = () => {
                         <Lock size={13} className="text-gray-400" />
                         <span>Password</span>
                       </label>
-                      <a href="#forgot" className="text-[10px] font-sans font-semibold text-secondary hover:underline">
-                        Forgot Password?
-                      </a>
                     </div>
                     
                     <div className="relative">
@@ -231,12 +228,6 @@ export const Login: React.FC = () => {
                     Create Account
                   </Link>
                 </p>
-
-                {/* Quick Hint */}
-                <div className="bg-accent-sage/40 border border-accent-sage-dark/30 rounded-xl p-3.5 text-[10px] text-primary/80 font-sans leading-relaxed">
-                  <span className="font-bold block mb-0.5">Quick Demo Account:</span>
-                  <span>Email: <strong className="font-semibold">meet.chauhan@example.com</strong> / Password: <strong className="font-semibold">password123</strong></span>
-                </div>
               </div>
             </div>
           </div>

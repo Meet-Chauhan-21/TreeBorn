@@ -1,37 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { Product, Category } from '../types';
+import type { Product, Category, AppSettings, CartItem } from '../types';
 import { fallbackProducts, fetchPublicProducts } from '../services/products';
 import { API_BASE_URL } from '../config';
-
-export interface AppSettings {
-  email: string;
-  whatsappNumber: string;
-  themeColor: string;
-  enableCreditCard: boolean;
-  enablePaypal: boolean;
-  enableCOD: boolean;
-  shopName?: string;
-  address?: string;
-  gstNumber?: string;
-  logo?: string;
-  homepageImages?: {
-    spotlight: string;
-    spotlightName?: string;
-    spotlightDescription?: string;
-    spotlightPrice?: number;
-    spotlightOldPrice?: number | null;
-    about: {
-      main: string;
-      secondary: string;
-    };
-  };
-}
-
-export interface CartItem {
-  product: Product;
-  quantity: number;
-  selectedSize: string;
-}
 
 interface StoreContextType {
   cart: CartItem[];

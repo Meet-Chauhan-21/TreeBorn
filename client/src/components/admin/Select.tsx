@@ -69,7 +69,7 @@ export const Select: React.FC<SelectProps> = ({
   const selectedOption = options.find((opt) => opt.value === value);
 
   return (
-    <div ref={containerRef} className={`relative w-full ${className}`}>
+    <div ref={containerRef} className={`relative ${className ? className : 'w-full'}`}>
       <button
         type="button"
         disabled={disabled}

@@ -1,11 +1,4 @@
-export interface CountryData {
-  name: string;
-  code: string;
-  states: {
-    name: string;
-    districts: string[];
-  }[];
-}
+import type { CountryData } from '../types';
 
 export const locationData: CountryData[] = [
   {

@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useAuth } from '../context/AuthContext';
-import type { Address, Order } from '../context/AuthContext';
+import type { Address, Order } from '../types';
 import { SearchableDropdown } from '../components/layout/SearchableDropdown';
 import { locationData } from '../data/locationData';
 import Navbar from '../components/layout/Navbar';
