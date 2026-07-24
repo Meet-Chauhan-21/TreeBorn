@@ -46,6 +46,16 @@ export const Navbar: React.FC = () => {
   ) => {
     if (closeMobileMenu) setIsMobileMenuOpen(false);
 
+    if (path === '/') {
+      if (location.pathname === '/') {
+        e.preventDefault();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.history.replaceState(null, '', '/');
+        setActiveSectionHash('');
+      }
+      return;
+    }
+
     if (!path.startsWith('/#')) {
       return;
     }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Plus, Edit, Trash2, Package, CheckCircle, AlertTriangle, Copy } from 'lucide-react';
+import { Search, Filter, Plus, Edit, Trash2, Copy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import AdminLayout from '../../components/admin/AdminLayout';
@@ -8,7 +8,6 @@ import Button from '../../components/admin/Button';
 import StatusBadge from '../../components/admin/StatusBadge';
 import DataTable from '../../components/admin/DataTable';
 import Pagination from '../../components/admin/Pagination';
-import StatsCard from '../../components/admin/StatsCard';
 import { useAuth } from '../../context/AuthContext';
 import { API_BASE_URL } from '../../config';
 import Select from '../../components/admin/Select';

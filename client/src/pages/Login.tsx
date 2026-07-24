@@ -6,7 +6,6 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useAuth } from '../context/AuthContext';
 import SocialLoginButtons from '../components/auth/SocialLoginButtons';
-import { toast } from 'sonner';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import Container from '../components/layout/Container';
@@ -25,7 +24,7 @@ const loginSchema = Yup.object().shape({
 export const Login: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, googleLogin, facebookLogin, facebookRegister, user, resendVerification } = useAuth();
+  const { login, facebookLogin, facebookRegister, user, resendVerification } = useAuth();
   
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);

@@ -525,40 +525,40 @@ export const Profile: React.FC = () => {
               <span className="text-[10px] font-sans font-bold uppercase tracking-widest text-primary/50 block px-2">
                 My Dashboard
               </span>
-              <nav className="flex flex-col gap-1 text-xs font-display font-semibold uppercase tracking-wider text-dark/70">
+              <nav className="flex flex-col gap-1.5 text-xs font-display font-semibold uppercase tracking-wider">
                 <button
                   onClick={() => { setActiveTab('profile'); setIsEditingAddress(false); }}
-                  className={`flex items-center gap-3 px-4 py-3.5 rounded-xl text-left cursor-pointer transition-all ${
+                  className={`flex items-center gap-3 px-4.5 py-3.5 rounded-2xl text-left cursor-pointer transition-all duration-300 ${
                     activeTab === 'profile'
-                      ? 'bg-primary/5 text-primary border-l-3 border-primary pl-3'
-                      : 'hover:bg-light-gray/40'
+                      ? 'bg-primary/10 text-primary border border-primary/15 font-bold shadow-3xs'
+                      : 'text-slate-655 hover:bg-slate-50/70 hover:text-slate-900 border border-transparent'
                   }`}
                 >
-                  <UserIcon size={14} className={activeTab === 'profile' ? 'text-primary' : 'text-gray-400'} />
+                  <UserIcon size={14} className={activeTab === 'profile' ? 'text-primary' : 'text-slate-400'} />
                   <span>Profile Settings</span>
                 </button>
 
                 <button
                   onClick={() => { setActiveTab('orders'); setIsEditingAddress(false); setOrderPage(1); }}
-                  className={`flex items-center gap-3 px-4 py-3.5 rounded-xl text-left cursor-pointer transition-all ${
+                  className={`flex items-center gap-3 px-4.5 py-3.5 rounded-2xl text-left cursor-pointer transition-all duration-300 ${
                     activeTab === 'orders'
-                      ? 'bg-primary/5 text-primary border-l-3 border-primary pl-3'
-                      : 'hover:bg-light-gray/40'
+                      ? 'bg-primary/10 text-primary border border-primary/15 font-bold shadow-3xs'
+                      : 'text-slate-655 hover:bg-slate-50/70 hover:text-slate-900 border border-transparent'
                   }`}
                 >
-                  <ShoppingBag size={14} className={activeTab === 'orders' ? 'text-primary' : 'text-gray-400'} />
+                  <ShoppingBag size={14} className={activeTab === 'orders' ? 'text-primary' : 'text-slate-400'} />
                   <span>Order History</span>
                 </button>
 
                 <button
                   onClick={() => { setActiveTab('addresses'); }}
-                  className={`flex items-center gap-3 px-4 py-3.5 rounded-xl text-left cursor-pointer transition-all ${
+                  className={`flex items-center gap-3 px-4.5 py-3.5 rounded-2xl text-left cursor-pointer transition-all duration-300 ${
                     activeTab === 'addresses'
-                      ? 'bg-primary/5 text-primary border-l-3 border-primary pl-3'
-                      : 'hover:bg-light-gray/40'
+                      ? 'bg-primary/10 text-primary border border-primary/15 font-bold shadow-3xs'
+                      : 'text-slate-655 hover:bg-slate-50/70 hover:text-slate-900 border border-transparent'
                   }`}
                 >
-                  <MapPin size={14} className={activeTab === 'addresses' ? 'text-primary' : 'text-gray-400'} />
+                  <MapPin size={14} className={activeTab === 'addresses' ? 'text-primary' : 'text-slate-400'} />
                   <span>Saved Addresses</span>
                 </button>
               </nav>

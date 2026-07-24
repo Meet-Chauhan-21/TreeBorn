@@ -265,8 +265,8 @@ export const Header: React.FC<HeaderProps> = ({
                       <button
                         key={notif._id}
                         onClick={() => handleNotificationClick(notif)}
-                        className={`w-full text-left p-3.5 hover:bg-slate-50/50 transition-colors flex gap-3 focus:outline-none cursor-pointer ${
-                          !notif.isRead ? 'bg-indigo-50/5' : ''
+                        className={`w-full text-left p-3.5 hover:bg-slate-100 transition-colors flex gap-3 focus:outline-none cursor-pointer ${
+                          !notif.isRead ? 'bg-indigo-50/40' : ''
                         }`}
                       >
                         <div className="flex-1 min-w-0">

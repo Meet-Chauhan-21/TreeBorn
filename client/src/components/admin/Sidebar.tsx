@@ -90,7 +90,20 @@ const menuSections: MenuSection[] = [
 export const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => {
   const location = useLocation();
   const { settings } = useStore();
-  const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
+  const [openMenus, setOpenMenus] = useState<Record<string, boolean>>(() => {
+    const initialState: Record<string, boolean> = {};
+    menuSections.forEach((section) => {
+      section.items.forEach((item) => {
+        if (item.subItems) {
+          const hasActiveSub = item.subItems.some(sub => location.pathname === sub.path);
+          if (hasActiveSub) {
+            initialState[item.label] = true;
+          }
+        }
+      });
+    });
+    return initialState;
+  });
 
   const logoUrl = settings?.logo || 'https://images.unsplash.com/photo-1617897903246-719242758050?q=80&w=200&auto=format&fit=crop';
 
