@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { API_BASE_URL } from '../config';
 import type { Address, OrderItem, Order, User } from '../types';
@@ -217,7 +217,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const facebookLogin = async (payload: { code?: string; accessToken?: string }): Promise<any> => {
+  const facebookLogin = useCallback(async (payload: { code?: string; accessToken?: string }): Promise<any> => {
     setLoading(true);
     try {
       const response = await fetch(`${API_BASE}/facebook`, {
@@ -262,9 +262,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(false);
       return false;
     }
-  };
+  }, []);
 
-  const facebookRegister = async (name: string, email: string, facebookId: string): Promise<boolean> => {
+  const facebookRegister = useCallback(async (name: string, email: string, facebookId: string): Promise<boolean> => {
     setLoading(true);
     try {
       const response = await fetch(`${API_BASE}/facebook-register`, {
@@ -290,7 +290,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(false);
       return false;
     }
-  };
+  }, []);
 
   const verifyEmail = async (token: string): Promise<{ success: boolean; message: string }> => {
     setLoading(true);
