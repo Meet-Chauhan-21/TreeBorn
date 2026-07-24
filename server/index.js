@@ -13,6 +13,9 @@ const dns = require("dns");
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Trust reverse proxy (Render, Vercel, Heroku, etc.)
+app.set('trust proxy', 1);
+
 // To Set Custom DNS
 dns.setServers(["8.8.8.8", "8.8.4.4"]);
 
