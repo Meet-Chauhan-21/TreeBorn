@@ -18,6 +18,10 @@ const settingsSchema = new mongoose.Schema(
       type: Boolean,
       default: true
     },
+    enableRazorpay: {
+      type: Boolean,
+      default: true
+    },
     enablePaypal: {
       type: Boolean,
       default: true
@@ -29,7 +33,7 @@ const settingsSchema = new mongoose.Schema(
     shopName: {
       type: String,
       default: 'TREEBORN Skincare'
-    },
+    }, 
     address: {
       type: String,
       default: '10, GURUKRUPA SOCIETY, NEAR ARCHANA SOCIETY, DABHOLI ROAD, KATARGAM SURAT GUJARAT 395004 India'

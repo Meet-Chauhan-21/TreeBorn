@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, CreditCard, ShieldCheck, CheckCircle, ShoppingBag, Truck } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ArrowLeft, CreditCard, ShieldCheck, ShoppingBag, Truck } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 import { useAuth } from '../context/AuthContext';
 import { SearchableDropdown } from '../components/layout/SearchableDropdown';
@@ -12,6 +12,9 @@ import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import Container from '../components/layout/Container';
 import Button from '../components/layout/Button';
+import { PaymentSuccessModal } from '../components/checkout/PaymentSuccessModal';
+
+import { API_BASE_URL } from '../config';
 
 const formatWhatsAppMessage = (
   orderNumber: string,
@@ -20,33 +23,44 @@ const formatWhatsAppMessage = (
   totalAmount: number,
   paymentMethod: string
 ) => {
+  const emojiHerb = '\uD83C\uDF3F';
+  const emojiPackage = '\uD83D\uDCE6';
+  const emojiBags = '\uD83D\uDECD\uFE0F';
+  const emojiSmallSquare = '\u25AB\uFE0F';
+  const emojiDollar = '\uD83D\uDCB5';
+  const emojiPin = '\uD83D\uDCCD';
+  const emojiHouse = '\uD83C\uDFE0';
+  const emojiCity = '\uD83C\uDFD9\uFE0F';
+  const emojiIndia = '\uD83C\uDDEE\uD83C\uDDF3';
+  const emojiSeedling = '\uD83C\uDF31';
+
   let message = `━━━━━━━━━━━━━━━━━━━━━\n`;
-  message += `🌿 *TREEBORN - NEW ORDER* 🌿\n`;
+  message += `${emojiHerb} *TREEBORN - NEW ORDER* ${emojiHerb}\n`;
   message += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
   
-  message += `📦 *Order Details:*\n`;
+  message += `${emojiPackage} *Order Details:*\n`;
   message += `• *Order ID:* #${orderNumber}\n`;
   message += `• *Customer:* ${shippingAddress.name}\n`;
   message += `• *Mobile:* ${shippingAddress.phone}\n`;
-  message += `• *Payment Method:* ${paymentMethod === 'cod' ? 'Cash on Delivery (COD)' : 'Online Payment'}\n\n`;
+  message += `• *Payment Method:* ${paymentMethod === 'cod' ? 'Cash on Delivery (COD)' : 'Razorpay Online Payment'}\n\n`;
   
-  message += `🛍️ *Items Ordered:*\n`;
+  message += `${emojiBags} *Items Ordered:*\n`;
   cartItems.forEach((item, index) => {
     message += `${index + 1}. *${item.product.name}*\n`;
-    message += `   ▫️ Qty: ${item.quantity}\n`;
-    message += `   ▫️ Price: Rs. ${(item.product.price * item.quantity).toFixed(2)}\n`;
+    message += `   ${emojiSmallSquare} Qty: ${item.quantity}\n`;
+    message += `   ${emojiSmallSquare} Price: Rs. ${(item.product.price * item.quantity).toFixed(2)}\n`;
   });
   message += `\n`;
   
-  message += `💵 *Total Amount:* Rs. ${totalAmount.toFixed(2)}\n\n`;
+  message += `${emojiDollar} *Total Amount:* Rs. ${totalAmount.toFixed(2)}\n\n`;
   
-  message += `📍 *Shipping Address:*\n`;
-  message += `🏠 ${shippingAddress.street},\n`;
-  message += `🏙️ ${shippingAddress.district}, ${shippingAddress.state},\n`;
-  message += `🇮🇳 ${shippingAddress.country} - ${shippingAddress.zip}\n\n`;
+  message += `${emojiPin} *Shipping Address:*\n`;
+  message += `${emojiHouse} ${shippingAddress.street},\n`;
+  message += `${emojiCity} ${shippingAddress.district}, ${shippingAddress.state},\n`;
+  message += `${emojiIndia} ${shippingAddress.country} - ${shippingAddress.zip}\n\n`;
   
   message += `━━━━━━━━━━━━━━━━━━━━━\n`;
-  message += `Thank you for choosing TreeBorn! 🌱\n`;
+  message += `Thank you for choosing TreeBorn! ${emojiSeedling}\n`;
   message += `━━━━━━━━━━━━━━━━━━━━━`;
   
   return encodeURIComponent(message);
@@ -55,7 +69,7 @@ const formatWhatsAppMessage = (
 export const Checkout: React.FC = () => {
   const navigate = useNavigate();
   const { cart, clearCart, settings } = useStore();
-  const { user, placeOrder, loading, addAddress } = useAuth();
+  const { user, placeOrder, loading, addAddress, accessToken } = useAuth();
 
   // Load user saved addresses
   const savedAddresses = user?.addresses || [];
@@ -83,28 +97,26 @@ export const Checkout: React.FC = () => {
     zip: ''
   });
 
-  // Card Payment Form State
-  const [paymentInfo, setPaymentInfo] = useState({
-    cardName: user?.name || '',
-    cardNumber: '',
-    expiry: '',
-    cvv: '',
-  });
-
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderId, setOrderId] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'cod'>('card');
+  const [confirmedTotal, setConfirmedTotal] = useState<number>(0);
+  const [lastTransactionId, setLastTransactionId] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<'razorpay' | 'cod'>('razorpay');
   const [whatsappOrderUrl, setWhatsappOrderUrl] = useState('');
+
+  const isRazorpayEnabled = settings.enableRazorpay !== false;
+  const isCODEnabled = settings.enableCOD !== false;
 
   // Synchronize payment selection based on admin settings
   React.useEffect(() => {
-    if (!settings.enableCreditCard && settings.enableCOD) {
+    if (isRazorpayEnabled) {
+      setPaymentMethod('razorpay');
+    } else if (isCODEnabled) {
       setPaymentMethod('cod');
-    } else if (settings.enableCreditCard) {
-      setPaymentMethod('card');
     }
-  }, [settings]);
+  }, [isRazorpayEnabled, isCODEnabled]);
 
   // Orders are created server-side and require auth
   React.useEffect(() => {
@@ -152,26 +164,51 @@ export const Checkout: React.FC = () => {
     });
   };
 
-  // Handle inputs
-  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/\D/g, '');
-    if (value.length > 16) value = value.slice(0, 16);
-    const formatted = value.match(/.{1,4}/g)?.join(' ') || '';
-    setPaymentInfo({ ...paymentInfo, cardNumber: formatted });
-  };
-
-  const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/\D/g, '');
-    if (value.length > 4) value = value.slice(0, 4);
-    if (value.length > 2) {
-      value = `${value.slice(0, 2)}/${value.slice(2)}`;
+  const processOrderSuccess = async (result: any, shippingAddress: any, txId?: string) => {
+    // Save the new address to the user's saved addresses
+    if (useNewAddress && addAddress) {
+      try {
+        await addAddress(shippingAddress);
+      } catch (addrErr) {
+        console.error('Failed to save new address during checkout:', addrErr);
+      }
     }
-    setPaymentInfo({ ...paymentInfo, expiry: value });
-  };
 
-  const handleCvvChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, '');
-    setPaymentInfo({ ...paymentInfo, cvv: value.slice(0, 3) });
+    const exactTotal = result?.order?.totals?.total || total;
+    setConfirmedTotal(exactTotal);
+    setOrderId(result.order.orderNumber);
+    if (txId) setLastTransactionId(txId);
+
+    if (paymentMethod === 'cod') {
+      const orderMsg = formatWhatsAppMessage(
+        result.order.orderNumber,
+        shippingAddress,
+        cart,
+        exactTotal,
+        paymentMethod
+      );
+      const formatWhatsAppLink = (num: string) => {
+        const cleanNum = num.replace(/\D/g, '');
+        return cleanNum.length === 10 ? `91${cleanNum}` : cleanNum;
+      };
+      const url = `https://wa.me/${formatWhatsAppLink(settings.whatsappNumber)}?text=${orderMsg}`;
+      setWhatsappOrderUrl(url);
+
+      toast.success('Order placed successfully (Cash on Delivery)!');
+
+      // Auto open WhatsApp tab ONLY for COD orders
+      try {
+        window.open(url, '_blank');
+      } catch (e) {
+        console.error('Popup blocked by browser:', e);
+      }
+    } else {
+      toast.success('Razorpay Payment verified & Order confirmed!');
+      setWhatsappOrderUrl(''); // Explicitly hide WhatsApp for online payments!
+    }
+
+    setOrderPlaced(true);
+    clearCart();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -184,6 +221,18 @@ export const Checkout: React.FC = () => {
         toast.error('Please complete all required shipping fields.');
         return;
       }
+      
+      const phoneRegex = /^[0-9]{10}$/;
+      if (!phoneRegex.test(phone.trim())) {
+        toast.error('Contact phone number must be exactly 10 digits.');
+        return;
+      }
+
+      const zipRegex = /^[0-9]{6}$/;
+      if (!zipRegex.test(zip.trim())) {
+        toast.error('ZIP / Postal Code must be exactly 6 digits.');
+        return;
+      }
     } else {
       if (!selectedAddressId) {
         toast.error('Please select a saved shipping address.');
@@ -191,128 +240,163 @@ export const Checkout: React.FC = () => {
       }
     }
 
-    // Payment Validation
-    if (paymentMethod === 'card') {
-      if (paymentInfo.cardNumber.replace(/\s/g, '').length !== 16) {
-        toast.error('Please enter a valid 16-digit credit card number.');
-        return;
-      }
+    const selectedSavedAddress =
+      !useNewAddress ? savedAddresses.find((a) => a._id === selectedAddressId) : undefined;
 
-      if (paymentInfo.expiry.length !== 5) {
-        toast.error('Please enter a valid expiry date (MM/YY).');
-        return;
-      }
+    if (!useNewAddress && !selectedSavedAddress) {
+      toast.error('Please select a valid saved shipping address.');
+      return;
+    }
 
-      if (paymentInfo.cvv.length !== 3) {
-        toast.error('Please enter a valid CVV.');
-        return;
-      }
+    const shippingAddress = useNewAddress
+      ? {
+          name: newAddressForm.name,
+          phone: newAddressForm.phone,
+          street: newAddressForm.street,
+          country: newAddressForm.country,
+          state: newAddressForm.state,
+          district: newAddressForm.district,
+          zip: newAddressForm.zip
+        }
+      : {
+          name: selectedSavedAddress!.name,
+          phone: selectedSavedAddress!.phone,
+          street: selectedSavedAddress!.street,
+          country: selectedSavedAddress!.country,
+          state: selectedSavedAddress!.state,
+          district: selectedSavedAddress!.district,
+          zip: selectedSavedAddress!.zip
+        };
+
+    if (paymentMethod === 'razorpay' && !isRazorpayEnabled) {
+      toast.error('Razorpay online payments are currently disabled by store administrator.');
+      return;
+    }
+    if (paymentMethod === 'cod' && !isCODEnabled) {
+      toast.error('Cash on Delivery (COD) is currently disabled by store administrator.');
+      return;
     }
 
     setIsSubmitting(true);
-    try {
-      const selectedSavedAddress =
-        !useNewAddress ? savedAddresses.find((a) => a._id === selectedAddressId) : undefined;
 
-      if (!useNewAddress && !selectedSavedAddress) {
-        toast.error('Please select a valid saved shipping address.');
-        setIsSubmitting(false);
-        return;
-      }
-
-      const shippingAddress = useNewAddress
-        ? {
-            name: newAddressForm.name,
-            phone: newAddressForm.phone,
-            street: newAddressForm.street,
-            country: newAddressForm.country,
-            state: newAddressForm.state,
-            district: newAddressForm.district,
-            zip: newAddressForm.zip
-          }
-        : {
-            name: selectedSavedAddress!.name,
-            phone: selectedSavedAddress!.phone,
-            street: selectedSavedAddress!.street,
-            country: selectedSavedAddress!.country,
-            state: selectedSavedAddress!.state,
-            district: selectedSavedAddress!.district,
-            zip: selectedSavedAddress!.zip
-          };
-
-      const cardDigitsOnly = paymentInfo.cardNumber.replace(/\s/g, '');
-      const cardLast4 = cardDigitsOnly.slice(-4);
-
-      const result = await placeOrder({
-        items: cart.map((item) => ({
-          productId: item.product.id,
-          name: item.product.name,
-          quantity: item.quantity,
-          price: item.product.price,
-          selectedSize: item.selectedSize
-        })),
-        shippingAddress,
-        paymentMethod,
-        paymentDetails:
-          paymentMethod === 'card'
-            ? { cardName: paymentInfo.cardName, cardLast4 }
-            : undefined,
-        totals: { subtotal, shipping, tax, total }
-      });
-
-      setIsSubmitting(false);
-
-      if (!result) return;
-
-      // Save the new address to the user's saved addresses
-      if (useNewAddress && addAddress) {
-        try {
-          await addAddress(shippingAddress);
-        } catch (addrErr) {
-          console.error('Failed to save new address during checkout:', addrErr);
-        }
-      }
-
-      setOrderId(result.order.orderNumber);
-
-      const orderMsg = formatWhatsAppMessage(
-        result.order.orderNumber,
-        shippingAddress,
-        cart,
-        total,
-        paymentMethod
-      );
-      const formatWhatsAppLink = (num: string) => {
-        const cleanNum = num.replace(/\D/g, '');
-        return cleanNum.length === 10 ? `91${cleanNum}` : cleanNum;
-      };
-      const url = `https://wa.me/${formatWhatsAppLink(settings.whatsappNumber)}?text=${orderMsg}`;
-      setWhatsappOrderUrl(url);
-
-      setOrderPlaced(true);
-
-      if (paymentMethod === 'card') {
-        toast.success('Payment authorized. Order confirmed!');
-      } else {
-        toast.success('Order placed successfully (Cash on Delivery)!');
-      }
-
-      // Auto open WhatsApp tab
+    if (paymentMethod === 'razorpay') {
       try {
-        window.open(url, '_blank');
-      } catch (e) {
-        console.error('Popup blocked by browser:', e);
-      }
-    } catch (err) {
-      console.error('Checkout order error:', err);
-      toast.error('Failed to place order.');
-      setIsSubmitting(false);
-    }
-  };
+        // Step 1: Create Razorpay Order on Backend
+        const res = await fetch(`${API_BASE_URL}/users/orders/razorpay-create`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`
+          },
+          body: JSON.stringify({ amount: total })
+        });
 
-  const handleCompleteOrderSuccess = () => {
-    clearCart();
-    navigate('/');
+        const data = await res.json();
+        if (!res.ok) {
+          toast.error(data.message || 'Failed to initiate Razorpay transaction.');
+          setIsSubmitting(false);
+          return;
+        }
+
+        const razorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID || data.keyId || 'rzp_test_TFHJjhLymJTyfs';
+
+        // Step 2: Open Razorpay Modal
+        const options = {
+          key: razorpayKeyId,
+          amount: data.amount,
+          currency: data.currency || 'INR',
+          name: settings.shopName || 'TREEBORN Skincare',
+          description: 'Botanical Skincare Order Payment',
+          image: settings.logo || 'https://images.unsplash.com/photo-1617897903246-719242758050?q=80&w=200&auto=format&fit=crop',
+          order_id: data.razorpayOrderId,
+          prefill: {
+            name: shippingAddress.name,
+            contact: shippingAddress.phone,
+            email: user?.email || ''
+          },
+          theme: {
+            color: settings.themeColor || '#581C87'
+          },
+          handler: async function (response: any) {
+            // Step 3 & 4: Payment Success -> Send parameters to backend for HMAC Signature Verification
+            setIsVerifying(true);
+            try {
+              const orderResult = await placeOrder({
+                items: cart.map((item) => ({
+                  productId: item.product.id,
+                  name: item.product.name,
+                  quantity: item.quantity,
+                  price: item.product.price,
+                  selectedSize: item.selectedSize
+                })),
+                shippingAddress,
+                paymentMethod: 'razorpay',
+                paymentDetails: {
+                  razorpayOrderId: response.razorpay_order_id,
+                  razorpayPaymentId: response.razorpay_payment_id,
+                  razorpaySignature: response.razorpay_signature
+                },
+                totals: { subtotal, shipping, tax, total }
+              });
+
+              if (orderResult) {
+                await processOrderSuccess(orderResult, shippingAddress, response.razorpay_payment_id);
+              } else {
+                toast.error('Payment verification failed on server.');
+              }
+            } catch (verifyErr) {
+              console.error('Signature verification call error:', verifyErr);
+              toast.error('Razorpay signature verification failed.');
+            } finally {
+              setIsSubmitting(false);
+              setIsVerifying(false);
+            }
+          },
+          modal: {
+            ondismiss: function () {
+              setIsSubmitting(false);
+              toast.error('Razorpay checkout window closed.');
+            }
+          }
+        };
+
+        const razorpayInstance = new (window as any).Razorpay(options);
+        razorpayInstance.on('payment.failed', function (errResp: any) {
+          setIsSubmitting(false);
+          toast.error(errResp.error?.description || 'Razorpay payment failed.');
+        });
+        razorpayInstance.open();
+      } catch (razorpayErr) {
+        console.error('Razorpay error:', razorpayErr);
+        toast.error('Failed to launch Razorpay gateway.');
+        setIsSubmitting(false);
+      }
+    } else {
+      // COD Order Execution Flow
+      try {
+        const result = await placeOrder({
+          items: cart.map((item) => ({
+            productId: item.product.id,
+            name: item.product.name,
+            quantity: item.quantity,
+            price: item.product.price,
+            selectedSize: item.selectedSize
+          })),
+          shippingAddress,
+          paymentMethod: 'cod',
+          totals: { subtotal, shipping, tax, total }
+        });
+
+        setIsSubmitting(false);
+        if (result) {
+          await processOrderSuccess(result, shippingAddress);
+        }
+      } catch (err) {
+        console.error('Checkout COD error:', err);
+        toast.error('Failed to place COD order.');
+        setIsSubmitting(false);
+      }
+    }
   };
 
   return (
@@ -478,7 +562,13 @@ export const Checkout: React.FC = () => {
                           required
                           placeholder="380054"
                           value={newAddressForm.zip}
-                          onChange={(e) => setNewAddressForm({ ...newAddressForm, zip: e.target.value })}
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/\D/g, '');
+                            if (val.length <= 6) {
+                              setNewAddressForm({ ...newAddressForm, zip: val });
+                            }
+                          }}
+                          maxLength={6}
                           className="w-full border border-border-gray/80 px-4 py-3 text-sm rounded-xl text-dark focus:outline-none focus:border-primary font-sans bg-light-gray/10"
                         />
                       </div>
@@ -488,9 +578,15 @@ export const Checkout: React.FC = () => {
                         <input
                           type="text"
                           required
-                          placeholder="+91 98765 43210"
+                          placeholder="9876543210"
                           value={newAddressForm.phone}
-                          onChange={(e) => setNewAddressForm({ ...newAddressForm, phone: e.target.value })}
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/\D/g, '');
+                            if (val.length <= 10) {
+                              setNewAddressForm({ ...newAddressForm, phone: val });
+                            }
+                          }}
+                          maxLength={10}
                           className="w-full border border-border-gray/80 px-4 py-3 text-sm rounded-xl text-dark focus:outline-none focus:border-primary font-sans bg-light-gray/10"
                         />
                       </div>
@@ -506,155 +602,109 @@ export const Checkout: React.FC = () => {
                   <h2 className="text-base font-display font-semibold text-dark">Payment Methodology Selection</h2>
                 </div>
 
-                {/* Tabs selector */}
-                {settings.enableCreditCard && settings.enableCOD ? (
-                  <div className="grid grid-cols-2 gap-2 p-1.5 bg-light-gray/60 border border-border-gray/40 rounded-2xl">
+                {/* Payment Mode Selector */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {isRazorpayEnabled && (
                     <button
                       type="button"
-                      onClick={() => setPaymentMethod('card')}
-                      className={`py-3 rounded-xl text-xs sm:text-sm font-display font-semibold transition-all cursor-pointer ${
-                        paymentMethod === 'card'
-                          ? 'bg-primary text-white shadow-sm'
-                          : 'text-dark/70 hover:bg-gray-100 hover:text-dark'
+                      onClick={() => setPaymentMethod('razorpay')}
+                      className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                        paymentMethod === 'razorpay'
+                          ? 'border-primary bg-primary/5 shadow-xs'
+                          : 'border-border-gray/60 bg-white hover:border-primary/30'
                       }`}
                     >
-                      Online Payment
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="font-display font-bold text-sm text-dark flex items-center gap-2">
+                          <CreditCard size={18} className="text-primary" />
+                          <span>Razorpay Online</span>
+                        </span>
+                        {paymentMethod === 'razorpay' && (
+                          <span className="w-2.5 h-2.5 bg-primary rounded-full" />
+                        )}
+                      </div>
+                      <p className="text-[11px] text-gray-500 font-sans leading-relaxed">
+                        UPI (GPay, PhonePe, Paytm), Credit/Debit Cards, NetBanking & Wallets.
+                      </p>
+                      <div className="mt-3 pt-2 border-t border-border-gray/30 flex items-center justify-between text-[10px] font-semibold text-primary">
+                        <span>Official Gateway</span>
+                        <span className="bg-primary/10 px-2 py-0.5 rounded text-primary">Instant Verification</span>
+                      </div>
                     </button>
+                  )}
+
+                  {isCODEnabled && (
                     <button
                       type="button"
                       onClick={() => setPaymentMethod('cod')}
-                      className={`py-3 rounded-xl text-xs sm:text-sm font-display font-semibold transition-all cursor-pointer ${
+                      className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
                         paymentMethod === 'cod'
-                          ? 'bg-primary text-white shadow-sm'
-                          : 'text-dark/70 hover:bg-gray-100 hover:text-dark'
+                          ? 'border-primary bg-primary/5 shadow-xs'
+                          : 'border-border-gray/60 bg-white hover:border-primary/30'
                       }`}
                     >
-                      Cash on Delivery (COD)
-                    </button>
-                  </div>
-                ) : settings.enableCreditCard ? (
-                  <div className="p-4 bg-primary/5 border border-primary/20 rounded-2xl text-xs font-semibold text-primary">
-                    Active Payment Method: <span className="font-bold">Online Payment</span>
-                  </div>
-                ) : settings.enableCOD ? (
-                  <div className="p-4 bg-primary/5 border border-primary/20 rounded-2xl text-xs font-semibold text-primary">
-                    Active Payment Method: <span className="font-bold">Cash on Delivery (COD)</span>
-                  </div>
-                ) : (
-                  <div className="p-4 bg-red-50 border border-red-200 rounded-2xl text-xs font-semibold text-red-500">
-                    No active payment methods configured by store administrator.
-                  </div>
-                )}
-
-                {paymentMethod === 'card' ? (
-                  <motion.div
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4 }}
-                    className="space-y-4"
-                  >
-                    {/* Mock card layout visualization */}
-                    <div className="relative w-full h-44 rounded-2xl bg-gradient-to-br from-primary-dark via-primary to-accent-sage p-5 text-white flex flex-col justify-between shadow-md overflow-hidden">
-                      <div className="absolute right-0 top-0 opacity-10 pointer-events-none">
-                        <CreditCard size={180} />
-                      </div>
-                      <div className="flex justify-between items-start">
-                        <span className="text-[10px] uppercase font-bold tracking-widest bg-white/20 px-2 py-0.5 rounded">TreeBorn Care</span>
-                        <div className="w-10 h-7 bg-white/10 rounded flex items-center justify-center backdrop-blur-xs font-mono font-bold text-[10px]">VISA</div>
-                      </div>
-                      <div className="space-y-2">
-                        <span className="block font-mono text-sm sm:text-base tracking-widest">
-                          {paymentInfo.cardNumber || '•••• •••• •••• ••••'}
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="font-display font-bold text-sm text-dark flex items-center gap-2">
+                          <Truck size={18} className="text-secondary" />
+                          <span>Cash on Delivery</span>
                         </span>
-                        <div className="flex justify-between text-[10px] uppercase font-mono">
-                          <div>
-                            <span className="block text-white/50 text-[8px]">Card Holder</span>
-                            <span className="font-semibold">{paymentInfo.cardName || 'YOUR FULL NAME'}</span>
-                          </div>
-                          <div className="text-right">
-                            <span className="block text-white/50 text-[8px]">Expires</span>
-                            <span className="font-semibold">{paymentInfo.expiry || 'MM/YY'}</span>
-                          </div>
-                        </div>
+                        {paymentMethod === 'cod' && (
+                          <span className="w-2.5 h-2.5 bg-primary rounded-full" />
+                        )}
                       </div>
+                      <p className="text-[11px] text-gray-500 font-sans leading-relaxed">
+                        Pay in cash or mobile UPI QR scan upon package arrival.
+                      </p>
+                      <div className="mt-3 pt-2 border-t border-border-gray/30 flex items-center justify-between text-[10px] font-semibold text-secondary">
+                        <span>Doorstep Payment</span>
+                        <span className="bg-emerald-50 px-2 py-0.5 rounded text-secondary">Zero Online Risk</span>
+                      </div>
+                    </button>
+                  )}
+
+                  {!isRazorpayEnabled && !isCODEnabled && (
+                    <div className="sm:col-span-2 p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold">
+                      ⚠️ No payment methods are currently enabled by the store administrator.
                     </div>
+                  )}
+                </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      <div className="space-y-1.5 sm:col-span-3">
-                        <label className="text-xs font-semibold text-dark/70 font-display">Cardholder Full Name</label>
-                        <input
-                          type="text"
-                          required={paymentMethod === 'card'}
-                          placeholder="Meet Chauhan"
-                          value={paymentInfo.cardName}
-                          onChange={(e) => setPaymentInfo({ ...paymentInfo, cardName: e.target.value })}
-                          className="w-full border border-border-gray/80 px-4 py-3 text-sm rounded-xl text-dark focus:outline-none focus:border-primary font-sans bg-light-gray/10"
-                        />
-                      </div>
-
-                      <div className="space-y-1.5 sm:col-span-3">
-                        <label className="text-xs font-semibold text-dark/70 font-display">Credit Card Number</label>
-                        <input
-                          type="text"
-                          required={paymentMethod === 'card'}
-                          placeholder="4111 2222 3333 4444"
-                          value={paymentInfo.cardNumber}
-                          onChange={handleCardNumberChange}
-                          className="w-full border border-border-gray/80 px-4 py-3 text-sm rounded-xl text-dark focus:outline-none focus:border-primary font-sans bg-light-gray/10 font-mono tracking-widest"
-                        />
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-dark/70 font-display">Expiry Date</label>
-                        <input
-                          type="text"
-                          required={paymentMethod === 'card'}
-                          placeholder="MM/YY"
-                          value={paymentInfo.expiry}
-                          onChange={handleExpiryChange}
-                          className="w-full border border-border-gray/80 px-4 py-3 text-sm rounded-xl text-dark focus:outline-none focus:border-primary font-sans bg-light-gray/10"
-                        />
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-dark/70 font-display">CVV Security Code</label>
-                        <input
-                          type="text"
-                          required={paymentMethod === 'card'}
-                          placeholder="123"
-                          value={paymentInfo.cvv}
-                          onChange={handleCvvChange}
-                          className="w-full border border-border-gray/80 px-4 py-3 text-sm rounded-xl text-dark focus:outline-none focus:border-primary font-sans bg-light-gray/10 font-mono"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-2 bg-[#F2F5FA] border border-border-gray rounded-xl p-3.5">
-                      <ShieldCheck size={16} className="text-secondary mt-0.5 flex-shrink-0" />
-                      <span className="text-[10px] text-gray-500 font-sans leading-relaxed">
-                        Your details are processed with 256-bit bank-level SSL encryption. We never save raw credit credentials on our servers.
+                {paymentMethod === 'razorpay' ? (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="p-5 border border-primary/20 bg-primary/[0.02] rounded-2xl space-y-3 text-left"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-display font-bold text-xs text-primary uppercase tracking-wider">
+                        Razorpay Secure Checkout
                       </span>
+                      <span className="text-[10px] text-gray-400 font-mono">256-BIT SSL ENCRYPTED</span>
+                    </div>
+                    <p className="text-xs text-gray-600 font-sans leading-relaxed">
+                      Clicking <strong>Pay & Place Order</strong> opens the official Razorpay Checkout popup. Your payment is verified on our secure backend before confirming your botanical order.
+                    </p>
+                    <div className="flex flex-wrap gap-2 pt-1 text-[10px] font-medium text-gray-500">
+                      <span className="bg-white border border-gray-200 px-2 py-1 rounded">UPI / GPay / PhonePe</span>
+                      <span className="bg-white border border-gray-200 px-2 py-1 rounded">Visa / Mastercard / RuPay</span>
+                      <span className="bg-white border border-gray-200 px-2 py-1 rounded">NetBanking (50+ Banks)</span>
                     </div>
                   </motion.div>
                 ) : (
                   <motion.div
-                    initial={{ opacity: 0, y: 15 }}
+                    initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4 }}
-                    className="p-5 border border-[#1F7A4D]/25 bg-[#EBF3F0]/40 rounded-2xl space-y-3.5"
+                    transition={{ duration: 0.3 }}
+                    className="p-5 border border-[#1F7A4D]/25 bg-[#EBF3F0]/40 rounded-2xl space-y-3.5 text-left"
                   >
                     <div className="flex items-center gap-2 text-primary font-display font-semibold text-sm">
                       <Truck size={18} />
                       <span>Cash on Delivery (COD) Selected</span>
                     </div>
                     <p className="text-xs text-gray-650 font-sans leading-relaxed">
-                      You will pay the total amount of <strong className="text-primary font-bold font-display">₹{total.toFixed(2)}</strong> in cash or via mobile UPI QR scan to the delivery associate when your botanical package arrives at your doorstep.
+                      You will pay the total amount of <strong className="text-primary font-bold font-display">₹{total.toFixed(2)}</strong> in cash or via mobile UPI QR scan to the delivery associate when your botanical package arrives.
                     </p>
-                    <div className="text-[10px] text-gray-500 font-sans space-y-1 pl-4 list-disc text-left">
-                      <li>Free logistics shipping terms apply.</li>
-                      <li>Please keep exact cash amount or mobile UPI apps ready at delivery.</li>
-                      <li>Order confirmation invoice is sent instantly to your registered mail.</li>
-                    </div>
                   </motion.div>
                 )}
 
@@ -669,10 +719,10 @@ export const Checkout: React.FC = () => {
                     {isSubmitting ? (
                       <span className="flex items-center gap-2">
                         <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        <span>Processing Transaction...</span>
+                        <span>Verifying & Processing...</span>
                       </span>
                     ) : (
-                      <span>{paymentMethod === 'card' ? 'Authorize & Place Order' : 'Confirm COD Order'}</span>
+                      <span>{paymentMethod === 'razorpay' ? `Pay ₹${total.toFixed(2)} via Razorpay` : 'Confirm COD Order'}</span>
                     )}
                   </Button>
                 </div>
@@ -732,71 +782,35 @@ export const Checkout: React.FC = () => {
         </Container>
       </main>
 
-      {/* Success Modal overlay */}
-      <AnimatePresence>
-        {orderPlaced && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-dark/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs"
-          >
-            <motion.div
-              initial={{ scale: 0.9, y: 30 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 30 }}
-              className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl text-center space-y-5 border border-border-gray/20"
-            >
-              <div className="w-16 h-16 rounded-full bg-[#EBF3F0] text-primary flex items-center justify-center mx-auto">
-                <CheckCircle size={32} />
-              </div>
-              
-              <div className="space-y-2">
-                <h3 className="text-xl font-display font-bold text-dark">Transaction Successful!</h3>
-                <p className="text-xs text-gray-500 font-sans">
-                  Thank you for your order. We are compiling your organic botanical selection.
-                </p>
-              </div>
+      {/* Full-Screen Verification Backdrop Loader */}
+      {isVerifying && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/80 backdrop-blur-md text-white p-6 space-y-4">
+          <div className="relative flex items-center justify-center">
+            <div className="w-20 h-20 border-4 border-emerald-400/20 border-t-emerald-400 rounded-full animate-spin" />
+            <ShieldCheck className="absolute text-emerald-400" size={32} />
+          </div>
+          <div className="text-center space-y-1.5 max-w-sm">
+            <h3 className="text-xl font-bold font-display text-white">Verifying Payment Security</h3>
+            <p className="text-xs text-slate-300 font-sans leading-relaxed">
+              Verifying HMAC SHA-256 digital signature with Razorpay servers...
+            </p>
+            <p className="text-[11px] text-amber-400/90 font-mono pt-2 animate-pulse">
+              Please do not refresh, click back, or close your browser tab.
+            </p>
+          </div>
+        </div>
+      )}
 
-              <div className="bg-light-gray/45 border border-border-gray/30 rounded-2xl p-4 text-xs font-mono text-left space-y-1.5 text-gray-650">
-                <div className="flex justify-between">
-                  <span>Order ID:</span>
-                  <span className="font-bold text-dark">{orderId}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Method:</span>
-                  <span className="font-semibold text-dark uppercase">{paymentMethod}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Amount Charged:</span>
-                  <span className="font-bold text-primary">₹{total.toFixed(2)}</span>
-                </div>
-              </div>
-
-              {whatsappOrderUrl && (
-                <Button
-                  variant="outline"
-                  onClick={() => window.open(whatsappOrderUrl, '_blank')}
-                  className="w-full py-3 rounded-full font-semibold uppercase tracking-wider text-xs shadow-sm cursor-pointer border-[#16A34A] text-[#16A34A] hover:bg-green-50/20 flex items-center justify-center gap-2"
-                >
-                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.457L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.37 9.863-9.73.001-2.597-1.006-5.038-2.834-6.87-1.827-1.83-4.258-2.836-6.857-2.837-5.442 0-9.87 4.372-9.873 9.734-.001 1.738.455 3.43 1.32 4.932l-.993 3.629 3.73-.978zm11.23-5.32c-.3-.15-1.772-.875-2.046-.975-.276-.1-.476-.15-.676.15-.2.3-.775.975-.95 1.175-.175.2-.35.225-.65.075-.3-.15-1.267-.467-2.413-1.49-1.127-.992-1.89-2.22-2.112-2.6-.222-.38-.024-.585.126-.735.135-.135.3-.35.45-.525.15-.175.2-.3.3-.5.1-.2.05-.375-.025-.525-.075-.15-.676-1.625-.926-2.225-.244-.589-.49-.51-.676-.52-.175-.01-.375-.01-.575-.01-.2 0-.525.075-.8 3.375-.275 2.725 1.7 5.35 1.95 5.675.25.325 3.42 5.22 8.28 7.32 1.155.498 2.058.796 2.76 1.02.822.26 1.57.223 2.16.136.66-.098 1.772-.725 2.022-1.425.25-.7.25-1.3 0-1.425-.075-.125-.275-.225-.575-.375z"/>
-                  </svg>
-                  <span>Send Order details to WhatsApp</span>
-                </Button>
-              )}
-
-              <Button
-                variant="primary"
-                onClick={handleCompleteOrderSuccess}
-                className="w-full py-3 rounded-full font-semibold uppercase tracking-wider text-xs shadow-sm cursor-pointer"
-              >
-                Back to Botanicals Store
-              </Button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Google Pay / Paytm Style Success Animation Modal */}
+      <PaymentSuccessModal
+        isOpen={orderPlaced}
+        orderNumber={orderId}
+        totalAmount={confirmedTotal || total}
+        paymentMethod={paymentMethod}
+        transactionId={lastTransactionId}
+        whatsappUrl={whatsappOrderUrl}
+        onClose={() => setOrderPlaced(false)}
+      />
 
       <Footer />
     </>

@@ -16,6 +16,7 @@ interface SelectProps {
   disabled?: boolean;
   className?: string;
   hClass?: string; // custom height class, e.g. "h-10" or "h-12"
+  buttonClassName?: string; // custom button styling
 }
 
 export const Select: React.FC<SelectProps> = ({
@@ -27,6 +28,7 @@ export const Select: React.FC<SelectProps> = ({
   disabled = false,
   className = '',
   hClass = 'h-11',
+  buttonClassName = '',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -74,22 +76,24 @@ export const Select: React.FC<SelectProps> = ({
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full flex items-center justify-between px-4 bg-white border rounded-xl transition-all duration-200 cursor-pointer text-sm font-sans focus:outline-none focus:ring-4 focus:ring-indigo-600/5 ${hClass} ${
+        className={`w-full flex items-center justify-between px-3.5 border rounded-xl transition-all duration-200 cursor-pointer text-xs font-semibold focus:outline-none focus:ring-4 focus:ring-indigo-650/5 ${hClass} ${
           disabled
-            ? 'opacity-55 cursor-not-allowed bg-slate-50 border-slate-200'
+            ? 'opacity-55 cursor-not-allowed bg-slate-50 border-slate-200 text-slate-400'
             : error
             ? 'border-red-500 focus:border-red-500'
             : isOpen
             ? 'border-indigo-500 ring-4 ring-indigo-500/5 bg-white'
+            : buttonClassName
+            ? buttonClassName
             : 'border-slate-200 hover:border-slate-300 bg-white text-slate-800'
         }`}
       >
-        <span className={selectedOption ? 'text-slate-800 font-medium' : 'text-slate-400'}>
+        <span className={selectedOption ? (buttonClassName ? 'font-semibold' : 'text-slate-800 font-medium') : 'text-slate-400'}>
           {selectedOption ? selectedOption.label : placeholder}
         </span>
         <ChevronDown
-          size={16}
-          className={`text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+          size={14}
+          className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''} ${buttonClassName ? 'text-current' : 'text-slate-400'}`}
         />
       </button>
 

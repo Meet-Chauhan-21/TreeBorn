@@ -78,8 +78,11 @@ export interface AppSettings {
   whatsappNumber: string;
   themeColor: string;
   enableCreditCard: boolean;
+  enableRazorpay?: boolean;
+  razorpayKeyId?: string;
   enablePaypal: boolean;
   enableCOD: boolean;
+  facebookAppId?: string;
   shopName?: string;
   address?: string;
   gstNumber?: string;
@@ -136,13 +139,37 @@ export interface Order {
     total: number;
   };
   payment?: {
-    method: string;
-    status: string;
+    method: 'card' | 'cod' | 'razorpay' | string;
+    status: 'Pending' | 'Paid' | 'Failed' | 'Cancelled' | 'Refunded' | string;
+    transactionId?: string;
+    paidAt?: string | Date;
+    currency?: string;
+    amount?: number;
     cardName?: string;
     cardLast4?: string;
+    razorpayOrderId?: string;
+    razorpayPaymentId?: string;
+    razorpaySignature?: string;
   };
   createdAt?: string;
   user?: User; // added optionally just in case some components reference it
+
+  // Shiprocket Delivery Fields
+  shipmentCreated?: boolean;
+  shipmentId?: string;
+  awbCode?: string;
+  trackingNumber?: string;
+  trackingUrl?: string;
+  courierName?: string;
+  courierCompanyId?: string;
+  labelUrl?: string;
+  invoiceUrl?: string;
+  deliveryStatus?: string;
+  shiprocketResponse?: any;
+  pickupScheduled?: boolean;
+  manifestGenerated?: boolean;
+  createdShipmentAt?: string;
+  updatedShipmentAt?: string;
 }
 
 export interface User {

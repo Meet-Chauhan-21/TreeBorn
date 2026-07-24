@@ -1,6 +1,6 @@
 import React from 'react';
 
-type StatusType = 'active' | 'inactive' | 'pending' | 'completed' | 'cancelled' | 'processing' | 'low' | 'placed' | 'delivered' | 'shipped';
+type StatusType = 'active' | 'inactive' | 'pending' | 'completed' | 'cancelled' | 'processing' | 'low' | 'placed' | 'delivered' | 'shipped' | 'confirmed';
 
 interface StatusBadgeProps {
   status: StatusType | string;
@@ -9,7 +9,7 @@ interface StatusBadgeProps {
 
 const statusConfig: Partial<Record<StatusType, { bg: string; text: string; border: string; label: string }>> = {
   active: { bg: 'bg-emerald-50/70', text: 'text-emerald-700', border: 'border-emerald-200/45', label: 'Active' },
-  inactive: { bg: 'bg-slate-50/70', text: 'text-slate-600', border: 'border-slate-200/45', label: 'Inactive' },
+  inactive: { bg: 'bg-slate-50/70', text: 'text-slate-600', border: 'border-slate-200/45', label: 'Hidden' },
   pending: { bg: 'bg-amber-50/70', text: 'text-amber-700', border: 'border-amber-200/45', label: 'Pending' },
   completed: { bg: 'bg-blue-50/70', text: 'text-blue-700', border: 'border-blue-200/45', label: 'Completed' },
   cancelled: { bg: 'bg-rose-50/70', text: 'text-rose-700', border: 'border-rose-200/45', label: 'Cancelled' },
@@ -18,6 +18,7 @@ const statusConfig: Partial<Record<StatusType, { bg: string; text: string; borde
   placed: { bg: 'bg-blue-50/70', text: 'text-blue-700', border: 'border-blue-200/45', label: 'Placed' },
   delivered: { bg: 'bg-emerald-50/70', text: 'text-emerald-700', border: 'border-emerald-200/45', label: 'Delivered' },
   shipped: { bg: 'bg-indigo-50/70', text: 'text-indigo-700', border: 'border-indigo-200/45', label: 'Shipped' },
+  confirmed: { bg: 'bg-emerald-50/70', text: 'text-emerald-700', border: 'border-emerald-200/45', label: 'Confirmed' },
 };
 
 export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, label }) => {

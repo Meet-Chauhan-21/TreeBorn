@@ -65,7 +65,7 @@ export const DataTable = <T,>({
               <tr
                 key={keyExtractor ? keyExtractor(item) : index}
                 onClick={() => onRowClick && onRowClick(item)}
-                className={`hover:bg-slate-50/50 transition-all duration-150 ${onRowClick ? 'cursor-pointer' : ''}`}
+                className={`hover:bg-slate-100/70 hover:shadow-xs transition-all duration-200 ${onRowClick ? 'cursor-pointer' : ''}`}
               >
                 {columns.map((col) => (
                   <td key={col.key} className={`px-6 py-3.5 text-sm ${col.className}`}>

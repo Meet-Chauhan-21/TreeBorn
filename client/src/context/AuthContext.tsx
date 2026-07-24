@@ -9,9 +9,12 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   accessToken: string | null;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<boolean | { notVerified: boolean; email: string }>;
   register: (name: string, email: string, password: string, phone: string) => Promise<boolean>; // phone is now required
-  googleLogin: (credential: string) => Promise<boolean>;
+  googleLogin: (credentialOrToken: string, isAccessToken?: boolean) => Promise<boolean>;
+  facebookLogin: (payload: { code?: string; accessToken?: string }) => Promise<boolean | { needsEmail: boolean; facebookId: string; name: string }>;
+  facebookRegister: (name: string, email: string, facebookId: string) => Promise<boolean>;
+  verifyEmail: (token: string) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
   updateUser: (updatedData: Partial<User>) => Promise<boolean>; // backend integrated
   addAddress: (address: Omit<Address, '_id'>) => Promise<boolean>;
@@ -20,14 +23,21 @@ interface AuthContextType {
   placeOrder: (payload: {
     items: OrderItem[];
     shippingAddress: Omit<Address, '_id'>;
-    paymentMethod: 'card' | 'cod';
-    paymentDetails?: { cardName?: string; cardLast4?: string };
+    paymentMethod: 'card' | 'cod' | 'razorpay' | string;
+    paymentDetails?: {
+      cardName?: string;
+      cardLast4?: string;
+      razorpayOrderId?: string;
+      razorpayPaymentId?: string;
+      razorpaySignature?: string;
+    };
     totals: { subtotal: number; shipping: number; tax: number; total: number };
   }) => Promise<{ order: Order } | null>;
   fetchOrders: (
     page?: number,
     limit?: number
   ) => Promise<{ orders: Order[]; total: number; page: number; limit: number } | null>;
+  resendVerification: (email: string) => Promise<{ success: boolean; message?: string; cooldownRemaining?: number }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -87,7 +97,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initializeAuth();
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (email: string, password: string): Promise<boolean | { notVerified: boolean; email: string }> => {
     setLoading(true);
     try {
       const response = await fetch(`${API_BASE}/login`, {
@@ -100,6 +110,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const data = await response.json();
 
       if (!response.ok) {
+        if (data.notVerified) {
+          toast.warning(data.message || 'Email not verified.');
+          setLoading(false);
+          return { notVerified: true, email: data.email };
+        }
         toast.error(data.message || 'Login failed. Please check credentials.');
         setLoading(false);
         return false;
@@ -138,6 +153,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
       }
 
+      if (data.unverified) {
+        toast.info(data.message || 'Verification email sent! Please check your inbox.');
+        setLoading(false);
+        return true;
+      }
+
       setAccessToken(data.accessToken);
       const sessionUser = data.user;
 
@@ -153,13 +174,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const googleLogin = async (credential: string): Promise<boolean> => {
+  const googleLogin = async (credentialOrToken: string, isAccessToken: boolean = false): Promise<boolean> => {
     setLoading(true);
     try {
       const response = await fetch(`${API_BASE}/google`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ credential }),
+        body: JSON.stringify(
+          isAccessToken ? { accessToken: credentialOrToken } : { credential: credentialOrToken }
+        ),
         credentials: 'include',
       });
 
@@ -191,6 +214,109 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toast.error('Server error during Google login.');
       setLoading(false);
       return false;
+    }
+  };
+
+  const facebookLogin = async (payload: { code?: string; accessToken?: string }): Promise<any> => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_BASE}/facebook`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...payload,
+          redirectUri: `${window.location.origin}/login`
+        }),
+        credentials: 'include',
+      });
+
+      const data = await response.json();
+
+      if (data.needsEmail) {
+        setLoading(false);
+        return { needsEmail: true, facebookId: data.facebookId, name: data.name };
+      }
+
+      if (!response.ok) {
+        toast.error(data.message || 'Facebook Sign-In failed.');
+        setLoading(false);
+        return false;
+      }
+
+      setAccessToken(data.accessToken);
+
+      const profile = await fetchUserProfile(data.accessToken);
+      if (profile) {
+        setUser(profile);
+        toast.success(`Welcome back, ${profile.name}!`);
+        setLoading(false);
+        return true;
+      } else {
+        toast.error('Failed to retrieve user profile.');
+        setLoading(false);
+        return false;
+      }
+    } catch (error) {
+      console.error('Facebook login error:', error);
+      toast.error('Server error during Facebook login.');
+      setLoading(false);
+      return false;
+    }
+  };
+
+  const facebookRegister = async (name: string, email: string, facebookId: string): Promise<boolean> => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_BASE}/facebook-register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, facebookId }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data.message || 'Facebook registration failed.');
+        setLoading(false);
+        return false;
+      }
+
+      toast.success(data.message || 'Verification link sent! Please check your inbox.');
+      setLoading(false);
+      return true;
+    } catch (error) {
+      console.error('Facebook register error:', error);
+      toast.error('Server error during registration.');
+      setLoading(false);
+      return false;
+    }
+  };
+
+  const verifyEmail = async (token: string): Promise<{ success: boolean; message: string }> => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_BASE}/verify-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+        credentials: 'include',
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setAccessToken(data.accessToken);
+        setUser(data.user);
+        setLoading(false);
+        return { success: true, message: data.message || 'Email verified successfully!' };
+      } else {
+        setLoading(false);
+        return { success: false, message: data.message || 'Verification failed.' };
+      }
+    } catch (error) {
+      console.error('Verify email context error:', error);
+      setLoading(false);
+      return { success: false, message: 'Server error. Verification failed.' };
     }
   };
 
@@ -356,8 +482,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const placeOrder = async (payload: {
     items: OrderItem[];
     shippingAddress: Omit<Address, '_id'>;
-    paymentMethod: 'card' | 'cod';
-    paymentDetails?: { cardName?: string; cardLast4?: string };
+    paymentMethod: 'card' | 'cod' | 'razorpay' | string;
+    paymentDetails?: {
+      cardName?: string;
+      cardLast4?: string;
+      razorpayOrderId?: string;
+      razorpayPaymentId?: string;
+      razorpaySignature?: string;
+    };
     totals: { subtotal: number; shipping: number; tax: number; total: number };
   }): Promise<{ order: Order } | null> => {
     if (!accessToken) {
@@ -429,6 +561,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const resendVerification = async (
+    email: string
+  ): Promise<{ success: boolean; message?: string; cooldownRemaining?: number }> => {
+    try {
+      const response = await fetch(`${API_BASE}/resend-verification`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        toast.success(data.message || 'Verification link resent successfully!');
+        return { success: true, message: data.message };
+      } else {
+        toast.error(data.message || 'Failed to resend verification.');
+        return {
+          success: false,
+          message: data.message,
+          cooldownRemaining: data.cooldownRemaining
+        };
+      }
+    } catch (error) {
+      console.error('Resend verification fetch error:', error);
+      toast.error('Network error. Failed to resend verification.');
+      return { success: false, message: 'Network error. Please try again.' };
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -438,13 +598,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         login,
         register,
         googleLogin,
+        facebookLogin,
+        facebookRegister,
+        verifyEmail,
         logout,
         updateUser,
         addAddress,
         updateAddress,
         deleteAddress,
         placeOrder,
-        fetchOrders
+        fetchOrders,
+        resendVerification
       }}
     >
       {children}

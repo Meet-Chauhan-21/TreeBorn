@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Plus, Edit, Trash2, Package, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Search, Filter, Plus, Edit, Trash2, Package, CheckCircle, AlertTriangle, Copy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import AdminLayout from '../../components/admin/AdminLayout';
@@ -27,6 +27,10 @@ const ProductsList: React.FC = () => {
   // Delete Modal States
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+
+  // Copy Modal States
+  const [copyModalOpen, setCopyModalOpen] = useState(false);
+  const [itemToCopy, setItemToCopy] = useState<string | null>(null);
 
   const { accessToken } = useAuth();
 
@@ -56,6 +60,34 @@ const ProductsList: React.FC = () => {
   const handleDeleteTrigger = (productId: string) => {
     setItemToDelete(productId);
     setDeleteModalOpen(true);
+  };
+
+  const handleCopyTrigger = (productId: string) => {
+    setItemToCopy(productId);
+    setCopyModalOpen(true);
+  };
+
+  const confirmCopyProduct = async (productId: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/products/${productId}/copy`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      const data = await response.json();
+      if (response.ok) {
+        toast.success(data.message || 'Product duplicated successfully');
+        // Prepend the new copy to the top of list
+        setProducts([data.product, ...products]);
+      } else {
+        toast.error(data.message || 'Failed to duplicate product');
+      }
+    } catch (error) {
+      console.error('Error duplicating product:', error);
+      toast.error('Failed to duplicate product');
+    }
   };
 
   const confirmDeleteProduct = async (productId: string) => {
@@ -101,11 +133,11 @@ const ProductsList: React.FC = () => {
           <img
             src={item.image}
             alt={item.name}
-            className="w-14 h-14 object-cover rounded-xl"
+            className="w-14 h-14 object-cover rounded-xl border border-gray-100 shadow-3xs"
           />
           <div>
             <p className="font-semibold text-gray-900">{item.name}</p>
-            <p className="text-sm text-gray-500">{item.sku}</p>
+            <p className="inline-block font-mono text-[9px] bg-indigo-50 text-indigo-750 border border-indigo-150 px-1.5 py-0.5 rounded-md mt-1">{item.sku || 'NO SKU'}</p>
           </div>
         </div>
       ),
@@ -117,22 +149,32 @@ const ProductsList: React.FC = () => {
         const catName = typeof item.category === 'object' && item.category
           ? item.category.name
           : (item.category || '');
-        return <span className="text-gray-900">{catName}</span>;
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 uppercase tracking-wide">
+            {catName || 'General'}
+          </span>
+        );
       }
     },
     {
       key: 'price',
       header: 'Price',
       render: (item: any) => (
-        <span className="font-semibold text-gray-900">₹{item.price.toFixed(2)}</span>
+        <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-purple-50 text-purple-750 border border-purple-100 shadow-3xs">
+          ₹{item.price.toFixed(2)}
+        </span>
       ),
     },
     {
       key: 'stock',
       header: 'Stock',
       render: (item: any) => (
-        <span className={`font-semibold ${item.stock < 10 ? 'text-red-600' : 'text-gray-900'}`}>
-          {item.stock}
+        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider border ${
+          item.stock < 10
+            ? 'bg-rose-50 text-rose-700 border-rose-200'
+            : 'bg-emerald-50 text-emerald-700 border-emerald-250'
+        }`}>
+          {item.stock} Left
         </span>
       ),
     },
@@ -147,6 +189,17 @@ const ProductsList: React.FC = () => {
       className: 'text-right',
       render: (item: any) => (
         <div className="flex items-center justify-end gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            icon={Copy}
+            className="!text-blue-600 hover:!text-blue-800 hover:!bg-blue-50"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleCopyTrigger(item._id);
+            }}
+            title="Duplicate Product"
+          />
           <Button 
             variant="ghost" 
             size="sm" 
@@ -183,32 +236,49 @@ const ProductsList: React.FC = () => {
   return (
     <AdminLayout>
       <div className="space-y-6 pt-2">
-        {/* Small Data Cards (Stats widgets) related to Products tab - 4 cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          <StatsCard
-            title="Total Products"
-            value={products.length}
-            icon={Package}
-            color="primary"
-          />
-          <StatsCard
-            title="Active Products"
-            value={products.filter((p: any) => p.status?.toLowerCase() === 'active').length}
-            icon={CheckCircle}
-            color="green"
-          />
-          <StatsCard
-            title="Low Stock"
-            value={products.filter((p: any) => (p.stock || 0) <= 5 && (p.stock || 0) > 0).length}
-            icon={AlertTriangle}
-            color="orange"
-          />
-          <StatsCard
-            title="Out of Stock"
-            value={products.filter((p: any) => (p.stock || 0) === 0).length}
-            icon={AlertTriangle}
-            color="orange"
-          />
+        {/* Colorful Metric Cards for Products */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-indigo-50/70 border border-indigo-200/80 p-4 rounded-2xl shadow-xs text-left hover:shadow-md transition-all">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-800 block">Total Catalog</span>
+            <div className="flex items-baseline justify-between mt-1.5">
+              <span className="text-2xl font-extrabold text-indigo-600 font-display">{products.length}</span>
+              <span className="text-[10px] font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded border border-indigo-200">Products</span>
+            </div>
+            <span className="text-[10px] font-medium text-indigo-500 mt-1 block">Catalog Inventory</span>
+          </div>
+
+          <div className="bg-emerald-50/70 border border-emerald-200/80 p-4 rounded-2xl shadow-xs text-left hover:shadow-md transition-all">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800 block">Active Listed</span>
+            <div className="flex items-baseline justify-between mt-1.5">
+              <span className="text-2xl font-extrabold text-emerald-600 font-display">
+                {products.filter((p: any) => p.status?.toLowerCase() === 'active').length}
+              </span>
+              <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">Live</span>
+            </div>
+            <span className="text-[10px] font-medium text-emerald-500 mt-1 block">Visible in Store</span>
+          </div>
+
+          <div className="bg-amber-50/70 border border-amber-200/80 p-4 rounded-2xl shadow-xs text-left hover:shadow-md transition-all">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-amber-800 block">Low Stock Alert</span>
+            <div className="flex items-baseline justify-between mt-1.5">
+              <span className="text-2xl font-extrabold text-amber-600 font-display">
+                {products.filter((p: any) => (p.stock || 0) <= 5 && (p.stock || 0) > 0).length}
+              </span>
+              <span className="text-[10px] font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded border border-amber-200">≤ 5 Units</span>
+            </div>
+            <span className="text-[10px] font-medium text-amber-500 mt-1 block">Restock Warning</span>
+          </div>
+
+          <div className="bg-rose-50/70 border border-rose-200/80 p-4 rounded-2xl shadow-xs text-left hover:shadow-md transition-all">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-rose-800 block">Out of Stock</span>
+            <div className="flex items-baseline justify-between mt-1.5">
+              <span className="text-2xl font-extrabold text-rose-600 font-display">
+                {products.filter((p: any) => (p.stock || 0) === 0).length}
+              </span>
+              <span className="text-[10px] font-bold bg-rose-100 text-rose-700 px-2 py-0.5 rounded border border-rose-200">0 Units</span>
+            </div>
+            <span className="text-[10px] font-medium text-rose-500 mt-1 block">Requires Inventory</span>
+          </div>
         </div>
 
         <Card>
@@ -319,6 +389,49 @@ const ProductsList: React.FC = () => {
                 className="flex-1 py-2.5 px-4 bg-red-600 hover:bg-red-750 text-white font-semibold text-xs rounded-xl transition-colors cursor-pointer focus:outline-none"
               >
                 Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Copy Confirmation Modal */}
+      {copyModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl text-center space-y-4 border border-gray-100">
+            <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto">
+              <Copy size={22} />
+            </div>
+
+            <div className="space-y-1">
+              <h3 className="text-lg font-bold text-gray-900">Copy Product?</h3>
+              <p className="text-xs text-gray-500 leading-relaxed font-sans">
+                Are you sure you want to duplicate this product? It will be created with an inactive status.
+              </p>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setCopyModalOpen(false);
+                  setItemToCopy(null);
+                }}
+                className="flex-1 py-2.5 px-4 bg-gray-50 hover:bg-gray-100 text-gray-700 font-semibold text-xs rounded-xl border border-gray-200 transition-colors cursor-pointer focus:outline-none"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (itemToCopy) {
+                    await confirmCopyProduct(itemToCopy);
+                  }
+                  setCopyModalOpen(false);
+                  setItemToCopy(null);
+                }}
+                className="flex-1 py-2.5 px-4 bg-blue-600 hover:bg-blue-755 text-white font-semibold text-xs rounded-xl transition-colors cursor-pointer focus:outline-none"
+              >
+                Copy
               </button>
             </div>
           </div>

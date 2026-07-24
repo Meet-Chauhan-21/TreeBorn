@@ -152,12 +152,8 @@ const HomepageImages: React.FC = () => {
   return (
     <AdminLayout title="Homepage Images">
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">Homepage Images</h2>
-            <p className="text-gray-500">Configure Spotlight Formulation and About section editorial images</p>
-          </div>
-          <Button icon={Save} onClick={handleSave} className="py-3 px-5 text-sm font-bold shadow-lg shadow-indigo-500/10">
+        <div className="flex items-center justify-end border-b border-slate-100 pb-4">
+          <Button icon={Save} size="sm" onClick={handleSave}>
             Save Changes
           </Button>
         </div>

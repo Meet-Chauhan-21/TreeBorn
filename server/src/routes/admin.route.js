@@ -8,6 +8,7 @@ const dashboardController = require('../controller/admin/dashboard.controller');
 const productController = require('../controller/admin/product.controller');
 const orderController = require('../controller/admin/order.controller');
 const userController = require('../controller/admin/user.controller');
+const shipmentController = require('../controller/admin/shipment.controller');
 
 // Configure Multer
 const storage = multer.memoryStorage();
@@ -85,6 +86,7 @@ router.post('/cloudinary/delete', productController.deleteCloudinaryAsset);
 // Product CRUD endpoints
 router.get('/products', productController.getAllProductsAdmin);
 router.post('/products', productController.createProduct);
+router.post('/products/:id/copy', productController.copyProduct);
 router.put('/products/:id', productController.updateProduct);
 router.delete('/products/:id', productController.deleteProduct);
 
@@ -98,6 +100,18 @@ router.get('/orders', orderController.getAllOrders);
 router.get('/orders/:id', orderController.getOrderById);
 router.put('/orders/:id/status', orderController.updateOrderStatus);
 router.delete('/orders/:id', orderController.deleteOrder);
+
+// Shiprocket Delivery endpoints
+router.post('/orders/:id/create-shipment', shipmentController.createShipment);
+router.get('/orders/:id/shipment', shipmentController.getShipmentDetails);
+router.get('/orders/:id/couriers', shipmentController.getAvailableCouriers);
+router.post('/orders/:id/generate-awb', shipmentController.generateAwb);
+router.post('/orders/:id/generate-label', shipmentController.generateLabel);
+router.post('/orders/:id/generate-manifest', shipmentController.generateManifest);
+router.post('/orders/:id/schedule-pickup', shipmentController.schedulePickup);
+router.post('/orders/:id/generate-invoice', shipmentController.generateInvoice);
+router.post('/orders/:id/refresh-status', shipmentController.refreshStatus);
+router.post('/orders/:id/cancel-shipment', shipmentController.cancelShipment);
 
 // User endpoints
 router.get('/users', userController.getAllUsers);

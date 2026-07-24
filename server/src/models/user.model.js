@@ -81,9 +81,14 @@ const userSchema = new mongoose.Schema(
       unique: true,
       sparse: true
     },
+    facebookId: {
+      type: String,
+      unique: true,
+      sparse: true
+    },
     provider: {
       type: String,
-      enum: ['local', 'google'],
+      enum: ['local', 'google', 'facebook'],
       default: 'local'
     },
     role: {
@@ -94,6 +99,19 @@ const userSchema = new mongoose.Schema(
     refreshToken: {
       type: String,
       default: ''
+    },
+    isVerified: {
+      type: Boolean,
+      default: false
+    },
+    verificationToken: {
+      type: String
+    },
+    verificationTokenExpires: {
+      type: Date
+    },
+    lastVerificationSentAt: {
+      type: Date
     },
     addresses: [addressSchema]
   },

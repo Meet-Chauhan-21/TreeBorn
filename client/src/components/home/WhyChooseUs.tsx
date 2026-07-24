@@ -8,11 +8,19 @@ import { useStore } from '../../context/StoreContext';
 
 export const WhyChooseUs: React.FC = () => {
   const { settings } = useStore();
+  const themeColor = settings?.themeColor || '#581C87';
+
   return (
     <section id="about" className="py-24 bg-white relative overflow-hidden">
-      {/* Subtle brand graphic blur shapes */}
-      <div className="absolute left-0 top-1/4 w-[300px] h-[300px] rounded-full bg-accent-sage/35 blur-[100px] -z-10" />
-      <div className="absolute right-0 bottom-1/4 w-[250px] h-[250px] rounded-full bg-[#1F7A4D]/3 blur-[100px] -z-10" />
+      {/* Dynamic brand graphic blur shapes */}
+      <div
+        className="absolute left-0 top-1/4 w-[300px] h-[300px] rounded-full blur-[100px] -z-10 opacity-20 transition-all duration-500"
+        style={{ backgroundColor: themeColor }}
+      />
+      <div
+        className="absolute right-0 bottom-1/4 w-[250px] h-[250px] rounded-full blur-[100px] -z-10 opacity-15 transition-all duration-500"
+        style={{ backgroundColor: themeColor }}
+      />
 
       <Container className="space-y-24">
         
@@ -28,7 +36,10 @@ export const WhyChooseUs: React.FC = () => {
               transition={{ duration: 0.6 }}
               className="space-y-2.5"
             >
-              <span className="text-xs font-bold font-display uppercase tracking-widest text-secondary block">
+              <span
+                className="text-xs font-bold font-display uppercase tracking-widest px-3 py-1 rounded-full inline-block text-white transition-all duration-300 shadow-2xs"
+                style={{ backgroundColor: themeColor }}
+              >
                 About Tree Born
               </span>
               <h2 className="text-3xl sm:text-4xl font-display font-bold text-dark tracking-tight leading-tight">
@@ -56,21 +67,22 @@ export const WhyChooseUs: React.FC = () => {
               Every formulation is balanced to reinforce your skin's natural moisture barrier, neutralize oxidative stressors, and deliver deep, biological hydration. We honor the Earth's apothecary to feed your skin's natural glow.
             </motion.p>
 
-            {/* List highlights - Styled inside Premium Green Rectangular Boxes */}
+            {/* List highlights - Styled dynamically with Store Theme Color */}
             <div className="space-y-4 pt-4">
               <motion.div
                 initial={{ opacity: 0, y: 15 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: 0.2 }}
-                className="flex gap-4 items-start p-4 sm:p-5 rounded-2xl border border-[#1F7A4D]/20 bg-[#0F3D2E] text-white hover:bg-[#16523F] transition-all duration-300 shadow-2xs"
+                className="flex gap-4 items-start p-4 sm:p-5 rounded-2xl border text-white transition-all duration-300 shadow-2xs hover:scale-[1.01]"
+                style={{ backgroundColor: themeColor, borderColor: `${themeColor}40` }}
               >
-                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white flex-shrink-0 mt-0.5 border border-white/5">
+                <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center text-white flex-shrink-0 mt-0.5 border border-white/10 backdrop-blur-xs">
                   <Droplet size={18} />
                 </div>
                 <div className="space-y-1">
                   <h4 className="font-display font-bold text-xs sm:text-sm text-white">Molecular Bio-Fractionation</h4>
-                  <p className="text-[11px] text-white/80 font-sans leading-relaxed">We extract active botanical molecules at low temperatures to preserve their enzyme potency.</p>
+                  <p className="text-[11px] text-white/85 font-sans leading-relaxed">We extract active botanical molecules at low temperatures to preserve their enzyme potency.</p>
                 </div>
               </motion.div>
 
@@ -79,14 +91,15 @@ export const WhyChooseUs: React.FC = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: 0.3 }}
-                className="flex gap-4 items-start p-4 sm:p-5 rounded-2xl border border-[#1F7A4D]/20 bg-[#0F3D2E] text-white hover:bg-[#16523F] transition-all duration-300 shadow-2xs"
+                className="flex gap-4 items-start p-4 sm:p-5 rounded-2xl border text-white transition-all duration-300 shadow-2xs hover:scale-[1.01]"
+                style={{ backgroundColor: themeColor, borderColor: `${themeColor}40` }}
               >
-                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white flex-shrink-0 mt-0.5 border border-white/5">
+                <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center text-white flex-shrink-0 mt-0.5 border border-white/10 backdrop-blur-xs">
                   <Trees size={18} />
                 </div>
                 <div className="space-y-1">
                   <h4 className="font-display font-bold text-xs sm:text-sm text-white">One Bottle, One Tree Program</h4>
-                  <p className="text-[11px] text-white/80 font-sans leading-relaxed">For every premium botanical formulation purchased, we plant a native tree to offset carbon footprints.</p>
+                  <p className="text-[11px] text-white/85 font-sans leading-relaxed">For every premium botanical formulation purchased, we plant a native tree to offset carbon footprints.</p>
                 </div>
               </motion.div>
 
@@ -95,14 +108,15 @@ export const WhyChooseUs: React.FC = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: 0.4 }}
-                className="flex gap-4 items-start p-4 sm:p-5 rounded-2xl border border-[#1F7A4D]/20 bg-[#0F3D2E] text-white hover:bg-[#16523F] transition-all duration-300 shadow-2xs"
+                className="flex gap-4 items-start p-4 sm:p-5 rounded-2xl border text-white transition-all duration-300 shadow-2xs hover:scale-[1.01]"
+                style={{ backgroundColor: themeColor, borderColor: `${themeColor}40` }}
               >
-                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white flex-shrink-0 mt-0.5 border border-white/5">
+                <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center text-white flex-shrink-0 mt-0.5 border border-white/10 backdrop-blur-xs">
                   <Recycle size={18} />
                 </div>
                 <div className="space-y-1">
                   <h4 className="font-display font-bold text-xs sm:text-sm text-white">100% Zero-Waste Packaging</h4>
-                  <p className="text-[11px] text-white/80 font-sans leading-relaxed">Our UV-protective glass jars and biodegradable cartons prevent active oxidation and eliminate plastic waste.</p>
+                  <p className="text-[11px] text-white/85 font-sans leading-relaxed">Our UV-protective glass jars and biodegradable cartons prevent active oxidation and eliminate plastic waste.</p>
                 </div>
               </motion.div>
             </div>

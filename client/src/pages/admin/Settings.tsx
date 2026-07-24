@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Save, Palette, CreditCard, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
 import AdminLayout from '../../components/admin/AdminLayout';
@@ -14,14 +14,22 @@ const Settings: React.FC = () => {
   const { updateLocalSettings } = useStore();
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const colorInputRef = useRef<HTMLInputElement>(null);
+
+  const triggerColorPicker = () => {
+    colorInputRef.current?.click();
+  };
 
   const [formData, setFormData] = useState({
     email: '',
     whatsappNumber: '',
     themeColor: '#581C87',
     enableCreditCard: true,
+    enableRazorpay: true,
+    razorpayKeyId: 'rzp_test_TFHJjhLymJTyfs',
     enablePaypal: true,
     enableCOD: true,
+    facebookAppId: '',
     shopName: '',
     address: '',
     gstNumber: '',
@@ -71,8 +79,11 @@ const Settings: React.FC = () => {
               whatsappNumber: data.settings.whatsappNumber || '',
               themeColor: data.settings.themeColor || '#581C87',
               enableCreditCard: data.settings.enableCreditCard !== false,
+              enableRazorpay: data.settings.enableRazorpay !== false,
+              razorpayKeyId: data.settings.razorpayKeyId || 'rzp_test_TFHJjhLymJTyfs',
               enablePaypal: data.settings.enablePaypal !== false,
               enableCOD: data.settings.enableCOD !== false,
+              facebookAppId: data.settings.facebookAppId || '',
               shopName: data.settings.shopName || '',
               address: data.settings.address || '',
               gstNumber: data.settings.gstNumber || '',
@@ -195,17 +206,13 @@ const Settings: React.FC = () => {
 
   return (
     <AdminLayout title="Settings">
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Settings</h2>
-          <p className="text-gray-500">Manage contact information, design configurations, and checkout options</p>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
+      <div className="space-y-6 pb-10">
+ 
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
             <Card title="Store Settings & Contacts" icon={Palette}>
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Support Email</label>
                     <input
@@ -227,7 +234,7 @@ const Settings: React.FC = () => {
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4 mt-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Shop Name</label>
                     <input
@@ -258,13 +265,13 @@ const Settings: React.FC = () => {
                     placeholder="Store address..."
                   />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 items-center">
-                  <div className="md:col-span-2">
+                <div className="grid grid-cols-1 gap-4 mt-4 items-center">
+                  <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Store Logo</label>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-3">
                       <label className="flex items-center gap-2 px-4 py-3 bg-white border border-gray-200 rounded-2xl cursor-pointer hover:bg-slate-50 transition-colors shadow-3xs text-slate-700 font-sans text-sm border-dashed">
                         <Upload size={16} className={uploading ? 'animate-spin' : ''} />
-                        <span>{uploading ? 'Uploading...' : 'Upload Logo Image'}</span>
+                        <span>{uploading ? 'Uploading...' : 'Upload Logo'}</span>
                         <input
                           type="file"
                           accept="image/*"
@@ -278,16 +285,16 @@ const Settings: React.FC = () => {
                         <button
                           type="button"
                           onClick={handleRemoveLogo}
-                          className="flex items-center gap-1.5 px-4 py-3 border border-red-200 text-red-650 rounded-2xl hover:bg-red-50 transition-all font-sans text-sm cursor-pointer shadow-3xs focus:outline-none"
+                          className="flex items-center gap-1.5 px-4 py-3 border border-red-200 text-red-655 rounded-2xl hover:bg-red-50 transition-all font-sans text-sm cursor-pointer shadow-3xs focus:outline-none"
                         >
                           <X size={15} />
-                          <span>Cancel / Remove</span>
+                          <span>Remove Logo</span>
                         </button>
                       )}
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-3">Logo Preview</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Logo Preview</label>
                     <div className="h-14 w-36 border border-gray-200 rounded-2xl bg-slate-50/50 flex items-center justify-center overflow-hidden shadow-3xs p-1">
                       {formData.logo ? (
                         <img src={formData.logo} alt="Store Logo Preview" className="h-full w-auto object-contain" />
@@ -299,20 +306,20 @@ const Settings: React.FC = () => {
                 </div>
               </div>
             </Card>
-
+ 
             <Card title="Theme Customization" icon={Palette}>
               <div className="space-y-6">
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-3">Select Preset Theme Accent Color</label>
                   
                   {/* Preset Colors Grid */}
-                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 mb-5">
+                  <div className="grid grid-cols-3 gap-2 mb-5">
                     {presetColors.map((color) => (
                       <button
                         key={color.value}
                         type="button"
                         onClick={() => updateThemeColor(color.value)}
-                        className={`p-3 rounded-xl border text-center transition-all flex flex-col items-center justify-center gap-1.5 cursor-pointer hover:bg-slate-50/50 ${
+                        className={`p-2.5 rounded-xl border text-center transition-all flex flex-col items-center justify-center gap-1.5 cursor-pointer hover:bg-slate-50/50 ${
                           formData.themeColor.toLowerCase() === color.value.toLowerCase()
                             ? 'border-indigo-500 ring-2 ring-indigo-500/10 bg-indigo-50/10'
                             : 'border-slate-200'
@@ -328,14 +335,15 @@ const Settings: React.FC = () => {
                       </button>
                     ))}
                   </div>
-
+ 
                   {/* Custom Color Selector & Selected Color Preview Box */}
                   <div className="border-t border-slate-100 pt-5 space-y-4">
                     <label className="block text-sm font-semibold text-slate-700">Custom Accent Color Selection</label>
                     <div className="flex flex-wrap items-center gap-4 bg-slate-50 border border-slate-200/80 p-4 rounded-xl">
                       {/* Color Palette Selector box */}
-                      <div className="relative w-10 h-10 rounded-lg overflow-hidden border border-slate-250/60 shadow-3xs flex items-center justify-center cursor-pointer bg-white">
+                      <div className="relative w-10 h-10 rounded-lg overflow-hidden border border-slate-250/60 shadow-3xs flex items-center justify-center cursor-pointer bg-white shrink-0">
                         <input
+                          ref={colorInputRef}
                           type="color"
                           value={formData.themeColor}
                           onChange={(e) => updateThemeColor(e.target.value)}
@@ -345,13 +353,22 @@ const Settings: React.FC = () => {
                       
                       {/* Small Preview Box of selected color */}
                       <div
-                        className="w-10 h-10 rounded-lg border border-slate-300 shadow-inner transition-all duration-300"
+                        className="w-10 h-10 rounded-lg border border-slate-300 shadow-inner transition-all duration-300 shrink-0"
                         style={{ backgroundColor: formData.themeColor }}
                         title="Selected Accent Preview"
                       />
-
-                      <div className="flex-1 min-w-[120px]">
-                        <p className="text-xs font-bold text-slate-800">Selected Hex Color</p>
+ 
+                      <button
+                        type="button"
+                        onClick={triggerColorPicker}
+                        className="flex items-center gap-2 px-4 py-2.5 border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 transition-all font-sans text-xs font-semibold cursor-pointer shadow-3xs rounded-xl focus:outline-none"
+                      >
+                        <Palette size={14} className="text-slate-500" />
+                        <span>Choose Color</span>
+                      </button>
+ 
+                      <div className="flex-1 min-w-[100px]">
+                        <p className="text-xs font-bold text-slate-800">Hex Code</p>
                         <input
                           type="text"
                           value={formData.themeColor}
@@ -361,7 +378,7 @@ const Settings: React.FC = () => {
                       </div>
                     </div>
                   </div>
-
+ 
                   {/* Recent Colors list display */}
                   {recentColors.length > 0 && (
                     <div className="border-t border-slate-100 pt-5">
@@ -387,56 +404,56 @@ const Settings: React.FC = () => {
                 </div>
               </div>
             </Card>
-
-            <Card title="Active Payment Methods" icon={CreditCard}>
-              <div className="space-y-4">
-                <label className="flex items-center gap-3 cursor-pointer p-3.5 border border-gray-150 rounded-2xl hover:bg-gray-50/20 transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={formData.enableCreditCard}
-                    onChange={(e) => setFormData({ ...formData, enableCreditCard: e.target.checked })}
-                    className="w-5 h-5 text-primary rounded focus:ring-primary cursor-pointer"
-                  />
-                  <div>
-                    <span className="text-sm font-semibold text-gray-800 block">Credit Card Payments</span>
-                    <span className="text-xs text-gray-500 block mt-0.5">Allow users to pay with major credit cards at checkout.</span>
-                  </div>
-                </label>
-
-                <label className="flex items-center gap-3 cursor-pointer p-3.5 border border-gray-150 rounded-2xl hover:bg-gray-50/20 transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={formData.enablePaypal}
-                    onChange={(e) => setFormData({ ...formData, enablePaypal: e.target.checked })}
-                    className="w-5 h-5 text-primary rounded focus:ring-primary cursor-pointer"
-                  />
-                  <div>
-                    <span className="text-sm font-semibold text-gray-800 block">PayPal Processing</span>
-                    <span className="text-xs text-gray-500 block mt-0.5">Let users complete checkout via secure PayPal redirect gateway.</span>
-                  </div>
-                </label>
-
-                <label className="flex items-center gap-3 cursor-pointer p-3.5 border border-gray-150 rounded-2xl hover:bg-gray-50/20 transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={formData.enableCOD}
-                    onChange={(e) => setFormData({ ...formData, enableCOD: e.target.checked })}
-                    className="w-5 h-5 text-primary rounded focus:ring-primary cursor-pointer"
-                  />
-                  <div>
-                    <span className="text-sm font-semibold text-gray-800 block">Cash on Delivery (COD)</span>
-                    <span className="text-xs text-gray-500 block mt-0.5">Accept order placements with COD processing option.</span>
-                  </div>
-                </label>
-              </div>
-            </Card>
           </div>
-
-          <div className="space-y-6">
-            <Button icon={Save} onClick={handleSave} className="w-full justify-center py-3.5 text-sm rounded-2xl font-bold shadow-lg shadow-primary/10">
-              Save Store Changes
-            </Button>
-          </div>
+ 
+          <Card title="Active Payment Methods & Gateways" icon={CreditCard}>
+            <div className="space-y-4">
+              <label className="flex items-center gap-3 cursor-pointer p-3.5 border border-gray-150 rounded-2xl hover:bg-gray-50/20 transition-colors">
+                <input
+                  type="checkbox"
+                  checked={formData.enableRazorpay}
+                  onChange={(e) => setFormData({ ...formData, enableRazorpay: e.target.checked })}
+                  className="w-5 h-5 text-primary rounded focus:ring-primary cursor-pointer"
+                />
+                <div>
+                  <span className="text-sm font-semibold text-gray-800 block">Razorpay Gateway (UPI, Cards, Netbanking)</span>
+                  <span className="text-xs text-gray-500 block mt-0.5">Enable official Razorpay online payment checkout flow.</span>
+                </div>
+              </label>
+ 
+              {formData.enableRazorpay && (
+                <div className="p-3.5 bg-indigo-50/60 border border-indigo-150 rounded-2xl text-left flex items-start gap-2.5">
+                  <div className="w-2 h-2 rounded-full bg-indigo-600 mt-1.5 flex-shrink-0 animate-pulse" />
+                  <p className="text-xs text-indigo-900 font-sans leading-relaxed">
+                    <strong>Environment Security Enforced:</strong> Razorpay Credentials (Key ID & Secret Key) are safely loaded strictly from <code className="text-indigo-700 bg-white px-1.5 py-0.5 rounded border border-indigo-200 font-mono text-[11px]">server/.env</code> and <code className="text-indigo-700 bg-white px-1.5 py-0.5 rounded border border-indigo-200 font-mono text-[11px]">client/.env</code> files.
+                  </p>
+                </div>
+              )}
+ 
+              <label className="flex items-center gap-3 cursor-pointer p-3.5 border border-gray-150 rounded-2xl hover:bg-gray-50/20 transition-colors">
+                <input
+                  type="checkbox"
+                  checked={formData.enableCOD}
+                  onChange={(e) => setFormData({ ...formData, enableCOD: e.target.checked })}
+                  className="w-5 h-5 text-primary rounded focus:ring-primary cursor-pointer"
+                />
+                <div>
+                  <span className="text-sm font-semibold text-gray-800 block">Cash on Delivery (COD)</span>
+                  <span className="text-xs text-gray-500 block mt-0.5">Accept order placements with COD processing option.</span>
+                </div>
+              </label>
+            </div>
+          </Card>
+        </div>
+ 
+        <div className="flex justify-end pt-4">
+          <Button
+            icon={Save}
+            onClick={handleSave}
+            className="py-3 px-6 text-sm rounded-xl font-bold shadow-md shadow-primary/10 hover:shadow-lg transition-all"
+          >
+            Save Settings
+          </Button>
         </div>
       </div>
     </AdminLayout>

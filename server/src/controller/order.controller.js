@@ -1,4 +1,7 @@
+const crypto = require('crypto');
 const Order = require('../models/order.model');
+const Settings = require('../models/settings.model');
+const { sendOrderConfirmationEmail, sendAdminNewOrderEmail } = require('../util/email.util');
 
 const ORDER_NUMBER_PREFIX = 'TREEBORN';
 
@@ -22,12 +25,80 @@ const validateAddress = (shippingAddress) => {
   return missing;
 };
 
+// @desc    Create a Razorpay Order
+// @route   POST /api/users/orders/razorpay-create
+// @access  Protected
+const createRazorpayOrder = async (req, res) => {
+  try {
+    const { amount } = req.body;
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ message: 'Valid amount is required.' });
+    }
+
+    const storeSettings = (await Settings.findOne()) || {};
+    if (storeSettings.enableRazorpay === false) {
+      return res.status(400).json({ message: 'Online payments via Razorpay are currently disabled by store administrator.' });
+    }
+
+    const keyId = process.env.RAZORPAY_KEY_ID || 'rzp_test_TFHJjhLymJTyfs';
+    const keySecret = process.env.RAZORPAY_KEY_SECRET || 'r0EJomid7zHjRUt0GX3iB6Qf';
+
+    const amountInPaise = Math.round(amount * 100);
+    const receipt = `rcpt_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+
+    const authHeader = `Basic ${Buffer.from(`${keyId}:${keySecret}`).toString('base64')}`;
+
+    const response = await fetch('https://api.razorpay.com/v1/orders', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: authHeader
+      },
+      body: JSON.stringify({
+        amount: amountInPaise,
+        currency: 'INR',
+        receipt,
+        notes: { store: 'TreeBorn Skincare' }
+      })
+    });
+
+    const responseText = await response.text();
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (parseErr) {
+      console.error(`Razorpay API Non-JSON Response (Status ${response.status}):`, responseText);
+      return res.status(502).json({
+        message: 'Razorpay Gateway is temporarily unavailable. Please try again in a few moments or select Cash on Delivery.'
+      });
+    }
+
+    if (!response.ok) {
+      console.error('Razorpay API Error Response:', data);
+      return res.status(400).json({
+        message: data.error?.description || data.message || 'Failed to create Razorpay order.'
+      });
+    }
+
+    return res.status(200).json({
+      razorpayOrderId: data.id,
+      amount: data.amount,
+      currency: data.currency,
+      keyId
+    });
+  } catch (error) {
+    console.error('Create Razorpay Order Error:', error);
+    return res.status(500).json({ message: 'Server error creating Razorpay order.' });
+  }
+};
+
 // @desc    Create an order for the logged-in user
 // @route   POST /api/users/orders
 // @access  Protected
 const createOrder = async (req, res) => {
   try {
     const userId = req.user?._id;
+    const userEmail = req.user?.email;
     if (!userId) return res.status(401).json({ message: 'Unauthorized' });
 
     const { items, shippingAddress, paymentMethod, paymentDetails, totals } = req.body;
@@ -44,8 +115,16 @@ const createOrder = async (req, res) => {
       });
     }
 
-    if (!paymentMethod || !['card', 'cod'].includes(paymentMethod)) {
-      return res.status(400).json({ message: 'paymentMethod must be either "card" or "cod".' });
+    if (!paymentMethod || !['card', 'cod', 'razorpay'].includes(paymentMethod)) {
+      return res.status(400).json({ message: 'paymentMethod must be "razorpay", "card", or "cod".' });
+    }
+
+    const storeSettings = (await Settings.findOne()) || {};
+    if (paymentMethod === 'cod' && storeSettings.enableCOD === false) {
+      return res.status(400).json({ message: 'Cash on Delivery (COD) is currently disabled by store administrator.' });
+    }
+    if (paymentMethod === 'razorpay' && storeSettings.enableRazorpay === false) {
+      return res.status(400).json({ message: 'Razorpay online payments are currently disabled by store administrator.' });
     }
 
     if (!totals) return res.status(400).json({ message: 'Totals are required.' });
@@ -56,9 +135,78 @@ const createOrder = async (req, res) => {
       return res.status(400).json({ message: 'Invalid totals provided.', missing: missingTotals });
     }
 
-    const orderNumber = await generateOrderNumber();
+    let paymentData = {};
 
-    const paymentStatus = paymentMethod === 'card' ? 'paid' : 'pending';
+    // Strict Razorpay Signature Verification
+    if (paymentMethod === 'razorpay') {
+      const { razorpayOrderId, razorpayPaymentId, razorpaySignature } = paymentDetails || {};
+
+      if (!razorpayOrderId || !razorpayPaymentId || !razorpaySignature) {
+        return res.status(400).json({ message: 'Razorpay payment details missing.' });
+      }
+
+      const keySecret = process.env.RAZORPAY_KEY_SECRET || 'r0EJomid7zHjRUt0GX3iB6Qf';
+      const body = `${razorpayOrderId}|${razorpayPaymentId}`;
+      const expectedSignature = crypto
+        .createHmac('sha256', keySecret)
+        .update(body)
+        .digest('hex');
+
+      if (expectedSignature !== razorpaySignature) {
+        console.error('Razorpay Signature Verification Failed!');
+        return res.status(400).json({ message: 'Payment verification failed. Invalid signature.' });
+      }
+
+      // Duplicate Payment Protection: Prevent duplicate orders if callback or request is submitted multiple times
+      const existingOrder = await Order.findOne({
+        $or: [
+          { 'payment.razorpayPaymentId': razorpayPaymentId },
+          { 'payment.transactionId': razorpayPaymentId }
+        ]
+      });
+
+      if (existingOrder) {
+        console.warn(`Duplicate payment submission blocked for Razorpay Payment ID: ${razorpayPaymentId}`);
+        return res.status(200).json({
+          message: 'Order already processed for this payment.',
+          order: existingOrder
+        });
+      }
+
+      paymentData = {
+        method: 'razorpay',
+        status: 'Paid',
+        transactionId: razorpayPaymentId,
+        paidAt: new Date(),
+        currency: 'INR',
+        amount: totals.total,
+        razorpayOrderId,
+        razorpayPaymentId,
+        razorpaySignature
+      };
+    } else if (paymentMethod === 'cod') {
+      paymentData = {
+        method: 'cod',
+        status: 'Pending',
+        transactionId: `COD-${Date.now()}`,
+        paidAt: null,
+        currency: 'INR',
+        amount: totals.total
+      };
+    } else if (paymentMethod === 'card') {
+      paymentData = {
+        method: 'card',
+        status: 'Paid',
+        transactionId: `CARD-${Date.now()}`,
+        paidAt: new Date(),
+        currency: 'INR',
+        amount: totals.total,
+        cardName: paymentDetails?.cardName || '',
+        cardLast4: paymentDetails?.cardLast4 || ''
+      };
+    }
+
+    const orderNumber = await generateOrderNumber();
 
     const order = await Order.create({
       orderNumber,
@@ -71,19 +219,14 @@ const createOrder = async (req, res) => {
         selectedSize: i.selectedSize || '50ml'
       })),
       shippingAddress,
-      payment: {
-        method: paymentMethod,
-        status: paymentStatus,
-        cardName: paymentDetails?.cardName || '',
-        cardLast4: paymentDetails?.cardLast4 || ''
-      },
+      payment: paymentData,
       totals: {
         subtotal: totals.subtotal,
         shipping: totals.shipping,
         tax: totals.tax,
         total: totals.total
       },
-      status: 'Placed'
+      status: 'Pending'
     });
 
     // Create notification for admin
@@ -91,8 +234,8 @@ const createOrder = async (req, res) => {
       const Notification = require('../models/notification.model');
       await Notification.create({
         type: 'new_order',
-        title: 'New Order Placed',
-        message: `Order #${order.orderNumber} placed by ${shippingAddress.name} for ₹${totals.total.toFixed(2)}`,
+        title: paymentData.status === 'Paid' ? 'New Paid Order Placed' : 'New COD Order Placed',
+        message: `Order #${order.orderNumber} (${paymentData.method.toUpperCase()}) placed by ${shippingAddress.name} for ₹${totals.total.toFixed(2)}`,
         link: `/admin/orders/${order._id}`
       });
     } catch (notificationError) {
@@ -122,6 +265,19 @@ const createOrder = async (req, res) => {
       }
     } catch (stockError) {
       console.error('Failed to decrement stock / create low stock notification:', stockError);
+    }
+
+    // Send Emails (Customer Confirmation & Admin Alert)
+    try {
+      const settings = await Settings.findOne();
+      const adminEmail = settings?.email || 'dabhisanjay901@gmail.com';
+      
+      if (userEmail) {
+        await sendOrderConfirmationEmail(order, userEmail);
+      }
+      await sendAdminNewOrderEmail(order, adminEmail);
+    } catch (emailError) {
+      console.error('Failed to dispatch order emails:', emailError);
     }
 
     return res.status(201).json({
@@ -164,7 +320,9 @@ const getUserOrders = async (req, res) => {
 };
 
 module.exports = {
+  createRazorpayOrder,
   createOrder,
   getUserOrders
 };
+
 

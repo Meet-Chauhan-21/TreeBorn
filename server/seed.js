@@ -25,6 +25,7 @@ const seedDatabase = async () => {
       password: "treeborn@123",    // Change this to update password
       phone: "+919999999999",
       role: "admin",
+      isVerified: true,
     };
 
     // Check only by EMAIL
@@ -38,6 +39,7 @@ const seedDatabase = async () => {
       adminUser.name = adminData.name;
       adminUser.phone = adminData.phone;
       adminUser.role = adminData.role;
+      adminUser.isVerified = true;
 
       const salt = await bcrypt.genSalt(10);
       adminUser.password = await bcrypt.hash(adminData.password, salt);
@@ -58,6 +60,7 @@ const seedDatabase = async () => {
         password: hashedPassword,
         phone: adminData.phone,
         role: adminData.role,
+        isVerified: true,
       });
 
       console.log("✅ New admin created successfully.");

@@ -11,7 +11,7 @@ const getAllUsers = async (req, res) => {
     const skip = (page - 1) * limit;
     const search = req.query.search || '';
 
-    let query = { role: 'user' };
+    let query = {};
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: 'i' } },

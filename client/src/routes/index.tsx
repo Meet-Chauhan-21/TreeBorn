@@ -23,6 +23,7 @@ import LegalPages from '../pages/admin/LegalPages';
 import CategoriesList from '../pages/admin/CategoriesList';
 import CategoryDetail from '../pages/admin/CategoryDetail';
 import HomepageImages from '../pages/admin/HomepageImages';
+import VerifyEmail from '../pages/VerifyEmail';
 
 export const router = createBrowserRouter([
   {
@@ -59,6 +60,10 @@ export const router = createBrowserRouter([
       {
         path: '/google-login-mock',
         element: <GoogleLoginMock />,
+      },
+      {
+        path: '/verify-email',
+        element: <VerifyEmail />,
       },
       {
         path: '/privacy-policy',

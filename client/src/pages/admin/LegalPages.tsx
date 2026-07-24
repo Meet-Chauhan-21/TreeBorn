@@ -122,11 +122,7 @@ export const LegalPages: React.FC = () => {
   return (
     <AdminLayout>
       <div className="space-y-6 pt-2 font-sans pb-12">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-bold text-slate-900">Legal Pages Management</h2>
-            <p className="text-xs text-slate-500 mt-0.5">Configure structured sections and lines for dynamic Privacy Policy and Terms & Conditions pages</p>
-          </div>
+        <div className="flex items-center justify-end border-b border-slate-100 pb-4">
           <Button 
             icon={Save} 
             size="sm" 

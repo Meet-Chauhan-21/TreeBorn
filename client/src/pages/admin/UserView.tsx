@@ -76,36 +76,52 @@ const UserView: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <Card className="lg:col-span-2">
             <div className="flex items-start gap-4 mb-6">
-              <div className="w-16 h-16 bg-linear-to-br from-primary to-secondary rounded-2xl flex items-center justify-center text-white font-bold text-xl">
+              <div className="w-16 h-16 bg-gradient-to-tr from-indigo-500 to-indigo-650 text-white rounded-2xl flex items-center justify-center font-extrabold text-2xl shadow-md uppercase">
                 {user.name?.charAt(0) || 'U'}
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">{user.name}</h1>
-                <p className="text-gray-500">Customer profile details</p>
+                <h1 className="text-2xl font-extrabold text-gray-900">{user.name}</h1>
+                <p className="text-xs text-gray-550 font-sans mt-0.5">Customer profile and historical details</p>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
-              <div className="flex items-center gap-3"><Mail size={16} className="text-primary" /> {user.email}</div>
-              <div className="flex items-center gap-3"><Phone size={16} className="text-primary" /> {user.phone}</div>
-              <div className="flex items-center gap-3"><CalendarDays size={16} className="text-primary" /> Joined {new Date(user.createdAt).toLocaleDateString()}</div>
-              <div className="flex items-center gap-3"><ShoppingBag size={16} className="text-primary" /> {user.orders || 0} orders</div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div className="flex items-center gap-3 bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3 font-sans text-xs font-semibold shadow-3xs text-indigo-800">
+                <Mail size={16} className="text-indigo-500" />
+                <span>{user.email}</span>
+              </div>
+              <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-3 font-sans text-xs font-semibold shadow-3xs text-emerald-800">
+                <Phone size={16} className="text-emerald-500" />
+                <span>{user.phone || 'N/A'}</span>
+              </div>
+              <div className="flex items-center gap-3 bg-purple-50 border border-purple-100 rounded-xl px-4 py-3 font-sans text-xs font-semibold shadow-3xs text-purple-800">
+                <CalendarDays size={16} className="text-purple-500" />
+                <span>Joined {new Date(user.createdAt).toLocaleDateString()}</span>
+              </div>
+              <div className="flex items-center gap-3 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 font-sans text-xs font-semibold shadow-3xs text-amber-800">
+                <ShoppingBag size={16} className="text-amber-500" />
+                <span>{user.orders || 0} orders placed</span>
+              </div>
             </div>
 
             {user.recentOrders?.length > 0 && (
               <div className="mt-8 space-y-4">
-                <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2"><UserRound size={18} /> Recent Orders</h2>
-                {user.recentOrders.map((order: any) => (
-                  <div key={order._id} className="flex items-center justify-between p-4 rounded-2xl bg-gray-50">
-                    <div>
-                      <p className="font-semibold text-gray-900">{order.orderNumber}</p>
-                      <p className="text-sm text-gray-500">{new Date(order.createdAt).toLocaleDateString()}</p>
+                <h2 className="text-md font-bold text-gray-900 flex items-center gap-2"><UserRound size={17} className="text-indigo-600" /> Recent Activity & Orders</h2>
+                <div className="grid grid-cols-1 gap-3">
+                  {user.recentOrders.map((order: any) => (
+                    <div key={order._id} className="flex items-center justify-between p-4 rounded-2xl bg-slate-50/60 border border-slate-100/80 hover:bg-slate-100 hover:border-slate-200 transition duration-150">
+                      <div className="space-y-1">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100 shadow-3xs">
+                          {order.orderNumber}
+                        </span>
+                        <p className="text-xs text-gray-500 font-sans pl-1">Placed on {new Date(order.createdAt).toLocaleDateString()}</p>
+                      </div>
+                      <Button type="button" variant="ghost" size="sm" onClick={() => navigate(`/admin/orders/${order._id}`)}>
+                        View Order Details
+                      </Button>
                     </div>
-                    <Button type="button" variant="ghost" size="sm" onClick={() => navigate(`/admin/orders/${order._id}`)}>
-                      View Order
-                    </Button>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
           </Card>

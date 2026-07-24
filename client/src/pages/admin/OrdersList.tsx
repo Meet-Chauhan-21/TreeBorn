@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, ShoppingCart, Clock, TrendingUp, Trash2, CheckCircle, RotateCw } from 'lucide-react';
+import { Search, Trash2, RotateCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import AdminLayout from '../../components/admin/AdminLayout';
@@ -7,7 +7,6 @@ import Card from '../../components/admin/Card';
 import Button from '../../components/admin/Button';
 import DataTable from '../../components/admin/DataTable';
 import Pagination from '../../components/admin/Pagination';
-import StatsCard from '../../components/admin/StatsCard';
 import { useAuth } from '../../context/AuthContext';
 import { API_BASE_URL } from '../../config';
 import Select from '../../components/admin/Select';
@@ -51,18 +50,103 @@ const OrderStatusSelect: React.FC<{
 
 
 
+  const statusColorClass = status === 'Pending'
+    ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100/50'
+    : status === 'Confirmed'
+      ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100/50'
+      : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100/50';
+
   return (
     <div className="w-32 text-left" onClick={(e) => e.stopPropagation()}>
       <Select
         value={status}
         disabled={updating}
         onChange={handleStatusChange}
-        hClass="h-8 px-2"
-        options={['Placed', 'Processing', 'Shipped', 'Delivered', 'Cancelled'].map((opt) => ({
+        hClass="h-8 px-2.5"
+        buttonClassName={`border ${statusColorClass}`}
+        options={['Pending', 'Confirmed', 'Cancelled'].map((opt) => ({
           value: opt,
           label: opt,
         }))}
       />
+    </div>
+  );
+};
+
+const OrderDeliveryCell: React.FC<{
+  order: any;
+  accessToken: string | null;
+  onOrderUpdated: (updatedOrder: any) => void;
+}> = ({ order, accessToken, onOrderUpdated }) => {
+  const [loading, setLoading] = useState(false);
+
+  const handleCreateShipment = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent row click navigation
+    if (!accessToken) return;
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/orders/${order._id}/create-shipment`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      const data = await response.json();
+      if (response.ok) {
+        toast.success(`Shiprocket shipment created for order ${order.orderNumber}`);
+        onOrderUpdated(data.order);
+      } else {
+        toast.error(data.message || 'Failed to create shipment');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Network error during shipment creation');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!order.shipmentCreated) {
+    return (
+      <div onClick={(e) => e.stopPropagation()}>
+        <Button
+          type="button"
+          size="sm"
+          disabled={loading}
+          onClick={handleCreateShipment}
+          className="text-[10px] py-1.5 px-3.5 bg-black hover:bg-white text-white hover:text-black border border-black font-semibold rounded-xl transition-all duration-300 flex items-center justify-center shadow-3xs hover:shadow-md hover:scale-105"
+        >
+          <span className="relative z-10">{loading ? 'Creating...' : 'Create Shipment'}</span>
+        </Button>
+      </div>
+    );
+  }
+
+  const deliveryStatusLower = String(order.deliveryStatus || '').toLowerCase();
+  const isDraft = !order.deliveryStatus || deliveryStatusLower === 'draft' || deliveryStatusLower === 'created';
+
+  return (
+    <div className="flex flex-col gap-1 text-[11px] text-slate-500 font-sans" onClick={(e) => e.stopPropagation()}>
+      <span className={`font-bold px-2 py-0.5 rounded-lg text-[9px] uppercase w-max tracking-wider border ${
+        deliveryStatusLower.includes('deliver')
+          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+          : deliveryStatusLower.includes('cancel')
+          ? 'bg-rose-50 text-rose-700 border-rose-200'
+          : isDraft
+          ? 'bg-slate-100 text-slate-700 border-slate-200'
+          : 'bg-indigo-50 text-indigo-700 border-indigo-100'
+      }`}>
+        {isDraft ? 'Shipment Draft' : order.deliveryStatus}
+      </span>
+      {order.courierName && (
+        <span className="text-[10px] text-slate-600 font-medium">
+          Courier: <span className="font-bold text-slate-800">{order.courierName}</span>
+        </span>
+      )}
+      {order.awbCode && (
+        <span className="font-mono text-[9px] text-slate-400">AWB: {order.awbCode}</span>
+      )}
     </div>
   );
 };
@@ -165,7 +249,11 @@ const OrdersList: React.FC = () => {
   const totalPages = Math.ceil(filteredOrders.length / recordsPerPage);
 
   const columns = [
-    { key: 'orderNumber', header: 'Order ID', render: (item: any) => <span className="font-semibold text-slate-800">{item.orderNumber}</span> },
+    { key: 'orderNumber', header: 'Order Number', render: (item: any) => (
+      <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100 shadow-3xs">
+        {item.orderNumber}
+      </span>
+    ) },
     {
       key: 'customer',
       header: 'Customer',
@@ -174,12 +262,20 @@ const OrdersList: React.FC = () => {
     {
       key: 'date',
       header: 'Date',
-      render: (item: any) => new Date(item.createdAt).toLocaleDateString()
+      render: (item: any) => (
+        <span className="text-purple-900 font-extrabold font-sans text-xs">
+          {new Date(item.createdAt).toLocaleDateString()}
+        </span>
+      )
     },
     {
       key: 'total',
       header: 'Total',
-      render: (item: any) => <span className="font-bold text-slate-900">₹{item.totals.total.toFixed(2)}</span>,
+      render: (item: any) => (
+        <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-purple-50 text-purple-750 border border-purple-100 shadow-3xs">
+          ₹{item.totals.total.toFixed(2)}
+        </span>
+      ),
     },
     {
       key: 'status',
@@ -199,15 +295,45 @@ const OrdersList: React.FC = () => {
       ),
     },
     {
+      key: 'delivery',
+      header: 'Delivery / Shipment',
+      render: (item: any) => (
+        <OrderDeliveryCell
+          order={item}
+          accessToken={accessToken}
+          onOrderUpdated={(updatedOrder) => {
+            setOrders((prev) =>
+              prev.map((o) => (o._id === item._id ? updatedOrder : o))
+            );
+          }}
+        />
+      )
+    },
+    {
       key: 'payment',
       header: 'Payment',
-      render: (item: any) => (
-        <span className={`px-2 py-0.5 rounded-lg text-xs font-semibold border ${item.payment?.status === 'paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-200/40' :
-            item.payment?.status === 'pending' ? 'bg-amber-50 text-amber-700 border-amber-200/40' : 'bg-rose-50 text-rose-700 border-rose-200/40'
-          }`}>
-          {item.payment?.status || 'pending'}
-        </span>
-      ),
+      render: (item: any) => {
+        const pStatus = (item.payment?.status || 'pending').toLowerCase();
+        const isPaid = pStatus === 'paid';
+        const isPending = pStatus === 'pending';
+        const isRefunded = pStatus === 'refunded';
+
+        return (
+          <span
+            className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider border ${
+              isPaid
+                ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                : isPending
+                ? 'bg-amber-100 text-amber-800 border-amber-300'
+                : isRefunded
+                ? 'bg-violet-100 text-violet-800 border-violet-300'
+                : 'bg-rose-100 text-rose-800 border-rose-300'
+            }`}
+          >
+            {item.payment?.status || 'Pending'}
+          </span>
+        );
+      },
     },
     {
       key: 'actions',
@@ -231,32 +357,49 @@ const OrdersList: React.FC = () => {
   return (
     <AdminLayout>
       <div className="space-y-6 pt-2">
-        {/* Small Data Cards (Stats widgets) related to Orders tab - 4 cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          <StatsCard
-            title="Total Orders"
-            value={orders.length}
-            icon={ShoppingCart}
-            color="primary"
-          />
-          <StatsCard
-            title="Completed Orders"
-            value={orders.filter((o: any) => o.status?.toLowerCase() === 'delivered').length}
-            icon={CheckCircle}
-            color="green"
-          />
-          <StatsCard
-            title="Pending Dispatch"
-            value={orders.filter((o: any) => o.status?.toLowerCase() === 'pending' || o.status?.toLowerCase() === 'processing' || o.status?.toLowerCase() === 'placed').length}
-            icon={Clock}
-            color="orange"
-          />
-          <StatsCard
-            title="Order Sales Total"
-            value={`₹${orders.reduce((sum: number, o: any) => sum + (o.totals?.total || 0), 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-            icon={TrendingUp}
-            color="purple"
-          />
+        {/* Colorful Metric Cards for Orders */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-indigo-50/70 border border-indigo-200/80 p-4 rounded-2xl shadow-xs text-left hover:shadow-md transition-all">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-800 block">Total Orders</span>
+            <div className="flex items-baseline justify-between mt-1.5">
+              <span className="text-2xl font-extrabold text-indigo-600 font-display">{orders.length}</span>
+              <span className="text-[10px] font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded border border-indigo-200">Orders</span>
+            </div>
+            <span className="text-[10px] font-medium text-indigo-500 mt-1 block">Customer Purchases</span>
+          </div>
+
+          <div className="bg-emerald-50/70 border border-emerald-200/80 p-4 rounded-2xl shadow-xs text-left hover:shadow-md transition-all">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800 block">Confirmed Orders</span>
+            <div className="flex items-baseline justify-between mt-1.5">
+              <span className="text-2xl font-extrabold text-emerald-600 font-display">
+                {orders.filter((o: any) => o.status === 'Confirmed').length}
+              </span>
+              <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">Confirmed</span>
+            </div>
+            <span className="text-[10px] font-medium text-emerald-500 mt-1 block">Successfully Confirmed</span>
+          </div>
+
+          <div className="bg-amber-50/70 border border-amber-200/80 p-4 rounded-2xl shadow-xs text-left hover:shadow-md transition-all">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-amber-800 block">Pending Orders</span>
+            <div className="flex items-baseline justify-between mt-1.5">
+              <span className="text-2xl font-extrabold text-amber-600 font-display">
+                {orders.filter((o: any) => o.status === 'Pending').length}
+              </span>
+              <span className="text-[10px] font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded border border-amber-200">Pending</span>
+            </div>
+            <span className="text-[10px] font-medium text-amber-500 mt-1 block">Action Required</span>
+          </div>
+
+          <div className="bg-purple-50/70 border border-purple-200/80 p-4 rounded-2xl shadow-xs text-left hover:shadow-md transition-all">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-purple-800 block">Order Revenue Total</span>
+            <div className="flex items-baseline justify-between mt-1.5">
+              <span className="text-xl font-extrabold text-purple-600 font-display truncate">
+                ₹{orders.reduce((sum: number, o: any) => sum + (o.totals?.total || 0), 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+              <span className="text-[10px] font-bold bg-purple-100 text-purple-700 px-2 py-0.5 rounded border border-purple-200 ml-1">Gross</span>
+            </div>
+            <span className="text-[10px] font-medium text-purple-500 mt-1 block">Total Sales Revenue</span>
+          </div>
         </div>
 
         <Card>
@@ -285,9 +428,7 @@ const OrdersList: React.FC = () => {
               options={[
                 { value: 'all', label: 'All Status' },
                 { value: 'pending', label: 'Pending' },
-                { value: 'processing', label: 'Processing' },
-                { value: 'shipped', label: 'Shipped' },
-                { value: 'delivered', label: 'Delivered' },
+                { value: 'confirmed', label: 'Confirmed' },
                 { value: 'cancelled', label: 'Cancelled' },
               ]}
             />

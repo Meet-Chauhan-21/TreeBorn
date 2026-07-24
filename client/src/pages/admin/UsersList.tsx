@@ -95,12 +95,12 @@ const UsersList: React.FC = () => {
       header: 'User',
       render: (item: any) => (
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-linear-to-br from-primary to-secondary rounded-xl flex items-center justify-center text-white font-bold">
-            {item.name.charAt(0)}
+          <div className="w-11 h-11 bg-black text-white rounded-xl flex items-center justify-center font-extrabold uppercase text-lg shadow-sm">
+            {item.name ? item.name.charAt(0) : 'U'}
           </div>
           <div>
-            <p className="font-semibold text-gray-900">{item.name}</p>
-            <p className="text-sm text-gray-500">{item.email}</p>
+            <p className="font-bold text-slate-900">{item.name}</p>
+            <p className="text-xs text-slate-500 font-sans">{item.email}</p>
           </div>
         </div>
       ),
@@ -109,9 +109,14 @@ const UsersList: React.FC = () => {
       key: 'role',
       header: 'Role',
       render: (item: any) => (
-        <span className={`px-3 py-1.5 rounded-full text-xs font-semibold ${item.role === 'admin' ? 'bg-purple-50 text-purple-700' : 'bg-gray-100 text-gray-700'
-          }`}>
-          {item.role}
+        <span
+          className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider border ${
+            item.role === 'admin'
+              ? 'bg-purple-100 text-purple-800 border-purple-300'
+              : 'bg-blue-100 text-blue-800 border-blue-300'
+          }`}
+        >
+          {item.role || 'user'}
         </span>
       ),
     },
@@ -120,12 +125,33 @@ const UsersList: React.FC = () => {
       header: 'Status',
       render: () => <StatusBadge status="active" />,
     },
-    { key: 'phone', header: 'Phone' },
-    { key: 'orders', header: 'Orders' },
+    {
+      key: 'phone',
+      header: 'Phone',
+      render: (item: any) => (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-150 font-sans shadow-3xs">
+          <Phone size={12} className="text-emerald-500" />
+          {item.phone || 'N/A'}
+        </span>
+      )
+    },
+    {
+      key: 'orders',
+      header: 'Orders',
+      render: (item: any) => (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200 uppercase font-sans">
+          {item.orders !== undefined ? item.orders : '0'} Orders
+        </span>
+      )
+    },
     {
       key: 'joined',
       header: 'Joined',
-      render: (item: any) => new Date(item.createdAt).toLocaleDateString()
+      render: (item: any) => (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-750 border border-indigo-200">
+          {new Date(item.createdAt).toLocaleDateString()}
+        </span>
+      )
     },
     {
       key: 'actions',
@@ -151,32 +177,49 @@ const UsersList: React.FC = () => {
   return (
     <AdminLayout>
       <div className="space-y-6 pt-2">
-        {/* Small Data Cards (Stats widgets) related to Users tab - 4 cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          <StatsCard
-            title="Total Users"
-            value={users.length}
-            icon={Users}
-            color="primary"
-          />
-          <StatsCard
-            title="Administrators"
-            value={users.filter((u: any) => u.role?.toLowerCase() === 'admin').length}
-            icon={ShieldAlert}
-            color="purple"
-          />
-          <StatsCard
-            title="Customer Profiles"
-            value={users.filter((u: any) => u.role?.toLowerCase() !== 'admin').length}
-            icon={UserCheck}
-            color="green"
-          />
-          <StatsCard
-            title="Verified Contacts"
-            value={users.filter((u: any) => u.phone).length}
-            icon={Phone}
-            color="blue"
-          />
+        {/* Colorful Metric Cards for Users */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-indigo-50/70 border border-indigo-200/80 p-4 rounded-2xl shadow-xs text-left hover:shadow-md transition-all">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-800 block">Total Registered</span>
+            <div className="flex items-baseline justify-between mt-1.5">
+              <span className="text-2xl font-extrabold text-indigo-600 font-display">{users.length}</span>
+              <span className="text-[10px] font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded border border-indigo-200">All Accounts</span>
+            </div>
+            <span className="text-[10px] font-medium text-indigo-500 mt-1 block">Includes Admins & Customers</span>
+          </div>
+
+          <div className="bg-purple-50/70 border border-purple-200/80 p-4 rounded-2xl shadow-xs text-left hover:shadow-md transition-all">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-purple-800 block">Administrators</span>
+            <div className="flex items-baseline justify-between mt-1.5">
+              <span className="text-2xl font-extrabold text-purple-600 font-display">
+                {users.filter((u: any) => u.role?.toLowerCase() === 'admin').length}
+              </span>
+              <span className="text-[10px] font-bold bg-purple-100 text-purple-700 px-2 py-0.5 rounded border border-purple-200">Admin Role</span>
+            </div>
+            <span className="text-[10px] font-medium text-purple-500 mt-1 block">Full Management Access</span>
+          </div>
+
+          <div className="bg-blue-50/70 border border-blue-200/80 p-4 rounded-2xl shadow-xs text-left hover:shadow-md transition-all">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-blue-800 block">Customer Accounts</span>
+            <div className="flex items-baseline justify-between mt-1.5">
+              <span className="text-2xl font-extrabold text-blue-600 font-display">
+                {users.filter((u: any) => u.role?.toLowerCase() !== 'admin').length}
+              </span>
+              <span className="text-[10px] font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded border border-blue-200">Store Shoppers</span>
+            </div>
+            <span className="text-[10px] font-medium text-blue-500 mt-1 block">Registered Buyers</span>
+          </div>
+
+          <div className="bg-emerald-50/70 border border-emerald-200/80 p-4 rounded-2xl shadow-xs text-left hover:shadow-md transition-all">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800 block">Verified Phone Contacts</span>
+            <div className="flex items-baseline justify-between mt-1.5">
+              <span className="text-2xl font-extrabold text-emerald-600 font-display">
+                {users.filter((u: any) => u.phone).length}
+              </span>
+              <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">Verified</span>
+            </div>
+            <span className="text-[10px] font-medium text-emerald-500 mt-1 block">Phone Numbers Saved</span>
+          </div>
         </div>
 
         <Card>

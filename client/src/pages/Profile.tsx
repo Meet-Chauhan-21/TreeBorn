@@ -25,7 +25,7 @@ const profileSchema = Yup.object().shape({
     .email('Please enter a valid email address')
     .required('Email address is required'),
   phone: Yup.string()
-    .min(10, 'Contact Phone must be at least 10 digits')
+    .matches(/^[0-9]{10}$/, 'Contact phone number must be exactly 10 digits')
     .required('Contact Phone is required'),
 });
 
@@ -34,7 +34,7 @@ const addressSchema = Yup.object().shape({
     .min(2, 'Name must be at least 2 characters')
     .required('Recipient Name is required'),
   phone: Yup.string()
-    .min(10, 'Phone must be at least 10 digits')
+    .matches(/^[0-9]{10}$/, 'Phone number must be exactly 10 digits')
     .required('Recipient Contact Phone is required'),
   street: Yup.string()
     .min(5, 'Street address is too short')
@@ -124,12 +124,34 @@ export const Profile: React.FC = () => {
         doc.setFont('helvetica', 'bold');
         doc.text('Invoice Details:', 120, 38);
         
+        const paymentMethodLabel =
+          order.payment?.method === 'razorpay'
+            ? 'Razorpay Online Payment'
+            : order.payment?.method === 'card'
+            ? 'Online Card'
+            : 'Cash on Delivery (COD)';
+
+        const transactionIdLabel =
+          order.payment?.transactionId ||
+          order.payment?.razorpayPaymentId ||
+          'N/A';
+
+        const paidDateLabel = order.payment?.paidAt
+          ? new Date(order.payment.paidAt).toLocaleDateString()
+          : order.createdAt
+          ? new Date(order.createdAt).toLocaleDateString()
+          : 'N/A';
+
         doc.setFont('helvetica', 'normal');
         doc.text([
           `Invoice No: INV-${order.orderNumber}`,
           `Order Date: ${order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}`,
-          `Payment Method: ${order.payment?.method === 'card' ? 'Online Card' : 'Cash on Delivery (COD)'}`,
-          `Payment Status: ${order.payment?.status?.toUpperCase() || 'PENDING'}`
+          `Payment Method: ${paymentMethodLabel}`,
+          `Payment Status: ${(order.payment?.status || 'PENDING').toUpperCase()}`,
+          `Transaction ID: ${transactionIdLabel}`,
+          `Paid Date: ${paidDateLabel}`,
+          `Currency: ${order.payment?.currency || 'INR'}`,
+          `Amount Paid: INR ${(order.totals?.total || 0).toFixed(2)}`
         ], 120, 44);
         
         // Compute startY dynamically based on wrapped address length
@@ -241,7 +263,6 @@ export const Profile: React.FC = () => {
     }
   };
 
-  // Orders State
   const [orderPage, setOrderPage] = useState(1);
   const ordersPerPage = 3;
   const [orders, setOrders] = useState<Order[]>([]);
@@ -593,7 +614,13 @@ export const Profile: React.FC = () => {
                           type="text"
                           name="phone"
                           value={profileFormik.values.phone}
-                          onChange={profileFormik.handleChange}
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/\D/g, '');
+                            if (val.length <= 10) {
+                              profileFormik.setFieldValue('phone', val);
+                            }
+                          }}
+                          maxLength={10}
                           onBlur={profileFormik.handleBlur}
                           className={`w-full border px-4 py-3 text-sm rounded-xl text-dark focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 font-sans bg-light-gray/10 transition-colors ${
                             profileFormik.touched.phone && profileFormik.errors.phone
@@ -674,18 +701,43 @@ export const Profile: React.FC = () => {
                       orders.map((order) => {
                         const orderId = order._id || order.orderNumber;
                         const isExpanded = expandedOrderId === orderId;
-                        const steps = ['Placed', 'Processing', 'Shipped', 'Delivered'];
                         const currentStatus = order.status;
                         const isCancelled = currentStatus === 'Cancelled';
-                        const getActiveIndex = (status: string) => {
-                          const s = status.toLowerCase();
-                          if (s === 'placed') return 0;
-                          if (s === 'processing') return 1;
-                          if (s === 'shipped') return 2;
-                          if (s === 'delivered') return 3;
-                          return -1;
+                        const isRTO = order.deliveryStatus?.toLowerCase().includes('rto');
+                        
+                        let steps = ['Placed', 'Shipment Created', 'AWB Generated', 'Pickup Scheduled', 'In Transit', 'Out For Delivery', 'Delivered'];
+                        if (isCancelled) {
+                          steps = ['Placed', 'Cancelled'];
+                        } else if (isRTO) {
+                          steps = ['Placed', 'Shipment Created', 'AWB Generated', 'Pickup Scheduled', 'In Transit', 'Out For Delivery', 'RTO'];
+                        }
+
+                        const getActiveIndex = (ord: any) => {
+                          if (isCancelled) return 1;
+                          if (isRTO) {
+                            const status = String(ord.deliveryStatus || '').toLowerCase();
+                            if (status.includes('rto')) return 6;
+                            if (status.includes('out for delivery') || status.includes('out_for_delivery')) return 5;
+                            if (status.includes('transit') || status.includes('shipped')) return 4;
+                            if (ord.pickupScheduled) return 3;
+                            if (ord.awbCode) return 2;
+                            if (ord.shipmentCreated) return 1;
+                            return 0;
+                          }
+                          
+                          const orderStatus = String(ord.status || '').toLowerCase();
+                          const deliveryStatus = String(ord.deliveryStatus || '').toLowerCase();
+                          
+                          if (orderStatus === 'delivered' || deliveryStatus.includes('deliver')) return 6;
+                          if (deliveryStatus.includes('out for delivery') || deliveryStatus.includes('out_for_delivery')) return 5;
+                          if (deliveryStatus.includes('transit') || deliveryStatus.includes('shipped') || orderStatus === 'shipped') return 4;
+                          if (ord.pickupScheduled) return 3;
+                          if (ord.awbCode) return 2;
+                          if (ord.shipmentCreated) return 1;
+                          return 0;
                         };
-                        const activeIndex = getActiveIndex(currentStatus);
+                        
+                        const activeIndex = getActiveIndex(order);
 
                         return (
                           <div
@@ -714,11 +766,11 @@ export const Profile: React.FC = () => {
 
                               <div className="flex items-center gap-4">
                                 <span className={`inline-flex items-center px-3 py-0.5 rounded-full text-[9px] font-sans font-bold uppercase tracking-wider ${
-                                  isCancelled
-                                    ? 'bg-rose-50 text-rose-700 border border-rose-200/50'
-                                    : currentStatus === 'Delivered'
+                                  currentStatus === 'Pending'
+                                    ? 'bg-amber-50 text-amber-700 border border-amber-200/50'
+                                    : currentStatus === 'Confirmed'
                                       ? 'bg-emerald-50 text-emerald-700 border border-emerald-250/50'
-                                      : 'bg-primary/5 text-primary border border-primary/15'
+                                      : 'bg-rose-50 text-rose-700 border border-rose-200/50'
                                 }`}>
                                   {currentStatus}
                                 </span>
@@ -742,11 +794,38 @@ export const Profile: React.FC = () => {
                             {isExpanded && (
                               <div className="p-5 sm:p-6 space-y-6 border-t border-border-gray/10 bg-white">
                                 {/* Professional Amazon/Flipkart Stepper */}
-                                <div className="border border-border-gray/30 rounded-2xl p-6 bg-slate-50/50">
-                                  <h4 className="text-[10px] font-sans font-bold uppercase tracking-widest text-gray-400 mb-4">
-                                    Delivery Status Tracking
-                                  </h4>
-                                  
+                                <div className="border border-border-gray/30 rounded-2xl p-6 bg-slate-50/50 space-y-6">
+                                  <div className="flex flex-wrap justify-between items-center gap-4">
+                                    <h4 className="text-[10px] font-sans font-bold uppercase tracking-widest text-gray-400">
+                                      Delivery Status Tracking
+                                    </h4>
+                                    
+                                    {order.shipmentCreated && (
+                                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500 font-sans">
+                                        {order.courierName && (
+                                          <div>
+                                            <span className="text-gray-400 font-medium">Courier:</span> <span className="font-semibold text-dark">{order.courierName}</span>
+                                          </div>
+                                        )}
+                                        {order.trackingNumber && (
+                                          <div>
+                                            <span className="text-gray-400 font-medium">AWB:</span> <span className="font-mono font-semibold text-dark">{order.trackingNumber}</span>
+                                          </div>
+                                        )}
+                                        {order.deliveryStatus && (
+                                          <div>
+                                            <span className="text-gray-400 font-medium">Shipment Status:</span> <span className="font-semibold text-primary">{order.deliveryStatus}</span>
+                                          </div>
+                                        )}
+                                        {(order.shiprocketResponse?.etd || order.shiprocketResponse?.response?.etd) && (
+                                          <div>
+                                            <span className="text-gray-400 font-medium">Est. Delivery:</span> <span className="font-semibold text-dark">{new Date(order.shiprocketResponse?.etd || order.shiprocketResponse?.response?.etd).toLocaleDateString()}</span>
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+
                                   {isCancelled ? (
                                     <div className="bg-rose-50/50 border border-rose-200/40 rounded-2xl p-4 flex items-center gap-3 text-rose-800 font-sans text-xs">
                                       <AlertTriangle size={18} className="text-rose-500 shrink-0" />
@@ -757,19 +836,19 @@ export const Profile: React.FC = () => {
                                     </div>
                                   ) : (
                                     <div className="py-6 px-4">
-                                      <div className="relative flex items-center justify-between w-full">
+                                      <div className="relative flex items-center justify-between w-full z-0">
                                         {/* Progress Bar line background */}
-                                        <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-slate-200/80 -z-10 rounded-full" />
+                                        <div className="absolute left-0 right-0 top-[16px] -translate-y-1/2 h-1 bg-slate-200/80 z-0 rounded-full" />
                                         <div 
-                                          className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-primary transition-all duration-500 -z-10 rounded-full" 
-                                          style={{ width: `${(activeIndex / 3) * 100}%` }}
+                                          className="absolute left-0 top-[16px] -translate-y-1/2 h-1 bg-primary transition-all duration-500 z-0 rounded-full" 
+                                          style={{ width: `${(activeIndex / (steps.length - 1)) * 100}%` }}
                                         />
                                         
                                         {steps.map((step, idx) => {
                                           const isActive = idx <= activeIndex;
                                           const isCurrent = idx === activeIndex;
                                           return (
-                                            <div key={step} className="flex flex-col items-center relative">
+                                            <div key={step} className="flex flex-col items-center relative z-10">
                                               <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all shadow-3xs ${
                                                 isActive 
                                                   ? 'bg-primary border-primary text-white scale-110' 
@@ -777,10 +856,10 @@ export const Profile: React.FC = () => {
                                               }`}>
                                                 {isActive ? <CheckCircle size={14} className="text-white" /> : <div className="w-2 h-2 bg-slate-200 rounded-full" />}
                                               </div>
-                                              <span className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mt-3 font-display text-center ${
+                                              <span className={`text-[8px] sm:text-[9px] font-bold uppercase tracking-wider mt-3 font-display text-center ${
                                                 isCurrent 
-                                                  ? 'text-primary' 
-                                                  : isActive ? 'text-slate-800' : 'text-slate-450'
+                                                  ? 'text-primary font-extrabold' 
+                                                  : isActive ? 'text-slate-800' : 'text-slate-400'
                                               }`}>
                                                 {step}
                                               </span>
@@ -788,6 +867,19 @@ export const Profile: React.FC = () => {
                                           );
                                         })}
                                       </div>
+                                    </div>
+                                  )}
+
+                                  {order.trackingUrl && (
+                                    <div className="flex justify-start">
+                                      <a
+                                        href={order.trackingUrl}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="inline-flex items-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold px-4 py-2.5 rounded-full transition duration-200 focus:outline-none"
+                                      >
+                                        Track Shipment Live
+                                      </a>
                                     </div>
                                   )}
                                 </div>
@@ -842,12 +934,24 @@ export const Profile: React.FC = () => {
                                       </h4>
                                       <div className="border border-border-gray/30 rounded-2xl p-4 space-y-2.5 text-xs text-gray-650 bg-white">
                                         <div className="flex justify-between">
-                                          <span>Payment Type</span>
-                                          <span className="font-semibold capitalize text-dark">{order.payment?.method === 'card' ? 'Credit / Debit Card' : 'Cash on Delivery (COD)'}</span>
+                                          <span>Payment Method</span>
+                                          <span className="font-semibold uppercase text-dark">
+                                            {order.payment?.method === 'razorpay' ? 'Razorpay Online' : order.payment?.method === 'card' ? 'Online Card' : 'Cash on Delivery (COD)'}
+                                          </span>
                                         </div>
                                         <div className="flex justify-between">
                                           <span>Payment Status</span>
-                                          <span className="font-semibold capitalize text-dark">{order.payment?.status || 'pending'}</span>
+                                          <span className={`font-bold uppercase text-[10px] px-2 py-0.5 rounded ${
+                                            order.payment?.status === 'Paid' || order.payment?.status === 'paid' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                                          }`}>{order.payment?.status || 'Pending'}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                          <span>Transaction ID</span>
+                                          <span className="font-mono text-dark text-[11px]">{order.payment?.transactionId || order.payment?.razorpayPaymentId || 'N/A'}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                          <span>Paid Date</span>
+                                          <span className="text-gray-700">{order.payment?.paidAt ? new Date(order.payment.paidAt).toLocaleDateString() : 'N/A'}</span>
                                         </div>
                                         <hr className="border-border-gray/20 my-1" />
                                         <div className="flex justify-between">
@@ -985,10 +1089,16 @@ export const Profile: React.FC = () => {
                           <input
                             type="text"
                             name="phone"
-                            placeholder="+91 98765 43210"
+                            placeholder="9876543210"
                             value={addressFormik.values.phone}
-                            onChange={addressFormik.handleChange}
+                            onChange={(e) => {
+                              const val = e.target.value.replace(/\D/g, '');
+                              if (val.length <= 10) {
+                                addressFormik.setFieldValue('phone', val);
+                              }
+                            }}
                             onBlur={addressFormik.handleBlur}
+                            maxLength={10}
                             className={`w-full border px-4 py-2.5 text-xs rounded-xl text-dark focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 font-sans bg-white transition-colors ${
                               addressFormik.touched.phone && addressFormik.errors.phone
                                 ? 'border-red-500 focus:border-red-500'
@@ -1077,8 +1187,14 @@ export const Profile: React.FC = () => {
                             name="zip"
                             placeholder="380054"
                             value={addressFormik.values.zip}
-                            onChange={addressFormik.handleChange}
+                            onChange={(e) => {
+                              const val = e.target.value.replace(/\D/g, '');
+                              if (val.length <= 6) {
+                                addressFormik.setFieldValue('zip', val);
+                              }
+                            }}
                             onBlur={addressFormik.handleBlur}
+                            maxLength={6}
                             className={`w-full border px-4 py-2.5 text-xs rounded-xl text-dark focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 font-sans bg-white transition-colors ${
                               addressFormik.touched.zip && addressFormik.errors.zip
                                 ? 'border-red-500 focus:border-red-500'

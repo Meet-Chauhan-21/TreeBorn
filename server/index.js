@@ -7,6 +7,7 @@ const userRoutes = require('./src/routes/user.route');
 const orderRoutes = require('./src/routes/order.route');
 const productRoutes = require('./src/routes/product.route');
 const adminRoutes = require('./src/routes/admin.route');
+const webhookRoutes = require('./src/routes/webhook.route');
 const dns = require("dns");
 
 const app = express();
@@ -65,6 +66,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/users', orderRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/webhooks', webhookRoutes);
 
 // Public Categories Configuration Endpoint
 app.get('/api/categories', async (req, res) => {
@@ -122,7 +124,10 @@ app.use((err, req, res, next) => {
   });
 });
 
+const { startShipmentStatusSync } = require('./src/services/shipmentSync.service');
+
 // Start listening
 app.listen(PORT, () => {
   console.log(`Server is running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+  startShipmentStatusSync();
 });

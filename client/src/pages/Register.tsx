@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { User, Mail, Lock, ArrowRight, ShieldCheck, Phone, Eye, EyeOff } from 'lucide-react';
+import { User, Mail, Lock, ArrowRight, ShieldCheck, Phone, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useAuth } from '../context/AuthContext';
-import { GoogleLogin } from '@react-oauth/google';
+import SocialLoginButtons from '../components/auth/SocialLoginButtons';
 import { toast } from 'sonner';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
@@ -18,11 +18,11 @@ const registerSchema = Yup.object().shape({
     .min(2, 'Name must be at least 2 characters')
     .required('Full Name is required'),
   email: Yup.string()
-    .email('Please enter a valid email address')
+    .email('Invalid email address')
     .required('Email address is required'),
   phone: Yup.string()
-    .min(10, 'Contact Phone must be at least 10 digits')
-    .required('Contact Phone is required'),
+    .matches(/^[6-9]\d{9}$/, 'Please enter a valid 10-digit Indian phone number')
+    .required('Phone number is required'),
   password: Yup.string()
     .min(6, 'Password must be at least 6 characters')
     .required('Password is required'),
@@ -33,19 +33,81 @@ const registerSchema = Yup.object().shape({
 
 export const Register: React.FC = () => {
   const navigate = useNavigate();
-  const { register, googleLogin, user } = useAuth();
+  const { register, googleLogin, facebookLogin, facebookRegister, user, resendVerification } = useAuth();
   
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Email verification post-registration states
+  const [isRegistered, setIsRegistered] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState('');
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
+  const [isResending, setIsResending] = useState(false);
+
+  // States for Facebook email linking
+  const [showFbEmailForm, setShowFbEmailForm] = useState(false);
+  const [fbUserData, setFbUserData] = useState<{ facebookId: string; name: string } | null>(null);
+  const [fbEmail, setFbEmail] = useState('');
+  const [fbSubmitting, setFbSubmitting] = useState(false);
+  const [fbEmailSent, setFbEmailSent] = useState(false);
+
+  // Check for Facebook OAuth Redirect Code
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    if (code) {
+      window.history.replaceState({}, document.title, window.location.pathname);
+      const doFbLogin = async () => {
+        const res = await facebookLogin({ code });
+        if (res && typeof res === 'object' && res.needsEmail) {
+          setFbUserData({ facebookId: res.facebookId, name: res.name });
+          setShowFbEmailForm(true);
+        }
+      };
+      doFbLogin();
+    }
+  }, [facebookLogin]);
+
+  const handleFbEmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!fbEmail || !fbUserData) return;
+    setFbSubmitting(true);
+    const success = await facebookRegister(fbUserData.name, fbEmail, fbUserData.facebookId);
+    setFbSubmitting(false);
+    if (success) {
+      setFbEmailSent(true);
+    }
+  };
+
+  // Rate-limiting countdown timer
+  useEffect(() => {
+    if (cooldownSeconds <= 0) return;
+    const timer = setInterval(() => {
+      setCooldownSeconds((prev) => prev - 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [cooldownSeconds]);
+
   // Redirect if already logged in
-  React.useEffect(() => {
+  useEffect(() => {
     if (user) {
       const defaultPath = user.role === 'admin' ? '/admin' : '/profile';
       navigate(defaultPath, { replace: true });
     }
   }, [user, navigate]);
+
+  const handleResend = async () => {
+    if (cooldownSeconds > 0 || isResending || !registeredEmail) return;
+    setIsResending(true);
+    const res = await resendVerification(registeredEmail);
+    setIsResending(false);
+    if (res.success) {
+      setCooldownSeconds(60);
+    } else if (res.cooldownRemaining) {
+      setCooldownSeconds(res.cooldownRemaining);
+    }
+  };
 
   // Formik configuration
   const formik = useFormik({
@@ -59,8 +121,12 @@ export const Register: React.FC = () => {
     validationSchema: registerSchema,
     onSubmit: async (values) => {
       setIsSubmitting(true);
-      await register(values.name, values.email, values.password, values.phone);
+      const success = await register(values.name, values.email, values.password, values.phone);
       setIsSubmitting(false);
+      if (success) {
+        setRegisteredEmail(values.email);
+        setIsRegistered(true);
+      }
     },
   });
 
@@ -114,216 +180,330 @@ export const Register: React.FC = () => {
             {/* Right Column - Form Sheet */}
             <div className="col-span-1 md:col-span-7 p-6 sm:p-10 lg:p-12 flex flex-col justify-center bg-white">
               <div className="max-w-md w-full mx-auto space-y-6">
-                <div>
-                  <h1 className="text-2xl font-display font-bold text-dark tracking-tight">
-                    Create your Account
-                  </h1>
-                  <p className="text-xs text-gray-500 font-sans mt-1">
-                    Fill in your details below to activate your premium botanical membership profile.
-                  </p>
-                </div>
-
-                <form onSubmit={formik.handleSubmit} className="space-y-4">
-                  {/* Name input */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-dark/70 font-display flex items-center gap-1.5">
-                      <User size={13} className="text-gray-400" />
-                      <span>Full Name</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="name"
-                      placeholder="Priyesh Patel"
-                      value={formik.values.name}
-                      onChange={formik.handleChange}
-                      onBlur={formik.handleBlur}
-                      className={`w-full border px-4 py-3 text-sm rounded-xl text-dark focus:outline-none focus:border-primary font-sans bg-light-gray/20 transition-colors ${
-                        formik.touched.name && formik.errors.name
-                          ? 'border-red-500 focus:border-red-500'
-                          : 'border-border-gray/80'
-                      }`}
-                    />
-                    {formik.touched.name && formik.errors.name && (
-                      <div className="text-[10px] text-red-500 font-sans font-medium mt-1">
-                        {formik.errors.name}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Email input */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-dark/70 font-display flex items-center gap-1.5">
-                      <Mail size={13} className="text-gray-400" />
-                      <span>Email Address</span>
-                    </label>
-                    <input
-                      type="email"
-                      name="email"
-                      placeholder="priyesh.patel@gmail.com"
-                      value={formik.values.email}
-                      onChange={formik.handleChange}
-                      onBlur={formik.handleBlur}
-                      className={`w-full border px-4 py-3 text-sm rounded-xl text-dark focus:outline-none focus:border-primary font-sans bg-light-gray/20 transition-colors ${
-                        formik.touched.email && formik.errors.email
-                          ? 'border-red-500 focus:border-red-500'
-                          : 'border-border-gray/80'
-                      }`}
-                    />
-                    {formik.touched.email && formik.errors.email && (
-                      <div className="text-[10px] text-red-500 font-sans font-medium mt-1">
-                        {formik.errors.email}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Phone input */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-dark/70 font-display flex items-center gap-1.5">
-                      <Phone size={13} className="text-gray-400" />
-                      <span>Contact Phone</span>
-                    </label>
-                    <input
-                      type="tel"
-                      name="phone"
-                      placeholder="+91 98765 43210"
-                      value={formik.values.phone}
-                      onChange={formik.handleChange}
-                      onBlur={formik.handleBlur}
-                      className={`w-full border px-4 py-3 text-sm rounded-xl text-dark focus:outline-none focus:border-primary font-sans bg-light-gray/20 transition-colors ${
-                        formik.touched.phone && formik.errors.phone
-                          ? 'border-red-500 focus:border-red-500'
-                          : 'border-border-gray/80'
-                      }`}
-                    />
-                    {formik.touched.phone && formik.errors.phone && (
-                      <div className="text-[10px] text-red-500 font-sans font-medium mt-1">
-                        {formik.errors.phone}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Passwords grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-dark/70 font-display flex items-center gap-1.5">
-                        <Lock size={13} className="text-gray-400" />
-                        <span>Password</span>
-                      </label>
-                      <div className="relative">
-                        <input
-                          type={showPassword ? 'text' : 'password'}
-                          name="password"
-                          placeholder="••••••••"
-                          value={formik.values.password}
-                          onChange={formik.handleChange}
-                          onBlur={formik.handleBlur}
-                          className={`w-full border pl-4 pr-10 py-3 text-sm rounded-xl text-dark focus:outline-none focus:border-primary font-sans bg-light-gray/20 transition-colors ${
-                            formik.touched.password && formik.errors.password
-                              ? 'border-red-500 focus:border-red-500'
-                              : 'border-border-gray/80'
-                          }`}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-dark focus:outline-none cursor-pointer p-0.5"
-                        >
-                          {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                        </button>
-                      </div>
-                      {formik.touched.password && formik.errors.password && (
-                        <div className="text-[10px] text-red-500 font-sans font-medium mt-1">
-                          {formik.errors.password}
-                        </div>
-                      )}
+                {fbEmailSent ? (
+                  <div className="py-6 space-y-6 text-center animate-fade-in">
+                    <div className="w-16 h-16 bg-[#EBF5F1] text-primary border border-primary/30 rounded-full flex items-center justify-center mx-auto shadow-xs">
+                      <CheckCircle2 size={28} className="stroke-[1.5]" />
                     </div>
                     
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-dark/70 font-display flex items-center gap-1.5">
-                        <Lock size={13} className="text-gray-400" />
-                        <span>Confirm Password</span>
-                      </label>
-                      <div className="relative">
-                        <input
-                          type={showConfirmPassword ? 'text' : 'password'}
-                          name="confirmPassword"
-                          placeholder="••••••••"
-                          value={formik.values.confirmPassword}
-                          onChange={formik.handleChange}
-                          onBlur={formik.handleBlur}
-                          className={`w-full border pl-4 pr-10 py-3 text-sm rounded-xl text-dark focus:outline-none focus:border-primary font-sans bg-light-gray/20 transition-colors ${
-                            formik.touched.confirmPassword && formik.errors.confirmPassword
-                              ? 'border-red-500 focus:border-red-500'
-                              : 'border-border-gray/80'
-                          }`}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-dark focus:outline-none cursor-pointer p-0.5"
-                        >
-                          {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                        </button>
-                      </div>
-                      {formik.touched.confirmPassword && formik.errors.confirmPassword && (
-                        <div className="text-[10px] text-red-500 font-sans font-medium mt-1">
-                          {formik.errors.confirmPassword}
-                        </div>
-                      )}
+                    <div className="space-y-2">
+                      <h2 className="text-xl font-display font-extrabold text-slate-800 tracking-tight">Verify Your Email</h2>
+                      <p className="text-xs text-slate-500 font-sans leading-relaxed max-w-sm mx-auto px-2">
+                        We sent a verification link to <span className="font-semibold text-primary">{fbEmail}</span>. 
+                        Please verify to activate your profile. Once verified, you will be automatically granted access.
+                      </p>
                     </div>
                   </div>
+                ) : isRegistered ? (
+                  <div className="space-y-6">
+                    <div>
+                      <h1 className="text-2xl font-display font-bold text-dark tracking-tight">
+                        Verify your Account
+                      </h1>
+                      <p className="text-xs text-gray-500 font-sans mt-1">
+                        We sent a verification link to your email. Please verify to activate your profile.
+                      </p>
+                    </div>
 
-                  {/* Submit Button */}
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    className="w-full py-3.5 rounded-xl font-display font-semibold text-xs uppercase tracking-wider mt-4"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? (
-                      <span className="flex items-center justify-center gap-2">
-                        <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        <span>Creating Account...</span>
-                      </span>
-                    ) : (
-                      <span className="flex items-center justify-center gap-1.5">
-                        <span>Register Now</span>
-                        <ArrowRight size={14} />
-                      </span>
-                    )}
-                  </Button>
-                </form>
+                    <div className="p-5 bg-sky-50 border border-sky-100 rounded-2xl space-y-4 shadow-3xs">
+                      <p className="text-xs font-sans text-sky-850 font-medium leading-relaxed">
+                        Registration successful! A verification link has been sent to your email. Please check your inbox and verify your email to log in.
+                      </p>
+                      
+                      <button
+                        type="button"
+                        onClick={handleResend}
+                        disabled={cooldownSeconds > 0 || isResending}
+                        className={`text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-xl border transition-all cursor-pointer focus:outline-none flex items-center justify-center gap-1.5 ${
+                          cooldownSeconds > 0 || isResending
+                            ? 'bg-gray-50 border-gray-250 text-gray-400 cursor-not-allowed'
+                            : 'bg-white border-sky-200 text-sky-700 hover:bg-sky-50/70 active:scale-95'
+                        }`}
+                      >
+                        {isResending ? (
+                          <>
+                            <span className="w-3.5 h-3.5 border-2 border-sky-300 border-t-sky-700 rounded-full animate-spin" />
+                            <span>Resending...</span>
+                          </>
+                        ) : cooldownSeconds > 0 ? (
+                          <span>Resend in {cooldownSeconds}s</span>
+                        ) : (
+                          <span>Resend Verification Link</span>
+                        )}
+                      </button>
+                    </div>
 
-                {/* Divider */}
-                <div className="relative flex items-center justify-center py-2 text-xs">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-border-gray/50"></div>
+                    <div className="pt-2 text-center">
+                      <Link
+                        to="/login"
+                        className="text-xs font-bold text-primary hover:underline font-sans transition-colors"
+                      >
+                        Already verified? Proceed to Login
+                      </Link>
+                    </div>
                   </div>
-                  <span className="relative px-3 bg-white text-gray-400 font-sans text-[10px] uppercase font-semibold">
-                    Or continue with
-                  </span>
-                </div>
+                ) : (
+                  <>
+                    {showFbEmailForm ? (
+                      <div className="space-y-4">
+                        <div className="text-center pb-2">
+                          <div className="w-14 h-14 bg-emerald-50 text-emerald-600 border border-emerald-250 rounded-full flex items-center justify-center mx-auto mb-3 shadow-3xs">
+                            <ShieldCheck size={26} className="stroke-[1.5]" />
+                          </div>
+                          <h2 className="text-lg font-display font-extrabold text-slate-800 tracking-tight">Verify &amp; Secure Profile</h2>
+                          <p className="text-[11.5px] text-gray-500 font-sans mt-1 max-w-xs mx-auto leading-relaxed">
+                            Please enter your original email address. We will verify your account to ensure your security.
+                          </p>
+                        </div>
 
-                {/* Google Sign-in Button */}
-                <div className="w-full flex justify-center">
-                  <GoogleLogin
-                    onSuccess={async (credentialResponse) => {
-                      if (credentialResponse.credential) {
-                        await googleLogin(credentialResponse.credential);
-                      }
-                    }}
-                    onError={() => {
-                      toast.error('Google Sign-In failed.');
-                    }}
-                  />
-                </div>
+                        <form onSubmit={handleFbEmailSubmit} className="space-y-4">
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-semibold text-dark/70 font-display flex items-center gap-1.5">
+                              <Mail size={13} className="text-gray-400" />
+                              <span>Original Email Address</span>
+                            </label>
+                            <input
+                              type="email"
+                              required
+                              value={fbEmail}
+                              onChange={(e) => setFbEmail(e.target.value)}
+                              placeholder="your.email@example.com"
+                              className="w-full border px-4 py-3 text-sm rounded-xl text-dark focus:outline-none focus:border-primary font-sans bg-light-gray/20 transition-colors border-border-gray/80"
+                            />
+                          </div>
 
-                <p className="text-center text-xs text-gray-500 font-sans pt-2">
-                  Already have an account?{' '}
-                  <Link to="/login" className="font-semibold text-primary hover:underline">
-                    Sign In
-                  </Link>
-                </p>
+                          <Button
+                            type="submit"
+                            variant="primary"
+                            className="w-full py-3.5 rounded-xl font-display font-semibold text-xs uppercase tracking-wider mt-4"
+                            disabled={fbSubmitting}
+                          >
+                            {fbSubmitting ? (
+                              <span className="flex items-center justify-center gap-2">
+                                <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                <span>Sending Verification...</span>
+                              </span>
+                            ) : (
+                              'Send Verification Link'
+                            )}
+                          </Button>
+
+                          <button
+                            type="button"
+                            onClick={() => setShowFbEmailForm(false)}
+                            className="w-full text-center text-xs text-gray-500 font-sans hover:underline pt-2 cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                        </form>
+                      </div>
+                    ) : (
+                      <>
+                        <div>
+                          <h1 className="text-2xl font-display font-bold text-dark tracking-tight">
+                            Create your Account
+                          </h1>
+                          <p className="text-xs text-gray-500 font-sans mt-1">
+                            Fill in your details below to activate your premium botanical membership profile.
+                          </p>
+                        </div>
+
+                        <form onSubmit={formik.handleSubmit} className="space-y-4">
+                          {/* Name input */}
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-semibold text-dark/70 font-display flex items-center gap-1.5">
+                              <User size={13} className="text-gray-400" />
+                              <span>Full Name</span>
+                            </label>
+                            <input
+                              type="text"
+                              name="name"
+                              placeholder="Priyesh Patel"
+                              value={formik.values.name}
+                              onChange={formik.handleChange}
+                              onBlur={formik.handleBlur}
+                              className={`w-full border px-4 py-3 text-sm rounded-xl text-dark focus:outline-none focus:border-primary font-sans bg-light-gray/20 transition-colors ${
+                                formik.touched.name && formik.errors.name
+                                  ? 'border-red-500 focus:border-red-500'
+                                  : 'border-border-gray/80'
+                              }`}
+                            />
+                            {formik.touched.name && formik.errors.name && (
+                              <div className="text-[10px] text-red-500 font-sans font-medium mt-1">
+                                {formik.errors.name}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Email input */}
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-semibold text-dark/70 font-display flex items-center gap-1.5">
+                              <Mail size={13} className="text-gray-400" />
+                              <span>Email Address</span>
+                            </label>
+                            <input
+                              type="email"
+                              name="email"
+                              placeholder="meet.chauhan@example.com"
+                              value={formik.values.email}
+                              onChange={formik.handleChange}
+                              onBlur={formik.handleBlur}
+                              className={`w-full border px-4 py-3 text-sm rounded-xl text-dark focus:outline-none focus:border-primary font-sans bg-light-gray/20 transition-colors ${
+                                formik.touched.email && formik.errors.email
+                                  ? 'border-red-500 focus:border-red-500'
+                                  : 'border-border-gray/80'
+                              }`}
+                            />
+                            {formik.touched.email && formik.errors.email && (
+                              <div className="text-[10px] text-red-500 font-sans font-medium mt-1">
+                                {formik.errors.email}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Phone input */}
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-semibold text-dark/70 font-display flex items-center gap-1.5">
+                              <Phone size={13} className="text-gray-400" />
+                              <span>Phone Number</span>
+                            </label>
+                            <input
+                              type="text"
+                              name="phone"
+                              placeholder="9876543210"
+                              value={formik.values.phone}
+                              onChange={formik.handleChange}
+                              onBlur={formik.handleBlur}
+                              className={`w-full border px-4 py-3 text-sm rounded-xl text-dark focus:outline-none focus:border-primary font-sans bg-light-gray/20 transition-colors ${
+                                formik.touched.phone && formik.errors.phone
+                                  ? 'border-red-500 focus:border-red-500'
+                                  : 'border-border-gray/80'
+                              }`}
+                            />
+                            {formik.touched.phone && formik.errors.phone && (
+                              <div className="text-[10px] text-red-500 font-sans font-medium mt-1">
+                                {formik.errors.phone}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Password Fields Row */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {/* Password input */}
+                            <div className="space-y-1.5">
+                              <label className="text-xs font-semibold text-dark/70 font-display flex items-center gap-1.5">
+                                <Lock size={13} className="text-gray-400" />
+                                <span>Password</span>
+                              </label>
+                              <div className="relative">
+                                <input
+                                  type={showPassword ? 'text' : 'password'}
+                                  name="password"
+                                  placeholder="••••••••"
+                                  value={formik.values.password}
+                                  onChange={formik.handleChange}
+                                  onBlur={formik.handleBlur}
+                                  className={`w-full border pl-4 pr-10 py-3 text-sm rounded-xl text-dark focus:outline-none focus:border-primary font-sans bg-light-gray/20 transition-colors ${
+                                    formik.touched.password && formik.errors.password
+                                      ? 'border-red-500 focus:border-red-500'
+                                      : 'border-border-gray/80'
+                                  }`}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => setShowPassword(!showPassword)}
+                                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-dark focus:outline-none cursor-pointer p-0.5"
+                                >
+                                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                </button>
+                              </div>
+                              {formik.touched.password && formik.errors.password && (
+                                <div className="text-[10px] text-red-500 font-sans font-medium mt-1">
+                                  {formik.errors.password}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Confirm Password input */}
+                            <div className="space-y-1.5">
+                              <label className="text-xs font-semibold text-dark/70 font-display flex items-center gap-1.5">
+                                <Lock size={13} className="text-gray-400" />
+                                <span>Confirm Password</span>
+                              </label>
+                              <div className="relative">
+                                <input
+                                  type={showConfirmPassword ? 'text' : 'password'}
+                                  name="confirmPassword"
+                                  placeholder="••••••••"
+                                  value={formik.values.confirmPassword}
+                                  onChange={formik.handleChange}
+                                  onBlur={formik.handleBlur}
+                                  className={`w-full border pl-4 pr-10 py-3 text-sm rounded-xl text-dark focus:outline-none focus:border-primary font-sans bg-light-gray/20 transition-colors ${
+                                    formik.touched.confirmPassword && formik.errors.confirmPassword
+                                      ? 'border-red-500 focus:border-red-500'
+                                      : 'border-border-gray/80'
+                                  }`}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-dark focus:outline-none cursor-pointer p-0.5"
+                                >
+                                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                </button>
+                              </div>
+                              {formik.touched.confirmPassword && formik.errors.confirmPassword && (
+                                <div className="text-[10px] text-red-500 font-sans font-medium mt-1">
+                                  {formik.errors.confirmPassword}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Submit Button */}
+                          <Button
+                            type="submit"
+                            variant="primary"
+                            className="w-full py-3.5 rounded-xl font-display font-semibold text-xs uppercase tracking-wider mt-4"
+                            disabled={isSubmitting}
+                          >
+                            {isSubmitting ? (
+                              <span className="flex items-center justify-center gap-2">
+                                <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                <span>Creating Account...</span>
+                              </span>
+                            ) : (
+                              <span className="flex items-center justify-center gap-1.5">
+                                <span>Register Now</span>
+                                <ArrowRight size={14} />
+                              </span>
+                            )}
+                          </Button>
+                        </form>
+
+                        {/* Divider */}
+                        <div className="relative flex items-center justify-center py-2 text-xs">
+                          <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-border-gray/50"></div>
+                          </div>
+                          <span className="relative px-3 bg-white text-gray-400 font-sans text-[10px] uppercase font-semibold">
+                            Or continue with
+                          </span>
+                        </div>
+
+                        {/* Social Sign-in Buttons */}
+                        <SocialLoginButtons redirectPage="register" />
+
+                        <p className="text-center text-xs text-gray-500 font-sans pt-2">
+                          Already have an account?{' '}
+                          <Link to="/login" className="font-semibold text-primary hover:underline">
+                            Sign In
+                          </Link>
+                        </p>
+                      </>
+                    )}
+                  </>
+                )}
               </div>
             </div>
           </div>

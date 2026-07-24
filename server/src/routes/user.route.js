@@ -6,7 +6,11 @@ const {
   loginUser, 
   logoutUser, 
   refreshAccessToken, 
-  googleSignIn
+  googleSignIn,
+  facebookSignIn,
+  facebookRegister,
+  verifyEmail,
+  resendVerification
 } = require('../controller/user/auth.controller');
 
 const {
@@ -36,6 +40,10 @@ router.post('/login', loginUser);
 router.post('/refresh', refreshAccessToken);
 router.post('/logout', logoutUser); // Clear cookie and invalidate session
 router.post('/google', googleRateLimiter, googleSignIn);
+router.post('/facebook', googleRateLimiter, facebookSignIn);
+router.post('/facebook-register', googleRateLimiter, facebookRegister);
+router.post('/verify-email', verifyEmail);
+router.post('/resend-verification', resendVerification);
 router.post('/contact-us', async (req, res) => {
   try {
     const { name, email, message } = req.body;

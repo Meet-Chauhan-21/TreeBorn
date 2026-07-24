@@ -76,9 +76,8 @@ const SortDropdown: React.FC<SortDropdownProps> = ({ value, onChange, options })
                   onChange(option.id);
                   setIsOpen(false);
                 }}
-                className={`w-full text-left px-3.5 py-2.5 text-xs font-sans transition-colors flex items-center justify-between cursor-pointer ${
-                  value === option.id ? 'text-primary font-semibold bg-primary/[0.03]' : 'text-dark/70 hover:bg-light-gray/40 hover:text-dark'
-                }`}
+                className={`w-full text-left px-3.5 py-2.5 text-xs font-sans transition-colors flex items-center justify-between cursor-pointer ${value === option.id ? 'text-primary font-semibold bg-primary/[0.03]' : 'text-dark/70 hover:bg-light-gray/40 hover:text-dark'
+                  }`}
               >
                 <span>{option.label}</span>
                 {value === option.id && <Check size={12} className="text-primary" />}
@@ -349,7 +348,7 @@ export const Category: React.FC = () => {
         {/* Content Section */}
         <Container className="mt-12">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            
+
             {/* Desktop Filters Sidebar (Col Span 3) */}
             <aside className="hidden lg:block lg:col-span-3 sticky top-24 bg-white border border-border-gray/30 rounded-2xl p-6 shadow-xs space-y-6">
               <div className="flex items-center justify-between border-b border-border-gray/40 pb-4">
@@ -427,7 +426,7 @@ export const Category: React.FC = () => {
                 <label className="block text-xs font-bold text-dark/70 uppercase tracking-wider">
                   Product Badges
                 </label>
-                
+
                 <label className="flex items-center gap-2.5 text-xs text-dark font-sans select-none cursor-pointer">
                   <input
                     type="checkbox"
@@ -472,7 +471,7 @@ export const Category: React.FC = () => {
 
             {/* Products Grid & Mobile Controls Column (Col Span 9) */}
             <div className="lg:col-span-9 space-y-6">
-              
+
               {/* Toolbar - ENHANCED with Theme Color layout */}
               <div className="flex items-center justify-between bg-primary/[0.03] border border-border-gray/30 border-l-4 border-l-primary rounded-2xl py-3.5 px-5 shadow-xs">
                 <span className="text-xs sm:text-sm font-sans text-gray-500 font-medium">
@@ -530,7 +529,7 @@ export const Category: React.FC = () => {
                         >
                           {/* Image Frame */}
                           <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-light-gray mb-4 border border-border-gray/30">
-                            
+
                             {/* Badges */}
                             <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
                               {product.discount && product.discount > 0 ? (
@@ -592,13 +591,13 @@ export const Category: React.FC = () => {
                             <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-1 font-display">
                               {product.category}
                             </span>
-                            
+
                             <h3 className="font-display font-semibold text-xs sm:text-sm text-dark hover:text-primary transition-colors mb-1">
                               <Link to={`/product/${product.id}`} className="cursor-pointer line-clamp-1">
                                 {product.name}
                               </Link>
                             </h3>
-                            
+
                             {/* Star Rating */}
                             <div className="flex items-center gap-1 mb-2">
                               <div className="flex text-yellow-400">
@@ -678,7 +677,7 @@ export const Category: React.FC = () => {
 
               {/* Scrollable Filters list */}
               <div className="flex-grow overflow-y-auto p-5 space-y-6">
-                
+
                 {/* Search */}
                 <div className="space-y-2">
                   <label className="block text-xs font-bold text-dark/70 uppercase tracking-wider">
@@ -739,7 +738,7 @@ export const Category: React.FC = () => {
                   <label className="block text-xs font-bold text-dark/70 uppercase tracking-wider">
                     Product Badges
                   </label>
-                  
+
                   <label className="flex items-center gap-3 text-sm text-dark font-sans select-none cursor-pointer">
                     <input
                       type="checkbox"

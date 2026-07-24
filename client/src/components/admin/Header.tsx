@@ -1,5 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Bell, LogOut, Menu, X, Globe, PanelLeftOpen, Trash2, Clock } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  Search, Bell, LogOut, Menu, X, Globe, PanelLeftOpen, Trash2, Clock,
+  LayoutDashboard, ShoppingCart, Package, Users, Settings as SettingsIcon, Image as ImageIcon, FileText 
+} from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useStore } from '../../context/StoreContext';
 import { useNavigate } from 'react-router-dom';
@@ -31,6 +34,7 @@ export const Header: React.FC<HeaderProps> = ({
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [bellOpen, setBellOpen] = useState(false);
+  const bellRef = useRef<HTMLDivElement>(null);
 
   const fetchNotifications = async () => {
     if (!accessToken) return;
@@ -54,6 +58,17 @@ export const Header: React.FC<HeaderProps> = ({
       return () => clearInterval(timer);
     }
   }, [accessToken]);
+
+  // Click outside listener for notifications
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (bellRef.current && !bellRef.current.contains(event.target as Node)) {
+        setBellOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -120,6 +135,18 @@ export const Header: React.FC<HeaderProps> = ({
     onLogout();
   };
 
+  const getTabIcon = (tabTitle: string) => {
+    const lower = tabTitle.toLowerCase();
+    if (lower.includes('dashboard')) return <LayoutDashboard size={18} className="text-slate-700" />;
+    if (lower.includes('order')) return <ShoppingCart size={18} className="text-slate-700" />;
+    if (lower.includes('product')) return <Package size={18} className="text-slate-700" />;
+    if (lower.includes('user')) return <Users size={18} className="text-slate-700" />;
+    if (lower.includes('settings')) return <SettingsIcon size={18} className="text-slate-700" />;
+    if (lower.includes('homepage') || lower.includes('image')) return <ImageIcon size={18} className="text-slate-700" />;
+    if (lower.includes('legal') || lower.includes('page')) return <FileText size={18} className="text-slate-700" />;
+    return <LayoutDashboard size={18} className="text-slate-700" />;
+  };
+
   return (
     <header
       className={`fixed top-0 right-0 h-20 bg-white/80 backdrop-blur-md border-b border-slate-200/80 z-20 flex items-center justify-between px-8 transition-all duration-300 ${
@@ -142,9 +169,11 @@ export const Header: React.FC<HeaderProps> = ({
         >
           {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
         </button>
-        <div>
-          <h1 className="text-xl font-bold text-slate-900 tracking-tight">{title}</h1>
-          <p className="text-xs text-slate-500 mt-0.5">Admin Portal</p>
+        <div className="flex items-center gap-2.5">
+          {getTabIcon(title)}
+          <h1 className="text-sm font-extrabold text-slate-900 tracking-tight">{title}</h1>
+          <span className="text-slate-300 text-[10px]">•</span>
+          <span className="text-[10px] font-extrabold text-primary font-display uppercase tracking-wider">Admin Portal</span>
         </div>
       </div>
 
@@ -190,23 +219,25 @@ export const Header: React.FC<HeaderProps> = ({
 
         <button
           onClick={() => navigate('/')}
-          className="flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 hover:text-slate-950 text-xs font-semibold rounded-xl transition-all cursor-pointer shadow-2xs"
+          className="group flex items-center gap-1.5 px-4 h-9 bg-black hover:bg-white text-white hover:text-black border border-black text-xs font-bold rounded-xl transition-all duration-300 cursor-pointer shadow-2xs hover:shadow-md hover:scale-105 flex-shrink-0"
         >
-          <Globe size={13} className="text-slate-500" />
+          <Globe size={13} className="text-white group-hover:text-black transition-colors duration-300" />
           <span className="hidden sm:inline">View Website</span>
         </button>
 
-        <div className="relative">
+        <div className="relative" ref={bellRef}>
           <button
             onClick={() => setBellOpen(!bellOpen)}
-            className="relative p-2 hover:bg-slate-50 border border-transparent hover:border-slate-200 rounded-xl transition-all cursor-pointer focus:outline-none"
+            className="relative p-2 hover:bg-slate-100 border border-transparent hover:border-slate-200 rounded-xl transition-all cursor-pointer focus:outline-none flex items-center justify-center hover:scale-105"
           >
-            <Bell size={18} className="text-slate-600" />
-            {unreadCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-rose-600 text-white rounded-full text-[9px] font-sans font-bold flex items-center justify-center">
-                {unreadCount}
-              </span>
-            )}
+            <div className="relative">
+              <Bell size={18} className="text-slate-600" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-rose-600 text-white rounded-full text-[9px] font-sans font-bold flex items-center justify-center border border-white shadow-xs">
+                  {unreadCount}
+                </span>
+              )}
+            </div>
           </button>
 
           {bellOpen && (

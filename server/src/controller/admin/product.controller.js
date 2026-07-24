@@ -427,11 +427,58 @@ const deleteCategory = async (req, res) => {
   }
 };
 
+// @desc    Copy / Duplicate product
+// @route   POST /api/admin/products/:id/copy
+// @access  Private/Admin
+const copyProduct = async (req, res) => {
+  try {
+    const originalProduct = await Product.findById(req.params.id);
+    if (!originalProduct) {
+      return res.status(404).json({ message: 'Product to copy not found.' });
+    }
+
+    // Generate unique SKU
+    let newSku = `${originalProduct.sku}-copy`;
+    let skuExists = await Product.findOne({ sku: newSku });
+    let counter = 1;
+    while (skuExists) {
+      newSku = `${originalProduct.sku}-copy-${counter}`;
+      skuExists = await Product.findOne({ sku: newSku });
+      counter++;
+    }
+
+    // Clone the product document details
+    const productData = originalProduct.toObject();
+    delete productData._id;
+    delete productData.createdAt;
+    delete productData.updatedAt;
+
+    productData.name = `Copy of ${originalProduct.name}`;
+    productData.sku = newSku;
+    // Set to inactive so that admin has to explicitly publish it (Hidden)
+    productData.status = 'inactive';
+
+    const copiedProduct = await Product.create(productData);
+    
+    // Populate category so it displays nicely in the list
+    const populated = await Product.findById(copiedProduct._id).populate('category');
+
+    return res.status(201).json({
+      message: 'Product duplicated successfully',
+      product: populated
+    });
+  } catch (error) {
+    console.error('Copy Product Error:', error);
+    return res.status(500).json({ message: 'Server error. Failed to duplicate product.' });
+  }
+};
+
 module.exports = {
   getAllProductsAdmin,
   createProduct,
   updateProduct,
   deleteProduct,
+  copyProduct,
   uploadImage,
   uploadVideo,
   deleteCloudinaryAsset,

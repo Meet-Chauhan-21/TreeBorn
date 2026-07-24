@@ -13,7 +13,13 @@ const getDashboardStats = async (req, res) => {
       totalUsers,
       totalProducts,
       totalOrders,
-      totalRevenue,
+      totalRevenueResult,
+      totalOnlinePayments,
+      codOrders,
+      paidOrders,
+      failedPayments,
+      refundedOrders,
+      revenueByMethodResult,
       recentOrders,
       topProducts
     ] = await Promise.all([
@@ -21,8 +27,22 @@ const getDashboardStats = async (req, res) => {
       Product.countDocuments({ status: 'active' }),
       Order.countDocuments(),
       Order.aggregate([
-        { $match: { 'payment.status': 'paid' } },
+        { $match: { 'payment.status': { $in: ['Paid', 'paid'] } } },
         { $group: { _id: null, total: { $sum: '$totals.total' } } }
+      ]),
+      Order.countDocuments({ 'payment.method': { $in: ['razorpay', 'card'] } }),
+      Order.countDocuments({ 'payment.method': 'cod' }),
+      Order.countDocuments({ 'payment.status': { $in: ['Paid', 'paid'] } }),
+      Order.countDocuments({ 'payment.status': 'Failed' }),
+      Order.countDocuments({ 'payment.status': 'Refunded' }),
+      Order.aggregate([
+        { $match: { 'payment.status': { $in: ['Paid', 'paid'] } } },
+        {
+          $group: {
+            _id: '$payment.method',
+            total: { $sum: '$totals.total' }
+          }
+        }
       ]),
       Order.find().populate('user', 'name').sort({ createdAt: -1 }).limit(5),
       Order.aggregate([
@@ -40,14 +60,33 @@ const getDashboardStats = async (req, res) => {
       ])
     ]);
 
-    const revenue = totalRevenue.length > 0 ? totalRevenue[0].total : 0;
+    const revenue = totalRevenueResult.length > 0 ? totalRevenueResult[0].total : 0;
+
+    let onlineRevenue = 0;
+    let codRevenue = 0;
+    revenueByMethodResult.forEach((item) => {
+      if (item._id === 'razorpay' || item._id === 'card') {
+        onlineRevenue += item.total;
+      } else if (item._id === 'cod') {
+        codRevenue += item.total;
+      }
+    });
 
     return res.status(200).json({
       stats: {
         revenue,
         orders: totalOrders,
         products: totalProducts,
-        users: totalUsers
+        users: totalUsers,
+        totalOnlinePayments,
+        codOrders,
+        paidOrders,
+        failedPayments,
+        refundedOrders,
+        revenueByMethod: {
+          online: onlineRevenue,
+          cod: codRevenue
+        }
       },
       recentOrders,
       topProducts
@@ -84,6 +123,7 @@ const updateSettings = async (req, res) => {
       whatsappNumber, 
       themeColor, 
       enableCreditCard, 
+      enableRazorpay,
       enablePaypal, 
       enableCOD, 
       privacyPolicy, 
@@ -104,6 +144,7 @@ const updateSettings = async (req, res) => {
     settings.whatsappNumber = whatsappNumber !== undefined ? whatsappNumber : settings.whatsappNumber;
     settings.themeColor = themeColor !== undefined ? themeColor : settings.themeColor;
     settings.enableCreditCard = enableCreditCard !== undefined ? enableCreditCard : settings.enableCreditCard;
+    settings.enableRazorpay = enableRazorpay !== undefined ? enableRazorpay : settings.enableRazorpay;
     settings.enablePaypal = enablePaypal !== undefined ? enablePaypal : settings.enablePaypal;
     settings.enableCOD = enableCOD !== undefined ? enableCOD : settings.enableCOD;
     settings.privacyPolicy = privacyPolicy !== undefined ? privacyPolicy : settings.privacyPolicy;

@@ -35,14 +35,21 @@ const orderSchema = new mongoose.Schema(
     shippingAddress: { type: shippingAddressSchema, required: true },
 
     payment: {
-      method: { type: String, enum: ['card', 'cod'], required: true },
+      method: { type: String, enum: ['card', 'cod', 'razorpay'], required: true },
       status: {
         type: String,
-        enum: ['pending', 'authorized', 'paid'],
-        required: true
+        enum: ['Pending', 'Paid', 'Failed', 'Cancelled', 'Refunded', 'pending', 'authorized', 'paid'],
+        default: 'Pending'
       },
+      transactionId: { type: String, default: '' },
+      paidAt: { type: Date },
+      currency: { type: String, default: 'INR' },
+      amount: { type: Number, default: 0 },
       cardName: { type: String, default: '' },
-      cardLast4: { type: String, default: '' }
+      cardLast4: { type: String, default: '' },
+      razorpayOrderId: { type: String, default: '' },
+      razorpayPaymentId: { type: String, default: '' },
+      razorpaySignature: { type: String, default: '' }
     },
 
     totals: {
@@ -54,9 +61,26 @@ const orderSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ['Placed', 'Processing', 'Shipped', 'Delivered', 'Cancelled'],
-      default: 'Placed'
-    }
+      enum: ['Pending', 'Confirmed', 'Cancelled'],
+      default: 'Pending'
+    },
+
+    // Shiprocket Delivery Fields
+    shipmentCreated: { type: Boolean, default: false },
+    shipmentId: { type: String, default: '' },
+    awbCode: { type: String, default: '' },
+    trackingNumber: { type: String, default: '' },
+    trackingUrl: { type: String, default: '' },
+    courierName: { type: String, default: '' },
+    courierCompanyId: { type: String, default: '' },
+    labelUrl: { type: String, default: '' },
+    invoiceUrl: { type: String, default: '' },
+    deliveryStatus: { type: String, default: '' },
+    shiprocketResponse: { type: mongoose.Schema.Types.Mixed, default: null },
+    pickupScheduled: { type: Boolean, default: false },
+    manifestGenerated: { type: Boolean, default: false },
+    createdShipmentAt: { type: Date },
+    updatedShipmentAt: { type: Date }
   },
   { timestamps: true }
 );

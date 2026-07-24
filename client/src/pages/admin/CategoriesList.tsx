@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Plus, Edit, Trash2, Folder, AlertTriangle, Eye, EyeOff, Save, X, ArrowUp, ArrowDown, Upload, CheckCircle, Package } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, Folder, AlertTriangle, Eye, EyeOff, Save, X, ArrowUp, ArrowDown, Upload, CheckCircle, Package, LayoutGrid, List } from 'lucide-react';
 import { toast } from 'sonner';
 import AdminLayout from '../../components/admin/AdminLayout';
 import Card from '../../components/admin/Card';
@@ -19,6 +19,7 @@ const CategoriesList: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'sortOrder' | 'name' | 'newest'>('sortOrder');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   // Form Drawer States
   const [formOpen, setFormOpen] = useState(false);
@@ -246,116 +247,150 @@ const CategoriesList: React.FC = () => {
       <div className="space-y-6">
         {/* Header Section with Stats Cards */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 pb-5">
-          {/* Stats Cards Row */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-1 max-w-3xl">
-            <div className="bg-white border border-slate-100/80 rounded-2xl p-3.5 shadow-3xs flex items-center gap-3 transition-all hover:shadow-2xs">
-              <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100/50 flex items-center justify-center text-indigo-650 shrink-0">
-                <Folder size={16} />
-              </div>
+          {/* Upgraded Stats Cards Row */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 flex-1 max-w-4xl">
+            <div className="bg-white border border-slate-200/80 p-4.5 rounded-2xl shadow-3xs text-left hover:shadow-xs transition-all flex items-center justify-between">
               <div>
-                <span className="text-[9px] uppercase font-bold text-slate-400 block tracking-wider leading-none">Total Collections</span>
-                <span className="text-base font-bold text-slate-800 font-display mt-0.5 block leading-none">{categories.length}</span>
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block font-display">Total Categories</span>
+                <span className="text-2xl font-extrabold text-slate-900 mt-1 block leading-none font-display">{categories.length}</span>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-650 flex items-center justify-center">
+                <Folder size={18} />
               </div>
             </div>
 
-            <div className="bg-white border border-slate-100/80 rounded-2xl p-3.5 shadow-3xs flex items-center gap-3 transition-all hover:shadow-2xs">
-              <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-100/50 flex items-center justify-center text-emerald-600 shrink-0">
-                <CheckCircle size={16} />
-              </div>
+            <div className="bg-white border border-slate-200/80 p-4.5 rounded-2xl shadow-3xs text-left hover:shadow-xs transition-all flex items-center justify-between">
               <div>
-                <span className="text-[9px] uppercase font-bold text-slate-400 block tracking-wider leading-none">Active</span>
-                <span className="text-base font-bold text-slate-800 font-display mt-0.5 block leading-none">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block font-display">Active Channels</span>
+                <span className="text-2xl font-extrabold text-emerald-650 mt-1 block leading-none font-display">
                   {categories.filter(c => c.isActive).length}
                 </span>
               </div>
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-650 flex items-center justify-center">
+                <CheckCircle size={18} />
+              </div>
             </div>
 
-            <div className="bg-white border border-slate-100/80 rounded-2xl p-3.5 shadow-3xs flex items-center gap-3 transition-all hover:shadow-2xs">
-              <div className="w-9 h-9 rounded-xl bg-sky-50 border border-sky-100/50 flex items-center justify-center text-sky-650 shrink-0">
-                <Package size={16} />
-              </div>
+            <div className="bg-white border border-slate-200/80 p-4.5 rounded-2xl shadow-3xs text-left hover:shadow-xs transition-all flex items-center justify-between">
               <div>
-                <span className="text-[9px] uppercase font-bold text-slate-400 block tracking-wider leading-none">Total Products</span>
-                <span className="text-base font-bold text-slate-800 font-display mt-0.5 block leading-none">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block font-display">Catalog Items</span>
+                <span className="text-2xl font-extrabold text-amber-655 mt-1 block leading-none font-display">
                   {categories.reduce((acc, cat) => acc + (cat.count || 0), 0)}
                 </span>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100 text-amber-600 flex items-center justify-center">
+                <Package size={18} />
               </div>
             </div>
           </div>
 
           {/* Add Category Button on the right */}
-          <Button icon={Plus} onClick={handleAddTrigger} className="self-start lg:self-auto py-2.5 px-5 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/10 h-11 shrink-0">
+          <Button icon={Plus} onClick={handleAddTrigger} className="self-start lg:self-auto py-2.5 px-5 text-xs font-extrabold bg-primary hover:bg-primary-light text-white shadow-md shadow-primary/10 h-11 shrink-0 cursor-pointer">
             Add Category
           </Button>
         </div>
 
-        {/* Toolbar Card */}
-        <Card className="p-3 bg-white">
-          <div className="flex flex-wrap items-center gap-4 justify-start">
-            {/* Search Input Box */}
-            <div className="relative w-full sm:max-w-xs md:max-w-sm">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search categories..."
-                className="w-full pl-12 pr-4 py-2 border border-gray-250/70 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-sans text-xs"
-              />
+        {/* Enhanced Toolbar Card */}
+        <Card className="p-3 bg-white border border-slate-200/80 rounded-2xl saas-shadow">
+          <div className="flex flex-wrap items-center gap-4 justify-between">
+            <div className="flex flex-wrap items-center gap-4 flex-1">
+              {/* Search Input Box */}
+              <div className="relative w-full sm:max-w-xs flex items-center">
+                <Search 
+                  className="absolute left-4 text-slate-400 pointer-events-none" 
+                  size={14} 
+                />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search collections..."
+                  className="w-full pl-11 pr-4 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-primary font-sans text-xs bg-slate-50/20 transition-all focus:bg-white"
+                />
+              </div>
+
+              {/* Sorting controls in a single row */}
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider whitespace-nowrap font-display">Sort By</span>
+                <Select
+                  value={sortBy}
+                  onChange={(val) => setSortBy(val as any)}
+                  hClass="h-9"
+                  className="w-36 text-xs"
+                  options={[
+                    { value: 'sortOrder', label: 'Sort Order' },
+                    { value: 'name', label: 'Name' },
+                    { value: 'newest', label: 'Date Created' }
+                  ]}
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')}
+                  className="p-2.5 hover:bg-slate-50 border border-slate-200 rounded-xl transition text-slate-650 hover:border-slate-350 cursor-pointer flex items-center justify-center h-9 w-9 focus:outline-none"
+                  title={`Sort Direction: ${sortDirection}`}
+                >
+                  {sortDirection === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />}
+                </button>
+              </div>
             </div>
 
-            {/* Sorting controls in a single row */}
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold text-slate-455 uppercase tracking-wider whitespace-nowrap">Sort By:</span>
-              <Select
-                value={sortBy}
-                onChange={(val) => setSortBy(val as any)}
-                hClass="h-9"
-                className="w-36"
-                options={[
-                  { value: 'sortOrder', label: 'Sort Order' },
-                  { value: 'name', label: 'Name' },
-                  { value: 'newest', label: 'Date Created' }
-                ]}
-              />
-
+            {/* View Mode Toggle Buttons */}
+            <div className="flex items-center gap-1 border border-slate-200 bg-slate-50/80 p-1 rounded-xl flex-shrink-0">
               <button
                 type="button"
-                onClick={() => setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')}
-                className="p-2 hover:bg-slate-50 border border-slate-200 rounded-xl transition text-slate-600 cursor-pointer flex items-center justify-center h-9 w-9"
-                title={`Sort Direction: ${sortDirection}`}
+                onClick={() => setViewMode('grid')}
+                className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+                  viewMode === 'grid'
+                    ? 'bg-white text-indigo-650 shadow-2xs font-semibold'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+                title="Grid View"
               >
-                {sortDirection === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />}
+                <LayoutGrid size={15} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('list')}
+                className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+                  viewMode === 'list'
+                    ? 'bg-white text-indigo-650 shadow-2xs font-semibold'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+                title="List View"
+              >
+                <List size={15} />
               </button>
             </div>
           </div>
         </Card>
 
-        {/* Category List Loader / Grid */}
+        {/* Category List Loader / View Render */}
         {categoriesLoading ? (
           <div className="flex items-center justify-center min-h-[300px]">
-            <div className="w-10 h-10 border-4 border-indigo-150 border-t-indigo-650 rounded-full animate-spin" />
+            <div className="w-10 h-10 border-4 border-slate-105 border-t-primary rounded-full animate-spin" />
           </div>
         ) : sortedCategories.length === 0 ? (
-          <Card className="p-12 text-center text-gray-500 font-sans">
-            <Folder className="mx-auto text-slate-355 mb-3" size={40} />
+          <Card className="p-12 text-center text-gray-500 font-sans border border-slate-200/80 rounded-2xl">
+            <Folder className="mx-auto text-slate-300 mb-3" size={40} />
             <p className="text-sm font-semibold">No categories found matching your query.</p>
             <p className="text-xs text-slate-400 mt-1">Try refining your search terms or create a new category.</p>
           </Card>
-        ) : (
+        ) : viewMode === 'grid' ? (
+          /* Premium Interactive Grid View */
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {sortedCategories.map((category) => {
               return (
                 <div
                   key={category.id || category._id}
-                  className={`relative group bg-white border border-slate-105 rounded-3xl overflow-hidden shadow-3xs hover:shadow-md transition-all duration-305 flex flex-col justify-between border-t-4 border-t-indigo-600 ${
-                    !category.isActive ? 'opacity-80' : ''
+                  className={`relative group bg-white border border-slate-200/85 rounded-3xl overflow-hidden shadow-3xs hover:shadow-md transition-all duration-300 flex flex-col justify-between hover:border-slate-300 ${
+                    !category.isActive ? 'opacity-85' : ''
                   }`}
                 >
                   {/* Image & Visibility overlay (Clicking navigates to detail page) */}
                   <div
                     onClick={() => navigate(`/admin/categories/${category.id || category._id}`)}
-                    className="relative aspect-[16/9] w-full bg-slate-100 overflow-hidden cursor-pointer"
+                    className="relative aspect-[16/10] w-full bg-slate-100 overflow-hidden cursor-pointer"
                   >
                     <img
                       src={category.image}
@@ -363,18 +398,16 @@ const CategoriesList: React.FC = () => {
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-103"
                     />
                     
-                    {/* Visual Accents & Status Badges */}
-                    {!category.isActive && (
-                      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center">
-                        <span className="px-3 py-1 bg-red-650 text-white font-bold text-[9px] rounded-full uppercase tracking-widest shadow-sm flex items-center gap-1.5 animate-pulse">
-                          <EyeOff size={11} /> Disabled
+                    {/* Visual Accents & Status Badges using clean glassmorphic blurs */}
+                    {!category.isActive ? (
+                      <div className="absolute inset-0 bg-slate-950/20 backdrop-blur-xs flex items-center justify-center">
+                        <span className="px-3 py-1 bg-rose-600/90 backdrop-blur-xs text-white font-bold text-[9px] rounded-full uppercase tracking-widest shadow-sm flex items-center gap-1">
+                          <EyeOff size={10} /> Disabled
                         </span>
                       </div>
-                    )}
-                    
-                    {category.isActive && (
+                    ) : (
                       <div className="absolute top-3 left-3">
-                        <span className="px-2.5 py-0.5 bg-emerald-600 text-white font-bold text-[9px] rounded-full uppercase tracking-widest shadow-sm">
+                        <span className="px-2.5 py-0.5 bg-emerald-600/90 backdrop-blur-xs text-white font-bold text-[9px] rounded-full uppercase tracking-widest shadow-sm">
                           Active
                         </span>
                       </div>
@@ -388,29 +421,29 @@ const CategoriesList: React.FC = () => {
                   </div>
 
                   {/* Body Details */}
-                  <div className="p-5 flex-1 flex flex-col justify-between gap-4">
+                  <div className="p-5 flex-1 flex flex-col justify-between gap-3 text-left">
                     <div 
                       onClick={() => navigate(`/admin/categories/${category.id || category._id}`)}
-                      className="space-y-1.5 cursor-pointer"
+                      className="space-y-1 cursor-pointer"
                     >
-                      <h3 className="font-display font-bold text-lg text-slate-900 line-clamp-1 group-hover:text-indigo-650 transition-colors">
+                      <h3 className="font-display font-bold text-base text-slate-900 line-clamp-1 group-hover:text-primary transition-colors">
                         {category.name}
                       </h3>
                       <div className="flex items-center gap-1 text-[10px] font-mono text-slate-400 uppercase tracking-wide">
-                        <span>Path:</span>
-                        <span className="font-semibold text-slate-550">/collections/{category.slug}</span>
+                        <span>Slug:</span>
+                        <span className="font-semibold text-slate-500">/collections/{category.slug}</span>
                       </div>
                       {category.altText && (
-                        <p className="text-[10px] text-slate-450 italic mt-1.5 pl-2 border-l-2 border-slate-200 line-clamp-1">
-                          Alt: "{category.altText}"
+                        <p className="text-[10px] text-slate-400 italic mt-1 line-clamp-1 pl-2 border-l border-slate-200">
+                          "{category.altText}"
                         </p>
                       )}
                     </div>
 
-                    <div className="flex items-center justify-between border-t border-slate-50 pt-3.5 mt-auto">
+                    <div className="flex items-center justify-between border-t border-slate-100 pt-3 mt-1">
                       {/* Products Counter badge */}
-                      <span className="text-[10px] font-bold font-sans text-indigo-700 bg-indigo-50 border border-indigo-150/50 px-3 py-1 rounded-full flex items-center gap-1 shadow-3xs">
-                        <Package size={11} className="text-indigo-500" />
+                      <span className="text-[10px] font-bold font-sans text-primary bg-primary/5 border border-primary/10 px-3 py-1 rounded-full flex items-center gap-1 shadow-3xs">
+                        <Package size={11} className="text-primary" />
                         {category.count || 0} {category.count === 1 ? 'Product' : 'Products'}
                       </span>
 
@@ -419,30 +452,30 @@ const CategoriesList: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => handleToggleActive(category)}
-                          className={`p-2 rounded-xl border transition-all cursor-pointer ${
+                          className={`p-1.5 rounded-lg border transition-all cursor-pointer focus:outline-none ${
                             category.isActive
-                              ? 'border-slate-250 text-slate-500 hover:text-red-500 hover:border-red-100 hover:bg-red-50/20'
-                              : 'border-emerald-200 text-emerald-600 bg-emerald-50/10 hover:bg-emerald-50/30 hover:border-emerald-300'
+                              ? 'border-slate-200 text-slate-550 hover:text-rose-600 hover:bg-rose-50/20'
+                              : 'border-emerald-200 text-emerald-650 bg-emerald-50/10 hover:bg-emerald-50/30'
                           }`}
                           title={category.isActive ? 'Disable Category' : 'Enable Category'}
                         >
-                          {category.isActive ? <EyeOff size={14} /> : <Eye size={14} />}
+                          {category.isActive ? <EyeOff size={13} /> : <Eye size={13} />}
                         </button>
                         <button
                           type="button"
                           onClick={() => handleEditTrigger(category)}
-                          className="p-2 border border-slate-200 text-slate-500 hover:text-indigo-650 hover:border-indigo-100 hover:bg-indigo-50/20 rounded-xl transition cursor-pointer"
+                          className="p-1.5 border border-slate-200 text-slate-550 hover:text-primary hover:border-primary/20 hover:bg-primary/5 rounded-lg transition cursor-pointer focus:outline-none"
                           title="Edit Details"
                         >
-                          <Edit size={14} />
+                          <Edit size={13} />
                         </button>
                         <button
                           type="button"
                           onClick={() => handleDeleteTrigger(category.id || category._id || '')}
-                          className="p-2 border border-slate-200 text-slate-500 hover:text-red-600 hover:border-red-100 hover:bg-red-50/20 rounded-xl transition cursor-pointer"
+                          className="p-1.5 border border-slate-200 text-slate-550 hover:text-rose-600 hover:border-rose-100 hover:bg-rose-50/20 rounded-lg transition cursor-pointer focus:outline-none"
                           title="Delete Category"
                         >
-                          <Trash2 size={14} />
+                          <Trash2 size={13} />
                         </button>
                       </div>
                     </div>
@@ -451,6 +484,112 @@ const CategoriesList: React.FC = () => {
               );
             })}
           </div>
+        ) : (
+          /* Premium Shopify-Style Table List View */
+          <Card className="overflow-x-auto border border-slate-200/80 rounded-2xl saas-shadow bg-white p-0">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-slate-100 bg-slate-50/50 text-[10px] font-bold text-slate-400 uppercase tracking-wider font-display">
+                  <th className="py-4 px-6">Collection</th>
+                  <th className="py-4 px-6">Slug Path</th>
+                  <th className="py-4 px-6 text-center">Display Order</th>
+                  <th className="py-4 px-6 text-center">Linked Products</th>
+                  <th className="py-4 px-6 text-center">Status</th>
+                  <th className="py-4 px-6 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {sortedCategories.map((category) => (
+                  <tr 
+                    key={category.id || category._id}
+                    className="hover:bg-slate-50/40 transition-colors group text-xs text-slate-600"
+                  >
+                    {/* Collection Info (Image + Title) */}
+                    <td className="py-3.5 px-6 font-semibold">
+                      <div className="flex items-center gap-3">
+                        <img 
+                          src={category.image} 
+                          alt={category.name} 
+                          className="w-10 h-7.5 rounded-lg object-cover bg-slate-100 border border-slate-200/60 flex-shrink-0"
+                        />
+                        <button
+                          onClick={() => navigate(`/admin/categories/${category.id || category._id}`)}
+                          className="font-bold text-slate-800 hover:text-primary transition-colors text-left font-display text-sm cursor-pointer focus:outline-none"
+                        >
+                          {category.name}
+                        </button>
+                      </div>
+                    </td>
+                    
+                    {/* Slug Path */}
+                    <td className="py-3.5 px-6">
+                      <span className="font-mono text-[10px] text-slate-500 bg-slate-50 border border-slate-200/60 px-2 py-0.5 rounded">
+                        /collections/{category.slug}
+                      </span>
+                    </td>
+                    
+                    {/* Display Order */}
+                    <td className="py-3.5 px-6 text-center font-bold text-slate-700">
+                      {category.sortOrder !== undefined ? category.sortOrder : '-'}
+                    </td>
+                    
+                    {/* Linked Products Count */}
+                    <td className="py-3.5 px-6 text-center">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-primary bg-primary/5 border border-primary/10 px-2.5 py-0.5 rounded-full">
+                        <Package size={10} />
+                        {category.count || 0}
+                      </span>
+                    </td>
+                    
+                    {/* Status Badge Toggle */}
+                    <td className="py-3.5 px-6 text-center">
+                      <button
+                        onClick={() => handleToggleActive(category)}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider transition-all cursor-pointer border focus:outline-none ${
+                          category.isActive
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200/40'
+                            : 'bg-rose-50 text-rose-700 border-rose-200/40'
+                        }`}
+                      >
+                        <span className={`w-1.5 h-1.5 rounded-full ${category.isActive ? 'bg-emerald-500 animate-pulse' : 'bg-rose-550'}`} />
+                        {category.isActive ? 'Active' : 'Disabled'}
+                      </button>
+                    </td>
+                    
+                    {/* Actions */}
+                    <td className="py-3.5 px-6 text-right">
+                      <div className="flex items-center gap-1.5 justify-end">
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/admin/categories/${category.id || category._id}`)}
+                          className="p-1.5 border border-slate-200 text-slate-550 hover:text-slate-800 hover:bg-slate-50 rounded-lg transition cursor-pointer focus:outline-none"
+                          title="View Details"
+                        >
+                          <Folder size={13} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleEditTrigger(category)}
+                          className="p-1.5 border border-slate-200 text-slate-550 hover:text-primary hover:border-primary/20 hover:bg-primary/5 rounded-lg transition cursor-pointer focus:outline-none"
+                          title="Edit Details"
+                        >
+                          <Edit size={13} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteTrigger(category.id || category._id || '')}
+                          className="p-1.5 border border-slate-200 text-slate-550 hover:text-rose-600 hover:border-rose-100 hover:bg-rose-550/20 rounded-lg transition cursor-pointer focus:outline-none"
+                          title="Delete Category"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Card>
         )}
 
         {/* Modal Form Drawer (Slides in from the right) */}
@@ -463,53 +602,53 @@ const CategoriesList: React.FC = () => {
               className="bg-white w-full max-w-md h-full shadow-2xl flex flex-col border-l border-slate-200/80 overflow-y-auto"
               style={{ animation: 'slideInRight 0.25s ease-out' }}
             >
-              <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50/40">
-                <h3 className="text-lg font-bold text-gray-900">
-                  {editingCategory ? 'Edit Category' : 'Add Category'}
+              <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50/40 flex-shrink-0">
+                <h3 className="text-base font-bold text-slate-900 font-display">
+                  {editingCategory ? 'Edit Collection Details' : 'Create New Collection'}
                 </h3>
                 <button
                   onClick={() => setFormOpen(false)}
-                  className="p-1.5 hover:bg-slate-100 rounded-xl transition text-slate-400 hover:text-slate-700 cursor-pointer"
+                  className="p-1.5 hover:bg-slate-100 rounded-xl transition text-slate-400 hover:text-slate-700 cursor-pointer focus:outline-none"
                 >
-                  <X size={18} />
+                  <X size={16} />
                 </button>
               </div>
 
               <form onSubmit={handleSubmit} className="p-6 flex-1 flex flex-col justify-between space-y-6">
-                <div className="space-y-5">
+                <div className="space-y-5 text-left">
                   <div>
-                    <label className="block text-xs font-bold text-slate-650 uppercase tracking-wider mb-2">Category Name</label>
+                    <label className="block text-[10px] font-extrabold text-slate-450 uppercase tracking-wider mb-2 font-display">Category Name</label>
                     <input
                       type="text"
                       value={formData.name}
                       onChange={(e) => handleNameChange(e.target.value)}
                       placeholder="e.g. Lip Balms"
                       required
-                      className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-sans text-sm"
+                      className="w-full px-4 py-2.5 border border-slate-250 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary font-sans text-xs"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-650 uppercase tracking-wider mb-2">Image Alt Text (SEO)</label>
+                    <label className="block text-[10px] font-extrabold text-slate-455 uppercase tracking-wider mb-2 font-display">Image Alt Text (SEO)</label>
                     <input
                       type="text"
                       value={formData.altText}
                       onChange={(e) => setFormData({ ...formData, altText: e.target.value })}
                       placeholder="Provide a description of the cover image..."
-                      className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-sans text-sm"
+                      className="w-full px-4 py-2.5 border border-slate-250 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary font-sans text-xs"
                     />
                   </div>
 
                   {/* Dropzone Cover Image Upload */}
                   <div>
-                    <label className="block text-xs font-bold text-slate-650 uppercase tracking-wider mb-2">Cover Image Selection</label>
-                    <div className="border-2 border-dashed border-gray-200 rounded-2xl p-4 text-center hover:border-indigo-500/50 transition-colors relative bg-gray-50/10 overflow-hidden min-h-[160px] flex flex-col items-center justify-center">
+                    <label className="block text-[10px] font-extrabold text-slate-450 uppercase tracking-wider mb-2 font-display">Cover Image Selection</label>
+                    <div className="border border-dashed border-slate-250 rounded-2xl p-4.5 text-center hover:border-primary/50 transition-colors relative bg-slate-50/30 overflow-hidden min-h-[170px] flex flex-col items-center justify-center group">
                       {formData.image ? (
                         <div className="relative w-full h-full group flex items-center justify-center">
                           <img
                             src={formData.image}
                             alt="Category Cover"
-                            className="max-h-40 max-w-full object-contain rounded-xl bg-white"
+                            className="max-h-36 max-w-full object-contain rounded-xl bg-white shadow-3xs border border-slate-100"
                           />
                           <button
                             type="button"
@@ -520,13 +659,13 @@ const CategoriesList: React.FC = () => {
                               }
                               setFormData(prev => ({ ...prev, image: '' }));
                             }}
-                            className="absolute top-2 right-2 p-1.5 rounded-full bg-red-600 hover:bg-red-700 text-white shadow-md transition-colors cursor-pointer focus:outline-none z-20"
+                            className="absolute top-2 right-2 p-1.5 rounded-full bg-rose-600 hover:bg-rose-700 text-white shadow-md transition-colors cursor-pointer focus:outline-none z-20"
                             title="Clear Image"
                           >
                             <X size={12} />
                           </button>
                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl">
-                            <label className="text-white text-xs font-semibold cursor-pointer px-4 py-2 bg-black/60 rounded-full">
+                            <label className="text-white text-[10px] font-bold cursor-pointer px-3.5 py-1.5 bg-black/60 rounded-full uppercase tracking-wider">
                               Change Image
                               <input
                                 type="file"
@@ -542,12 +681,12 @@ const CategoriesList: React.FC = () => {
                           </div>
                         </div>
                       ) : (
-                        <label className="flex flex-col items-center justify-center cursor-pointer w-full py-6">
-                          <span className="w-10 h-10 rounded-full bg-indigo-50 text-indigo-650 flex items-center justify-center mb-2">
-                            <Upload size={20} />
+                        <label className="flex flex-col items-center justify-center cursor-pointer w-full py-5">
+                          <span className="w-9 h-9 rounded-full bg-primary/5 text-primary flex items-center justify-center mb-2.5 transition-transform group-hover:scale-105">
+                            <Upload size={16} />
                           </span>
-                          <span className="text-xs font-semibold text-gray-700">Click to upload cover image</span>
-                          <span className="text-[10px] text-gray-400 mt-1">PNG, JPG, WEBP up to 5MB</span>
+                          <span className="text-xs font-semibold text-slate-700">Click to upload cover image</span>
+                          <span className="text-[10px] text-slate-400 mt-1">PNG, JPG, WEBP up to 5MB</span>
                           <input
                             type="file"
                             accept="image/*"
@@ -562,52 +701,52 @@ const CategoriesList: React.FC = () => {
                       )}
                       {uploading && (
                         <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-10">
-                          <div className="w-6 h-6 border-2 border-indigo-100 border-t-indigo-650 rounded-full animate-spin" />
+                          <div className="w-6 h-6 border-2 border-slate-100 border-t-primary rounded-full animate-spin" />
                         </div>
                       )}
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-650 uppercase tracking-wider mb-2">Sort Display Order</label>
+                    <label className="block text-[10px] font-extrabold text-slate-450 uppercase tracking-wider mb-2 font-display">Sort Display Order</label>
                     <input
                       type="number"
                       value={formData.sortOrder}
                       onChange={(e) => setFormData({ ...formData, sortOrder: parseInt(e.target.value, 10) || 0 })}
                       placeholder="e.g. 5"
                       min={0}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-sans text-sm"
+                      className="w-full px-4 py-2.5 border border-slate-250 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary font-sans text-xs"
                     />
                   </div>
 
                   <div className="flex items-center pt-2">
-                    <label className="flex items-center gap-2.5 cursor-pointer">
+                    <label className="flex items-start gap-3 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={formData.isActive}
                         onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                        className="w-5 h-5 text-primary rounded border-slate-350 focus:ring-primary cursor-pointer"
+                        className="w-4.5 h-4.5 text-primary rounded border-slate-300 focus:ring-primary cursor-pointer mt-0.5"
                       />
                       <div>
-                        <span className="text-xs font-bold text-slate-700 block">Status: Active</span>
-                        <span className="text-[10px] text-slate-400 block mt-0.5">Let users see and shop from this collection.</span>
+                        <span className="text-xs font-bold text-slate-700 block">Active Status</span>
+                        <span className="text-[10px] text-slate-400 block mt-0.5 leading-normal">Allow customers to browse and buy products in this category.</span>
                       </div>
                     </label>
                   </div>
                 </div>
 
-                <div className="flex gap-3 pt-6 border-t border-slate-100 mt-auto">
+                <div className="flex gap-3 pt-5 border-t border-slate-100 mt-auto flex-shrink-0">
                   <button
                     type="button"
                     onClick={() => setFormOpen(false)}
-                    className="flex-1 py-3 px-4 bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold text-xs rounded-2xl border border-gray-200 transition cursor-pointer"
+                    className="flex-1 py-2.5 px-4 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 transition cursor-pointer focus:outline-none"
                   >
                     Cancel
                   </button>
                   <Button
                     type="submit"
                     icon={Save}
-                    className="flex-1 justify-center py-3 text-xs font-bold shadow-lg shadow-indigo-500/10"
+                    className="flex-1 justify-center py-2.5 text-xs font-bold shadow-xs shadow-primary/5 cursor-pointer"
                   >
                     {editingCategory ? 'Save Changes' : 'Create Category'}
                   </Button>
@@ -617,17 +756,17 @@ const CategoriesList: React.FC = () => {
           </div>
         )}
 
-        {/* Delete Confirmation Modal (Perfect Layout with Standard Tailwind Red Button) */}
+        {/* Delete Confirmation Modal */}
         {deleteModalOpen && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-55 p-4">
             <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl text-center space-y-4 border border-gray-150 animate-scale-in">
-              <div className="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto shadow-inner">
+              <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto shadow-inner">
                 <AlertTriangle size={24} />
               </div>
 
               <div className="space-y-1">
                 <h3 className="text-lg font-bold text-gray-900">Delete Category</h3>
-                <p className="text-xs text-gray-500 leading-relaxed">
+                <p className="text-xs text-gray-500 leading-relaxed font-sans">
                   Are you sure you want to delete this category? Products linked to it won't be deleted, but they will lose their category tag.
                 </p>
               </div>
@@ -646,7 +785,7 @@ const CategoriesList: React.FC = () => {
                 <button
                   type="button"
                   onClick={confirmDelete}
-                  className="flex-1 py-2.5 px-4 bg-red-650 bg-red-600 hover:bg-red-750 hover:bg-red-750 hover:bg-red-700 text-white font-semibold text-xs rounded-xl transition cursor-pointer focus:outline-none"
+                  className="flex-1 py-2.5 px-4 bg-rose-650 hover:bg-rose-700 text-white font-semibold text-xs rounded-xl transition cursor-pointer focus:outline-none"
                 >
                   Delete
                 </button>

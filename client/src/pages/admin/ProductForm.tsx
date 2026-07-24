@@ -660,8 +660,8 @@ const ProductForm: React.FC = () => {
                       onChange={(val) => formik.setFieldValue('status', val)}
                       error={Boolean(formik.touched.status && formik.errors.status)}
                       options={[
-                        { value: 'active', label: 'Active' },
-                        { value: 'inactive', label: 'Inactive' }
+                        { value: 'active', label: 'Visible (Active)' },
+                        { value: 'inactive', label: 'Hidden (Inactive)' }
                       ]}
                     />
                     {formik.touched.status && formik.errors.status && (

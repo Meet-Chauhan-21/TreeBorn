@@ -58,13 +58,18 @@ export const Newsletter: React.FC = () => {
         }
 
         // Format a professional WhatsApp message
+        const emojiHerb = '\uD83C\uDF3F';
+        const emojiUser = '\uD83D\uDC64';
+        const emojiMail = '\uD83D\uDCE7';
+        const emojiBubble = '\uD83D\uDCAC';
+
         let textMsg = `━━━━━━━━━━━━━━━━━━━━━\n`;
-        textMsg += `🌿 *TREEBORN - CONTACT INQUIRY* 🌿\n`;
+        textMsg += `${emojiHerb} *TREEBORN - CONTACT INQUIRY* ${emojiHerb}\n`;
         textMsg += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
         textMsg += `Hello TreeBorn Team, I would like to get in touch with you regarding your products/formulations. Here are my details:\n\n`;
-        textMsg += `👤 *Name:* ${values.name}\n`;
-        textMsg += `📧 *Email:* ${values.email}\n\n`;
-        textMsg += `💬 *Message:*\n"${values.message}"\n\n`;
+        textMsg += `${emojiUser} *Name:* ${values.name}\n`;
+        textMsg += `${emojiMail} *Email:* ${values.email}\n\n`;
+        textMsg += `${emojiBubble} *Message:*\n"${values.message}"\n\n`;
         textMsg += `━━━━━━━━━━━━━━━━━━━━━\n`;
         textMsg += `Please review and get back. Thank you!`;
 
@@ -84,7 +89,10 @@ export const Newsletter: React.FC = () => {
         console.error('Error submitting contact form to backend:', error);
         // Fallback: still let them WhatsApp if network fails
         toast.info('Prepared message for WhatsApp.');
-        const textMsg = `👤 Name: ${values.name}\n📧 Email: ${values.email}\n💬 Message: ${values.message}`;
+        const emojiUser = '\uD83D\uDC64';
+        const emojiMail = '\uD83D\uDCE7';
+        const emojiBubble = '\uD83D\uDCAC';
+        const textMsg = `${emojiUser} Name: ${values.name}\n${emojiMail} Email: ${values.email}\n${emojiBubble} Message: ${values.message}`;
         window.open(`https://wa.me/${formatWhatsAppLink(settings.whatsappNumber)}?text=${encodeURIComponent(textMsg)}`, '_blank');
         resetForm();
       }
