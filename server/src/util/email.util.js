@@ -265,7 +265,7 @@ Biological Cellular Restoration Apothecary.
   const transporter = createTransporter();
 
   if (transporter) {
-    const fromEmail = process.env.EMAIL_FROM || '"TreeBorn Skincare" <no-reply@treeborn.com>';
+    const fromEmail =process.env.EMAIL_FROM || `"TreeBorn Skincare" <${process.env.SMTP_USER}>`;
     await transporter.sendMail({
       from: fromEmail,
       to: email,
@@ -685,7 +685,8 @@ Biological Cellular Restoration Apothecary.
 
   const transporter = createTransporter();
   if (transporter) {
-    const fromEmail = process.env.EMAIL_FROM || '"TreeBorn Skincare" <no-reply@treeborn.com>';
+    const fromEmail =
+  process.env.EMAIL_FROM || `"TreeBorn Skincare" <${process.env.SMTP_USER}>`;
     await transporter.sendMail({
       from: fromEmail,
       to: userEmail,
@@ -984,7 +985,8 @@ Admin Notification System
 
   const transporter = createTransporter();
   if (transporter) {
-    const fromEmail = process.env.EMAIL_FROM || '"TreeBorn Admin Alert" <no-reply@treeborn.com>';
+    const fromEmail =
+  process.env.EMAIL_FROM || `"TreeBorn Skincare" <${process.env.SMTP_USER}>`;
     await transporter.sendMail({
       from: fromEmail,
       to: adminEmail,
