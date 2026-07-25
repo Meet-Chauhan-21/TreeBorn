@@ -139,7 +139,7 @@ export const SocialLoginButtons: React.FC<SocialLoginButtonsProps> = ({ redirect
       return;
     }
     const redirectUri = encodeURIComponent(`${window.location.origin}/${redirectPage}`);
-    window.location.href = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${fbAppId}&redirect_uri=${redirectUri}&scope=public_profile`;
+    window.location.href = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${fbAppId}&redirect_uri=${redirectUri}&scope=public_profile,email`;
   };
 
   return (

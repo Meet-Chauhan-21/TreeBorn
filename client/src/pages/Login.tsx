@@ -174,14 +174,16 @@ export const Login: React.FC = () => {
             {/* Right Column - Form Sheet */}
             <div className="col-span-1 md:col-span-7 p-6 sm:p-10 lg:p-12 flex flex-col justify-center bg-white">
               <div className="max-w-md w-full mx-auto space-y-6">
-                <div>
-                  <h1 className="text-2xl font-display font-bold text-dark tracking-tight">
-                    Welcome to TREEBORN
-                  </h1>
-                  <p className="text-xs text-gray-500 font-sans mt-1">
-                    Please enter your credentials or sign in with Google to manage your botanicals order.
-                  </p>
-                </div>
+                {!fbEmailSent && !showFbEmailForm && (
+                  <div>
+                    <h1 className="text-2xl font-display font-bold text-dark tracking-tight">
+                      Welcome to TREEBORN
+                    </h1>
+                    <p className="text-xs text-gray-500 font-sans mt-1">
+                      Please enter your credentials or sign in with Google to manage your botanicals order.
+                    </p>
+                  </div>
+                )}
 
                 {infoMessage && (
                   <div className="p-4 bg-primary/5 border border-primary/20 rounded-2xl space-y-3">

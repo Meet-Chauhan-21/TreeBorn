@@ -487,6 +487,31 @@ const facebookSignIn = async (req, res) => {
 
     if (finalEmail) {
       user = await User.findOne({ $or: [{ facebookId }, { email: finalEmail }] });
+      
+      // Auto-register user if email is retrieved from Facebook and user doesn't exist
+      if (!user) {
+        user = new User({
+          name,
+          email: finalEmail,
+          facebookId,
+          provider: 'facebook',
+          role: 'user',
+          isVerified: true
+        });
+        await user.save();
+
+        try {
+          const Notification = require('../../models/notification.model');
+          await Notification.create({
+            type: 'new_user',
+            title: 'New User Registered',
+            message: `${user.name} (${user.email}) registered a new account (via Facebook).`,
+            link: `/admin/users/${user._id}`
+          });
+        } catch (notificationError) {
+          console.error('Failed to create Facebook registration notification:', notificationError);
+        }
+      }
     } else {
       user = await User.findOne({ facebookId });
     }
