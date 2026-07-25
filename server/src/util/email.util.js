@@ -23,7 +23,7 @@ const createTransporter = () => {
 };
 
 const sendVerificationEmail = async (email, name, token) => {
-    
+
   const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
   const verificationUrl = `${clientUrl}/verify-email?token=${token}`;
 
@@ -291,8 +291,8 @@ try {
   }
 } catch (error) {
       console.error("❌ SEND MAIL ERROR");
-    console.error(err);
-    throw err;
+    console.error(error);
+    throw error;
 }
 
   return true;
