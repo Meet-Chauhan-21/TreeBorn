@@ -23,6 +23,7 @@ const createTransporter = () => {
 };
 
 const sendVerificationEmail = async (email, name, token) => {
+    
   const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
   const verificationUrl = `${clientUrl}/verify-email?token=${token}`;
 
@@ -262,16 +263,23 @@ Biological Cellular Restoration Apothecary.
 </html>
 `;
 
+console.log("📧 sendVerificationEmail called");
+  console.log("Recipient:", email);
+
   const transporter = createTransporter();
 
-  if (transporter) {
+    console.log("Transporter exists:", !!transporter);
+
+try {
+     if (transporter) {
     const fromEmail =process.env.EMAIL_FROM || `"TreeBorn Skincare" <${process.env.SMTP_USER}>`;
-    await transporter.sendMail({
+    const email_info = await transporter.sendMail({
       from: fromEmail,
       to: email,
       subject: 'Verify Your Email Address — TREEBORN',
       html: htmlContent,
     });
+     console.log("✅ Email Sent:", email_info);
   } else {
     // Development fallback logs
     console.log('\n==================================================');
@@ -281,6 +289,11 @@ Biological Cellular Restoration Apothecary.
     console.log(`🔗 Verification Link: ${verificationUrl}`);
     console.log('==================================================\n');
   }
+} catch (error) {
+      console.error("❌ SEND MAIL ERROR");
+    console.error(err);
+    throw err;
+}
 
   return true;
 };
