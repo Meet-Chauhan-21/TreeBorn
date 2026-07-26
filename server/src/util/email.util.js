@@ -1,9 +1,12 @@
 const nodemailer = require('nodemailer');
-const fs = require('fs');
-const path = require('path');
+const {
+  getVerificationTemplate,
+  getOrderConfirmationTemplate,
+  getAdminNewOrderTemplate
+} = require('./emailTemplates');
 
 const createTransporter = () => {
-  // If SMTP service/configurations are provided, use them
+  // If SMTP service/configurations are provided, use them (such as Brevo)
   if (process.env.SMTP_SERVICE) {
     return nodemailer.createTransport({
       service: process.env.SMTP_SERVICE,
@@ -28,7 +31,7 @@ const createTransporter = () => {
     });
   }
 
-  // Generic SMTP transport configuration
+  // Generic SMTP transport configuration (e.g. for Brevo SMTP host smtp-relay.brevo.com)
   if (
     process.env.SMTP_HOST &&
     process.env.SMTP_USER &&
@@ -55,21 +58,9 @@ const createTransporter = () => {
 const sendVerificationEmail = async (email, name, token) => {
   const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
   const verificationUrl = `${clientUrl}/verify-email?token=${token}`;
+  const currentYear = new Date().getFullYear().toString();
 
-  let htmlContent = '';
-  try {
-    const templatePath = path.join(__dirname, '../templates/verification.html');
-    htmlContent = fs.readFileSync(templatePath, 'utf8');
-    
-    // Replace placeholders
-    htmlContent = htmlContent
-      .replace(/{{name}}/g, name)
-      .replace(/{{verificationUrl}}/g, verificationUrl)
-      .replace(/{{currentYear}}/g, new Date().getFullYear().toString());
-  } catch (error) {
-    console.error("❌ Error reading verification email template:", error);
-    throw error;
-  }
+  const htmlContent = getVerificationTemplate(name, verificationUrl, currentYear);
 
   console.log("📧 sendVerificationEmail called");
   console.log("Recipient:", email);
@@ -130,34 +121,17 @@ const sendOrderConfirmationEmail = async (order, userEmail) => {
   const orderDate = order.payment?.paidAt
     ? new Date(order.payment.paidAt).toLocaleString()
     : new Date().toLocaleString();
+  const currentYear = new Date().getFullYear().toString();
 
-  let htmlContent = '';
-  try {
-    const templatePath = path.join(__dirname, '../templates/order-confirmation.html');
-    htmlContent = fs.readFileSync(templatePath, 'utf8');
-
-    htmlContent = htmlContent
-      .replace(/{{name}}/g, order.shippingAddress?.name || '')
-      .replace(/{{orderNumber}}/g, order.orderNumber || '')
-      .replace(/{{paymentMethod}}/g, paymentMethod)
-      .replace(/{{paymentStatus}}/g, paymentStatus)
-      .replace(/{{transactionId}}/g, transactionId)
-      .replace(/{{orderDate}}/g, orderDate)
-      .replace(/{{itemsHtml}}/g, itemsHtml)
-      .replace(/{{subtotal}}/g, (order.totals?.subtotal || 0).toFixed(2))
-      .replace(/{{shipping}}/g, (order.totals?.shipping || 0).toFixed(2))
-      .replace(/{{tax}}/g, (order.totals?.tax || 0).toFixed(2))
-      .replace(/{{total}}/g, (order.totals?.total || 0).toFixed(2))
-      .replace(/{{shippingName}}/g, order.shippingAddress?.name || '')
-      .replace(/{{shippingStreet}}/g, order.shippingAddress?.street || '')
-      .replace(/{{shippingDistrictState}}/g, `${order.shippingAddress?.district || ''}, ${order.shippingAddress?.state || ''}`)
-      .replace(/{{shippingCountryZip}}/g, `${order.shippingAddress?.country || ''} - ${order.shippingAddress?.zip || ''}`)
-      .replace(/{{shippingPhone}}/g, order.shippingAddress?.phone || '')
-      .replace(/{{currentYear}}/g, new Date().getFullYear().toString());
-  } catch (error) {
-    console.error("❌ Error reading order confirmation template:", error);
-    throw error;
-  }
+  const htmlContent = getOrderConfirmationTemplate(
+    order,
+    itemsHtml,
+    paymentMethod,
+    paymentStatus,
+    transactionId,
+    orderDate,
+    currentYear
+  );
 
   const transporter = createTransporter();
   try {
@@ -205,28 +179,17 @@ const sendAdminNewOrderEmail = async (order, adminEmail) => {
   const paymentMethod = paymentMethodMap[order.payment?.method] || order.payment?.method || 'N/A';
   const paymentStatus = (order.payment?.status || 'N/A').toUpperCase();
   const transactionId = order.payment?.transactionId || order.payment?.razorpayPaymentId || 'N/A';
+  const currentYear = new Date().getFullYear().toString();
 
-  let htmlContent = '';
-  try {
-    const templatePath = path.join(__dirname, '../templates/admin-new-order.html');
-    htmlContent = fs.readFileSync(templatePath, 'utf8');
-
-    htmlContent = htmlContent
-      .replace(/{{total}}/g, (order.totals?.total || 0).toFixed(2))
-      .replace(/{{orderNumber}}/g, order.orderNumber || '')
-      .replace(/{{shippingName}}/g, order.shippingAddress?.name || 'N/A')
-      .replace(/{{shippingPhone}}/g, order.shippingAddress?.phone || 'N/A')
-      .replace(/{{paymentMethod}}/g, paymentMethod)
-      .replace(/{{paymentStatus}}/g, paymentStatus)
-      .replace(/{{transactionId}}/g, transactionId)
-      .replace(/{{paidDate}}/g, paidDate)
-      .replace(/{{itemsCount}}/g, (order.items || []).length.toString())
-      .replace(/{{adminOrderUrl}}/g, adminOrderUrl)
-      .replace(/{{currentYear}}/g, new Date().getFullYear().toString());
-  } catch (error) {
-    console.error("❌ Error reading admin new order template:", error);
-    throw error;
-  }
+  const htmlContent = getAdminNewOrderTemplate(
+    order,
+    paidDate,
+    adminOrderUrl,
+    paymentMethod,
+    paymentStatus,
+    transactionId,
+    currentYear
+  );
 
   const transporter = createTransporter();
   try {

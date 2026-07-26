@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useGoogleLogin } from '@react-oauth/google';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
@@ -58,34 +58,61 @@ interface SocialLoginButtonsProps {
   redirectPage?: 'login' | 'register';
 }
 
-function LiveGoogleButton() {
+interface GoogleButtonProps {
+  disabled: boolean;
+  onStartLoading: () => void;
+  onEndLoading: () => void;
+  isLoading: boolean;
+}
+
+function LiveGoogleButton({ disabled, onStartLoading, onEndLoading, isLoading }: GoogleButtonProps) {
   const { googleLogin } = useAuth();
 
   const handleGoogleClick = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       if (tokenResponse.access_token) {
-        await googleLogin(tokenResponse.access_token, true);
+        try {
+          await googleLogin(tokenResponse.access_token, true);
+        } finally {
+          onEndLoading();
+        }
+      } else {
+        onEndLoading();
       }
     },
     onError: () => {
       toast.error('Google Sign-In failed.');
+      onEndLoading();
     },
   });
+
+  const handleClick = () => {
+    onStartLoading();
+    handleGoogleClick();
+  };
 
   return (
     <button
       type="button"
-      onClick={() => handleGoogleClick()}
-      className="w-full h-[44px] px-3 bg-white hover:bg-gray-50 active:scale-[0.98] text-gray-700 rounded-xl text-xs font-sans font-medium flex items-center justify-center gap-2 shadow-2xs hover:shadow-xs transition-all cursor-pointer border border-border-gray/80 hover:border-gray-350"
+      disabled={disabled}
+      onClick={handleClick}
+      className={`w-full h-[44px] px-3 bg-white hover:bg-gray-50 active:scale-[0.98] text-gray-700 rounded-xl text-xs font-sans font-medium flex items-center justify-center gap-2 shadow-2xs hover:shadow-xs transition-all border border-border-gray/80 hover:border-gray-350 ${
+        disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
+      }`}
     >
-      <GoogleIcon />
-      <span className="whitespace-nowrap">Google</span>
+      {isLoading ? (
+        <span className="w-4 h-4 border-2 border-gray-300 border-t-gray-700 rounded-full animate-spin" />
+      ) : (
+        <GoogleIcon />
+      )}
+      <span className="whitespace-nowrap">{isLoading ? 'Signing in...' : 'Google'}</span>
     </button>
   );
 }
 
-function FallbackGoogleButton() {
+function FallbackGoogleButton({ disabled, onStartLoading, onEndLoading, isLoading }: GoogleButtonProps) {
   const openMockPopup = () => {
+    onStartLoading();
     const width = 450;
     const height = 580;
     const left = window.screenX + (window.outerWidth - width) / 2;
@@ -97,23 +124,33 @@ function FallbackGoogleButton() {
     );
     if (!popup) {
       toast.info('Google Client ID is not set in .env. Please configure VITE_GOOGLE_CLIENT_ID.');
+      onEndLoading();
     }
   };
 
   return (
     <button
       type="button"
+      disabled={disabled}
       onClick={openMockPopup}
-      className="w-full h-[44px] px-3 bg-white hover:bg-gray-50 active:scale-[0.98] text-gray-700 rounded-xl text-xs font-sans font-medium flex items-center justify-center gap-2 shadow-2xs hover:shadow-xs transition-all cursor-pointer border border-border-gray/80 hover:border-gray-350"
+      className={`w-full h-[44px] px-3 bg-white hover:bg-gray-50 active:scale-[0.98] text-gray-700 rounded-xl text-xs font-sans font-medium flex items-center justify-center gap-2 shadow-2xs hover:shadow-xs transition-all border border-border-gray/80 hover:border-gray-350 ${
+        disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
+      }`}
     >
-      <GoogleIcon />
-      <span className="whitespace-nowrap">Google</span>
+      {isLoading ? (
+        <span className="w-4 h-4 border-2 border-gray-300 border-t-gray-700 rounded-full animate-spin" />
+      ) : (
+        <GoogleIcon />
+      )}
+      <span className="whitespace-nowrap">{isLoading ? 'Signing in...' : 'Google'}</span>
     </button>
   );
 }
 
 export const SocialLoginButtons: React.FC<SocialLoginButtonsProps> = ({ redirectPage = 'login' }) => {
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+  const [socialLoading, setSocialLoading] = useState(false);
+  const [activePlatform, setActivePlatform] = useState<'google' | 'facebook' | null>(null);
 
   // Listen for mock popup postMessage if used
   useEffect(() => {
@@ -126,6 +163,8 @@ export const SocialLoginButtons: React.FC<SocialLoginButtonsProps> = ({ redirect
           window.location.href = '/profile';
         }
       }
+      setSocialLoading(false);
+      setActivePlatform(null);
     };
 
     window.addEventListener('message', handleMessage);
@@ -138,21 +177,61 @@ export const SocialLoginButtons: React.FC<SocialLoginButtonsProps> = ({ redirect
       toast.info('Facebook App ID not configured in .env yet. Set VITE_FACEBOOK_APP_ID to activate live Facebook authentication.');
       return;
     }
+    
+    setSocialLoading(true);
+    setActivePlatform('facebook');
+
     const redirectUri = encodeURIComponent(`${window.location.origin}/${redirectPage}`);
-    window.location.href = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${fbAppId}&redirect_uri=${redirectUri}&scope=public_profile,email`;
+    // Introduce a short delay to render the button loading state visually before redirection freezes the DOM
+    setTimeout(() => {
+      window.location.href = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${fbAppId}&redirect_uri=${redirectUri}&scope=public_profile,email`;
+    }, 350);
+  };
+
+  const handleStartGoogleLoading = () => {
+    setSocialLoading(true);
+    setActivePlatform('google');
+  };
+
+  const handleEndGoogleLoading = () => {
+    setSocialLoading(false);
+    setActivePlatform(null);
   };
 
   return (
     <div className="grid grid-cols-2 gap-3 items-center w-full">
-      {googleClientId ? <LiveGoogleButton /> : <FallbackGoogleButton />}
+      {googleClientId ? (
+        <LiveGoogleButton
+          disabled={socialLoading}
+          onStartLoading={handleStartGoogleLoading}
+          onEndLoading={handleEndGoogleLoading}
+          isLoading={socialLoading && activePlatform === 'google'}
+        />
+      ) : (
+        <FallbackGoogleButton
+          disabled={socialLoading}
+          onStartLoading={handleStartGoogleLoading}
+          onEndLoading={handleEndGoogleLoading}
+          isLoading={socialLoading && activePlatform === 'google'}
+        />
+      )}
 
       <button
         type="button"
+        disabled={socialLoading}
         onClick={handleFacebookClick}
-        className="w-full h-[44px] px-3 bg-white hover:bg-gray-50 active:scale-[0.98] text-gray-700 rounded-xl text-xs font-sans font-medium flex items-center justify-center gap-2 shadow-2xs hover:shadow-xs transition-all cursor-pointer border border-border-gray/80 hover:border-gray-350"
+        className={`w-full h-[44px] px-3 bg-white hover:bg-gray-50 active:scale-[0.98] text-gray-700 rounded-xl text-xs font-sans font-medium flex items-center justify-center gap-2 shadow-2xs hover:shadow-xs transition-all border border-border-gray/80 hover:border-gray-350 ${
+          socialLoading ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
+        }`}
       >
-        <FacebookIcon />
-        <span className="whitespace-nowrap">Facebook</span>
+        {socialLoading && activePlatform === 'facebook' ? (
+          <span className="w-4 h-4 border-2 border-gray-300 border-t-gray-700 rounded-full animate-spin" />
+        ) : (
+          <FacebookIcon />
+        )}
+        <span className="whitespace-nowrap">
+          {socialLoading && activePlatform === 'facebook' ? 'Redirecting...' : 'Facebook'}
+        </span>
       </button>
     </div>
   );
