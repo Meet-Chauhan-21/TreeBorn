@@ -1,4 +1,11 @@
 const nodemailer = require('nodemailer');
+const dns = require('dns');
+
+// Force DNS resolver to prefer IPv4 over IPv6 to resolve ENETUNREACH in IPv4-only cloud environments like Render
+if (dns.setDefaultResultOrder) {
+  dns.setDefaultResultOrder('ipv4first');
+}
+
 const {
   getVerificationTemplate,
   getOrderConfirmationTemplate,
