@@ -1,16 +1,15 @@
 const nodemailer = require('nodemailer');
 const dns = require('dns');
-
-// Force DNS resolver to prefer IPv4 over IPv6 to resolve ENETUNREACH in IPv4-only cloud environments like Render
-if (dns.setDefaultResultOrder) {
-  dns.setDefaultResultOrder('ipv4first');
-}
-
 const {
   getVerificationTemplate,
   getOrderConfirmationTemplate,
   getAdminNewOrderTemplate
 } = require('./emailTemplates');
+
+// Force DNS resolver to prefer IPv4 over IPv6 to resolve ENETUNREACH in IPv4-only cloud environments like Render
+if (dns.setDefaultResultOrder) {
+  dns.setDefaultResultOrder('ipv4first');
+}
 
 const createTransporter = () => {
   // If SMTP service/configurations are provided, use them (such as Brevo)
@@ -68,6 +67,66 @@ const createTransporter = () => {
   return null;
 };
 
+/**
+ * Clean helper function to send emails.
+ * Supports both Brevo REST API (HTTPS/443, required for Render Free Tier) and standard Nodemailer (SMTP).
+ */
+const sendEmail = async ({ to, subject, html }) => {
+  // Option 1: Brevo REST API (highly recommended for Render Free Tier to bypass SMTP port blocks)
+  if (process.env.BREVO_API_KEY) {
+    console.log("📨 Sending email via Brevo REST API (HTTPS)...");
+    const fromEmail = process.env.EMAIL_FROM || 'dabhisanjay901@gmail.com';
+    
+    // Parse sender name and email from "Name <email>" format
+    let senderName = 'TreeBorn Skincare';
+    let senderEmail = 'dabhisanjay901@gmail.com';
+    const match = fromEmail.match(/^(?:"?([^"]*)"?\s)?(?:<(.+)>)$/);
+    if (match) {
+      senderName = match[1] || 'TreeBorn Skincare';
+      senderEmail = match[2];
+    }
+
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'api-key': process.env.BREVO_API_KEY,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        sender: { name: senderName, email: senderEmail },
+        to: [{ email: to }],
+        subject: subject,
+        htmlContent: html
+      })
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Brevo API sending failed');
+    }
+    console.log("✅ Email sent via Brevo REST API successfully:", data);
+    return true;
+  }
+
+  // Option 2: Standard Nodemailer (SMTP/Gmail)
+  const transporter = createTransporter();
+  if (transporter) {
+    const fromEmail = process.env.EMAIL_FROM || `"TreeBorn Skincare" <${process.env.SMTP_USER}>`;
+    const email_info = await transporter.sendMail({
+      from: fromEmail,
+      to: to,
+      subject: subject,
+      html: html,
+    });
+    console.log("✅ Email sent via SMTP successfully:", email_info);
+    return true;
+  }
+
+  // No sender configured, fallback to mock logs in development
+  return false;
+};
+
 const sendVerificationEmail = async (email, name, token) => {
   const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
   const verificationUrl = `${clientUrl}/verify-email?token=${token}`;
@@ -78,20 +137,9 @@ const sendVerificationEmail = async (email, name, token) => {
   console.log("📧 sendVerificationEmail called");
   console.log("Recipient:", email);
 
-  const transporter = createTransporter();
-  console.log("Transporter exists:", !!transporter);
-
   try {
-    if (transporter) {
-      const fromEmail = process.env.EMAIL_FROM || `"TreeBorn Skincare" <${process.env.SMTP_USER}>`;
-      const email_info = await transporter.sendMail({
-        from: fromEmail,
-        to: email,
-        subject: 'Verify Your Email Address — TREEBORN',
-        html: htmlContent,
-      });
-      console.log("✅ Email Sent:", email_info);
-    } else {
+    const sent = await sendEmail({ to: email, subject: 'Verify Your Email Address — TREEBORN', html: htmlContent });
+    if (!sent) {
       // Development fallback logs
       console.log('\n==================================================');
       console.log('🌿 [MOCK EMAIL] Verification Email Sent');
@@ -101,7 +149,7 @@ const sendVerificationEmail = async (email, name, token) => {
       console.log('==================================================\n');
     }
   } catch (error) {
-    console.error("❌ SEND MAIL ERROR");
+    console.error("❌ SEND VERIFICATION MAIL ERROR");
     console.error(error);
     throw error;
   }
@@ -146,18 +194,9 @@ const sendOrderConfirmationEmail = async (order, userEmail) => {
     currentYear
   );
 
-  const transporter = createTransporter();
   try {
-    if (transporter) {
-      const fromEmail = process.env.EMAIL_FROM || `"TreeBorn Skincare" <${process.env.SMTP_USER}>`;
-      await transporter.sendMail({
-        from: fromEmail,
-        to: userEmail,
-        subject: `Order Confirmation #${order.orderNumber} — TREEBORN`,
-        html: htmlContent,
-      });
-      console.log(`✅ Order confirmation email sent to ${userEmail}`);
-    } else {
+    const sent = await sendEmail({ to: userEmail, subject: `Order Confirmation #${order.orderNumber} — TREEBORN`, html: htmlContent });
+    if (!sent) {
       console.log('\n==================================================');
       console.log('🌿 [MOCK EMAIL] Customer Order Confirmation Email');
       console.log(`📧 Recipient: ${userEmail}`);
@@ -167,7 +206,7 @@ const sendOrderConfirmationEmail = async (order, userEmail) => {
       console.log('==================================================\n');
     }
   } catch (error) {
-    console.error("❌ SEND ORDER EMAIL ERROR");
+    console.error("❌ SEND ORDER CONFIRMATION EMAIL ERROR");
     console.error(error);
     throw error;
   }
@@ -204,18 +243,9 @@ const sendAdminNewOrderEmail = async (order, adminEmail) => {
     currentYear
   );
 
-  const transporter = createTransporter();
   try {
-    if (transporter) {
-      const fromEmail = process.env.EMAIL_FROM || `"TreeBorn Skincare" <${process.env.SMTP_USER}>`;
-      await transporter.sendMail({
-        from: fromEmail,
-        to: adminEmail,
-        subject: `🚨 New Order #${order.orderNumber} Placed — ₹${(order.totals?.total || 0).toFixed(2)}`,
-        html: htmlContent,
-      });
-      console.log(`✅ Admin new order notification email sent to ${adminEmail}`);
-    } else {
+    const sent = await sendEmail({ to: adminEmail, subject: `🚨 New Order #${order.orderNumber} Placed — ₹${(order.totals?.total || 0).toFixed(2)}`, html: htmlContent });
+    if (!sent) {
       console.log('\n==================================================');
       console.log('🚨 [MOCK EMAIL] Admin New Order Notification');
       console.log(`📧 Admin Email: ${adminEmail}`);
@@ -224,7 +254,7 @@ const sendAdminNewOrderEmail = async (order, adminEmail) => {
       console.log('==================================================\n');
     }
   } catch (error) {
-    console.error("❌ SEND ADMIN ORDER EMAIL ERROR");
+    console.error("❌ SEND ADMIN NEW ORDER EMAIL ERROR");
     console.error(error);
     throw error;
   }
