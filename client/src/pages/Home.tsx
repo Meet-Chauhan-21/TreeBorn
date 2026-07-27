@@ -4,6 +4,7 @@ import Navbar from '../components/layout/Navbar';
 import Hero from '../components/home/Hero';
 import PromoBanner from '../components/home/PromoBanner';
 import Categories from '../components/home/Categories';
+import BannerCarousel from '../components/home/BannerCarousel';
 import FeaturedProducts from '../components/home/FeaturedProducts';
 import BestSeller from '../components/home/BestSeller';
 import WhyChooseUs from '../components/home/WhyChooseUs';
@@ -26,6 +27,7 @@ export const Home: React.FC = () => {
       <main>
         <Hero />
         <PromoBanner />
+        <BannerCarousel />
         <Categories />
         <FeaturedProducts />
         <BestSeller />

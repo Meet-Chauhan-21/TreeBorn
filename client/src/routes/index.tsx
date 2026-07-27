@@ -24,6 +24,7 @@ import CategoriesList from '../pages/admin/CategoriesList';
 import CategoryDetail from '../pages/admin/CategoryDetail';
 import HomepageImages from '../pages/admin/HomepageImages';
 import VerifyEmail from '../pages/VerifyEmail';
+import ApiMetrics from '../pages/admin/ApiMetrics';
 
 export const router = createBrowserRouter([
   {
@@ -114,6 +115,10 @@ export const router = createBrowserRouter([
   {
     path: '/admin/settings',
     element: <Settings />,
+  },
+  {
+    path: '/admin/api-metrics',
+    element: <ApiMetrics />,
   },
   {
     path: '/admin/categories',

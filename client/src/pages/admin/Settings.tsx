@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Save, Palette, CreditCard, Upload, X } from 'lucide-react';
+import { Save, Palette, CreditCard, Upload, X, Percent } from 'lucide-react';
 import { toast } from 'sonner';
 import AdminLayout from '../../components/admin/AdminLayout';
 import Card from '../../components/admin/Card';
@@ -33,7 +33,14 @@ const Settings: React.FC = () => {
     shopName: '',
     address: '',
     gstNumber: '',
-    logo: ''
+    logo: '',
+    enableTax: false,
+    taxPercentage: 8,
+    taxName: 'GST',
+    enableDeliveryCharge: false,
+    deliveryCharge: 40,
+    enableFreeDeliveryThreshold: false,
+    freeDeliveryThreshold: 500,
   });
 
   const presetColors = [
@@ -87,7 +94,14 @@ const Settings: React.FC = () => {
               shopName: data.settings.shopName || '',
               address: data.settings.address || '',
               gstNumber: data.settings.gstNumber || '',
-              logo: data.settings.logo || ''
+              logo: data.settings.logo || '',
+              enableTax: data.settings.enableTax || false,
+              taxPercentage: data.settings.taxPercentage ?? 8,
+              taxName: data.settings.taxName || 'GST',
+              enableDeliveryCharge: data.settings.enableDeliveryCharge || false,
+              deliveryCharge: data.settings.deliveryCharge ?? 40,
+              enableFreeDeliveryThreshold: data.settings.enableFreeDeliveryThreshold || false,
+              freeDeliveryThreshold: data.settings.freeDeliveryThreshold ?? 500,
             });
           }
         }
@@ -406,44 +420,145 @@ const Settings: React.FC = () => {
             </Card>
           </div>
  
-          <Card title="Active Payment Methods & Gateways" icon={CreditCard}>
-            <div className="space-y-4">
-              <label className="flex items-center gap-3 cursor-pointer p-3.5 border border-gray-150 rounded-2xl hover:bg-gray-50/20 transition-colors">
-                <input
-                  type="checkbox"
-                  checked={formData.enableRazorpay}
-                  onChange={(e) => setFormData({ ...formData, enableRazorpay: e.target.checked })}
-                  className="w-5 h-5 text-primary rounded focus:ring-primary cursor-pointer"
-                />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start mt-6">
+            <Card title="Active Payment Methods & Gateways" icon={CreditCard}>
+              <div className="space-y-4">
+                <label className="flex items-center gap-3 cursor-pointer p-3.5 border border-gray-150 rounded-2xl hover:bg-gray-50/20 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={formData.enableRazorpay}
+                    onChange={(e) => setFormData({ ...formData, enableRazorpay: e.target.checked })}
+                    className="w-5 h-5 text-primary rounded focus:ring-primary cursor-pointer"
+                  />
+                  <div>
+                    <span className="text-sm font-semibold text-gray-800 block">Razorpay Gateway (UPI, Cards, Netbanking)</span>
+                    <span className="text-xs text-gray-500 block mt-0.5">Enable official Razorpay online payment checkout flow.</span>
+                  </div>
+                </label>
+   
+                {formData.enableRazorpay && (
+                  <div className="p-3.5 bg-indigo-50/60 border border-indigo-150 rounded-2xl text-left flex items-start gap-2.5">
+                    <div className="w-2 h-2 rounded-full bg-indigo-600 mt-1.5 flex-shrink-0 animate-pulse" />
+                    <p className="text-xs text-indigo-900 font-sans leading-relaxed">
+                      <strong>Environment Security Enforced:</strong> Razorpay Credentials (Key ID & Secret Key) are safely loaded strictly from <code className="text-indigo-700 bg-white px-1.5 py-0.5 rounded border border-indigo-200 font-mono text-[11px]">server/.env</code> and <code className="text-indigo-700 bg-white px-1.5 py-0.5 rounded border border-indigo-200 font-mono text-[11px]">client/.env</code> files.
+                    </p>
+                  </div>
+                )}
+   
+                <label className="flex items-center gap-3 cursor-pointer p-3.5 border border-gray-150 rounded-2xl hover:bg-gray-50/20 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={formData.enableCOD}
+                    onChange={(e) => setFormData({ ...formData, enableCOD: e.target.checked })}
+                    className="w-5 h-5 text-primary rounded focus:ring-primary cursor-pointer"
+                  />
+                  <div>
+                    <span className="text-sm font-semibold text-gray-800 block">Cash on Delivery (COD)</span>
+                    <span className="text-xs text-gray-500 block mt-0.5">Accept order placements with COD processing option.</span>
+                  </div>
+                </label>
+              </div>
+            </Card>
+
+            <Card title="Tax & Delivery Settings" icon={Percent}>
+              <div className="space-y-4">
+                {/* Tax Settings */}
+                <div className="border-b border-gray-100 pb-4">
+                  <label className="flex items-center gap-3 cursor-pointer mb-3">
+                    <input
+                      type="checkbox"
+                      checked={formData.enableTax}
+                      onChange={(e) => setFormData({ ...formData, enableTax: e.target.checked })}
+                      className="w-5 h-5 text-primary rounded focus:ring-primary cursor-pointer"
+                    />
+                    <div>
+                      <span className="text-sm font-semibold text-gray-800 block">Enable Taxes / GST</span>
+                      <span className="text-xs text-gray-500 block mt-0.5">Toggle to add tax to order totals.</span>
+                    </div>
+                  </label>
+                  
+                  {formData.enableTax && (
+                    <div className="grid grid-cols-2 gap-4 pl-8">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1">Tax Label / Name</label>
+                        <input
+                          type="text"
+                          value={formData.taxName}
+                          onChange={(e) => setFormData({ ...formData, taxName: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-sans text-xs"
+                          placeholder="e.g. GST"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1">Tax Percentage (%)</label>
+                        <input
+                          type="number"
+                          value={formData.taxPercentage}
+                          onChange={(e) => setFormData({ ...formData, taxPercentage: parseFloat(e.target.value) || 0 })}
+                          className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-sans text-xs"
+                          placeholder="e.g. 18"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Delivery Settings */}
                 <div>
-                  <span className="text-sm font-semibold text-gray-800 block">Razorpay Gateway (UPI, Cards, Netbanking)</span>
-                  <span className="text-xs text-gray-500 block mt-0.5">Enable official Razorpay online payment checkout flow.</span>
+                  <label className="flex items-center gap-3 cursor-pointer mb-3">
+                    <input
+                      type="checkbox"
+                      checked={formData.enableDeliveryCharge}
+                      onChange={(e) => setFormData({ ...formData, enableDeliveryCharge: e.target.checked })}
+                      className="w-5 h-5 text-primary rounded focus:ring-primary cursor-pointer"
+                    />
+                    <div>
+                      <span className="text-sm font-semibold text-gray-800 block">Enable Delivery Charges</span>
+                      <span className="text-xs text-gray-500 block mt-0.5">Charge standard shipping on orders.</span>
+                    </div>
+                  </label>
+                  
+                  {formData.enableDeliveryCharge && (
+                    <div className="space-y-3 pl-8">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1">Standard Delivery Charge (₹)</label>
+                        <input
+                          type="number"
+                          value={formData.deliveryCharge}
+                          onChange={(e) => setFormData({ ...formData, deliveryCharge: parseFloat(e.target.value) || 0 })}
+                          className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-sans text-xs"
+                          placeholder="e.g. 40"
+                        />
+                      </div>
+
+                      <label className="flex items-center gap-3 cursor-pointer mt-2 mb-1">
+                        <input
+                          type="checkbox"
+                          checked={formData.enableFreeDeliveryThreshold}
+                          onChange={(e) => setFormData({ ...formData, enableFreeDeliveryThreshold: e.target.checked })}
+                          className="w-4 h-4 text-primary rounded focus:ring-primary cursor-pointer"
+                        />
+                        <span className="text-xs font-semibold text-gray-700">Offer Free Delivery above a threshold</span>
+                      </label>
+
+                      {formData.enableFreeDeliveryThreshold && (
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-700 mb-1">Free Delivery Threshold (₹)</label>
+                          <input
+                            type="number"
+                            value={formData.freeDeliveryThreshold}
+                            onChange={(e) => setFormData({ ...formData, freeDeliveryThreshold: parseFloat(e.target.value) || 0 })}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-sans text-xs"
+                            placeholder="e.g. 500"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-              </label>
- 
-              {formData.enableRazorpay && (
-                <div className="p-3.5 bg-indigo-50/60 border border-indigo-150 rounded-2xl text-left flex items-start gap-2.5">
-                  <div className="w-2 h-2 rounded-full bg-indigo-600 mt-1.5 flex-shrink-0 animate-pulse" />
-                  <p className="text-xs text-indigo-900 font-sans leading-relaxed">
-                    <strong>Environment Security Enforced:</strong> Razorpay Credentials (Key ID & Secret Key) are safely loaded strictly from <code className="text-indigo-700 bg-white px-1.5 py-0.5 rounded border border-indigo-200 font-mono text-[11px]">server/.env</code> and <code className="text-indigo-700 bg-white px-1.5 py-0.5 rounded border border-indigo-200 font-mono text-[11px]">client/.env</code> files.
-                  </p>
-                </div>
-              )}
- 
-              <label className="flex items-center gap-3 cursor-pointer p-3.5 border border-gray-150 rounded-2xl hover:bg-gray-50/20 transition-colors">
-                <input
-                  type="checkbox"
-                  checked={formData.enableCOD}
-                  onChange={(e) => setFormData({ ...formData, enableCOD: e.target.checked })}
-                  className="w-5 h-5 text-primary rounded focus:ring-primary cursor-pointer"
-                />
-                <div>
-                  <span className="text-sm font-semibold text-gray-800 block">Cash on Delivery (COD)</span>
-                  <span className="text-xs text-gray-500 block mt-0.5">Accept order placements with COD processing option.</span>
-                </div>
-              </label>
-            </div>
-          </Card>
+              </div>
+            </Card>
+          </div>
         </div>
  
         <div className="flex justify-end pt-4">

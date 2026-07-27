@@ -87,18 +87,26 @@ export interface AppSettings {
   address?: string;
   gstNumber?: string;
   logo?: string;
-  homepageImages?: {
-    spotlight: string;
-    spotlightName?: string;
-    spotlightDescription?: string;
-    spotlightPrice?: number;
-    spotlightOldPrice?: number | null;
-    about: {
-      main: string;
-      secondary: string;
+    homepageImages?: {
+      spotlight: string;
+      spotlightName?: string;
+      spotlightDescription?: string;
+      spotlightPrice?: number;
+      spotlightOldPrice?: number | null;
+      about: {
+        main: string;
+        secondary: string;
+      };
     };
-  };
-}
+    enableTax?: boolean;
+    taxPercentage?: number;
+    taxName?: string;
+    enableDeliveryCharge?: boolean;
+    deliveryCharge?: number;
+    enableFreeDeliveryThreshold?: boolean;
+    freeDeliveryThreshold?: number;
+    banners?: string[];
+  }
 
 export interface CartItem {
   product: Product;

@@ -46,6 +46,42 @@ const settingsSchema = new mongoose.Schema(
       type: String,
       default: 'https://images.unsplash.com/photo-1617897903246-719242758050?q=80&w=200&auto=format&fit=crop'
     },
+    enableTax: {
+      type: Boolean,
+      default: false
+    },
+    taxPercentage: {
+      type: Number,
+      default: 8
+    },
+    taxName: {
+      type: String,
+      default: 'GST'
+    },
+    enableDeliveryCharge: {
+      type: Boolean,
+      default: false
+    },
+    deliveryCharge: {
+      type: Number,
+      default: 40
+    },
+    enableFreeDeliveryThreshold: {
+      type: Boolean,
+      default: false
+    },
+    freeDeliveryThreshold: {
+      type: Number,
+      default: 500
+    },
+    banners: {
+      type: [String],
+      default: [
+        'https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?q=80&w=1200&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1556228720-195a672e8a03?q=80&w=1200&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?q=80&w=1200&auto=format&fit=crop'
+      ]
+    },
     homepageImages: {
       spotlight: {
         type: String,

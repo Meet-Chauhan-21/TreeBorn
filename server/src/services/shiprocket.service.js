@@ -210,6 +210,15 @@ const trackShipment = async (awbCode) => {
   });
 };
 
+/**
+ * Get Shiprocket Wallet Balance
+ */
+const getWalletBalance = async () => {
+  return await request('/account/details/wallet-balance', {
+    method: 'GET'
+  });
+};
+
 module.exports = {
   createAdhocOrder,
   assignAWB,
@@ -220,5 +229,6 @@ module.exports = {
   generateManifest,
   schedulePickup,
   generateInvoice,
-  trackShipment
+  trackShipment,
+  getWalletBalance
 };

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { Mail, Lock, ArrowRight, Sparkles, Eye, EyeOff, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Sparkles, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useAuth } from '../context/AuthContext';
@@ -40,7 +40,7 @@ export const Login: React.FC = () => {
   const [fbUserData, setFbUserData] = useState<{ facebookId: string; name: string } | null>(null);
   const [fbEmail, setFbEmail] = useState('');
   const [fbSubmitting, setFbSubmitting] = useState(false);
-  const [fbEmailSent, setFbEmailSent] = useState(false);
+
 
   // Check for Facebook OAuth Redirect Code
   React.useEffect(() => {
@@ -66,7 +66,7 @@ export const Login: React.FC = () => {
     const success = await facebookRegister(fbUserData.name, fbEmail, fbUserData.facebookId);
     setFbSubmitting(false);
     if (success) {
-      setFbEmailSent(true);
+      navigate('/profile', { replace: true });
     }
   };
 
@@ -174,7 +174,7 @@ export const Login: React.FC = () => {
             {/* Right Column - Form Sheet */}
             <div className="col-span-1 md:col-span-7 p-6 sm:p-10 lg:p-12 flex flex-col justify-center bg-white">
               <div className="max-w-md w-full mx-auto space-y-6">
-                {!fbEmailSent && !showFbEmailForm && (
+                {!showFbEmailForm && (
                   <div>
                     <h1 className="text-2xl font-display font-bold text-dark tracking-tight">
                       Welcome to TREEBORN
@@ -216,21 +216,7 @@ export const Login: React.FC = () => {
                   </div>
                 )}
 
-                {fbEmailSent ? (
-                  <div className="py-6 space-y-6 text-center animate-fade-in">
-                    <div className="w-16 h-16 bg-[#EBF5F1] text-primary border border-primary/30 rounded-full flex items-center justify-center mx-auto shadow-xs">
-                      <CheckCircle2 size={28} className="stroke-[1.5]" />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <h2 className="text-xl font-display font-extrabold text-slate-800 tracking-tight">Verify Your Email</h2>
-                      <p className="text-xs text-slate-500 font-sans leading-relaxed max-w-sm mx-auto px-2">
-                        We sent a verification link to <span className="font-semibold text-primary">{fbEmail}</span>. 
-                        Please verify to activate your profile. Once verified, you will be automatically granted access.
-                      </p>
-                    </div>
-                  </div>
-                ) : showFbEmailForm ? (
+                {showFbEmailForm ? (
                   <div className="space-y-4">
                     <div className="text-center pb-2">
                       <div className="w-14 h-14 bg-emerald-50 text-emerald-600 border border-emerald-250 rounded-full flex items-center justify-center mx-auto mb-3 shadow-3xs">
@@ -267,10 +253,10 @@ export const Login: React.FC = () => {
                         {fbSubmitting ? (
                           <span className="flex items-center justify-center gap-2">
                             <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                            <span>Sending Verification...</span>
+                            <span>Authorizing...</span>
                           </span>
                         ) : (
-                          'Send Verification Link'
+                          'Authorize Profile'
                         )}
                       </Button>
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { motion } from 'framer-motion';
+
 import { ArrowLeft, CreditCard, ShieldCheck, ShoppingBag, Truck } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 import { useAuth } from '../context/AuthContext';
@@ -129,8 +129,22 @@ export const Checkout: React.FC = () => {
 
   // Cart values
   const subtotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
-  const shipping = subtotal >= 75 ? 0 : 9.99;
-  const tax = subtotal * 0.08; // 8% sales tax
+
+  // Settings-based shipping
+  const isShippingEnabled = settings.enableDeliveryCharge;
+  const standardShipping = settings.deliveryCharge || 0;
+  const isFreeShippingEnabled = settings.enableFreeDeliveryThreshold;
+  const freeShippingThreshold = settings.freeDeliveryThreshold || 0;
+
+  const shipping = isShippingEnabled 
+    ? (isFreeShippingEnabled && subtotal >= freeShippingThreshold ? 0 : standardShipping)
+    : 0;
+
+  // Settings-based tax
+  const isTaxEnabled = settings.enableTax;
+  const taxPercent = settings.taxPercentage || 0;
+  const tax = isTaxEnabled ? subtotal * (taxPercent / 100) : 0;
+
   const total = subtotal + shipping + tax;
 
   // Cascading Address Dropdowns for new addresses
@@ -599,114 +613,88 @@ export const Checkout: React.FC = () => {
               <div className="bg-white border border-border-gray/30 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
                 <div className="flex items-center gap-2 border-b border-border-gray/40 pb-4">
                   <CreditCard size={18} className="text-primary" />
-                  <h2 className="text-base font-display font-semibold text-dark">Payment Methodology Selection</h2>
+                  <h2 className="text-base font-display font-semibold text-dark">Payment Method</h2>
                 </div>
 
                 {/* Payment Mode Selector */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="border border-border-gray/50 rounded-2xl overflow-hidden divide-y divide-border-gray/40">
                   {isRazorpayEnabled && (
-                    <button
-                      type="button"
+                    <div 
                       onClick={() => setPaymentMethod('razorpay')}
-                      className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
-                        paymentMethod === 'razorpay'
-                          ? 'border-primary bg-primary/5 shadow-xs'
-                          : 'border-border-gray/60 bg-white hover:border-primary/30'
+                      className={`p-5 transition-all cursor-pointer text-left ${
+                        paymentMethod === 'razorpay' ? 'bg-primary/[0.02]' : 'bg-white hover:bg-slate-50/40'
                       }`}
                     >
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="font-display font-bold text-sm text-dark flex items-center gap-2">
-                          <CreditCard size={18} className="text-primary" />
-                          <span>Razorpay Online</span>
-                        </span>
-                        {paymentMethod === 'razorpay' && (
-                          <span className="w-2.5 h-2.5 bg-primary rounded-full" />
-                        )}
+                      <div className="flex items-center gap-3.5">
+                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 transition-all bg-white ${
+                          paymentMethod === 'razorpay' ? 'border-primary ring-4 ring-primary/10' : 'border-gray-300'
+                        }`}>
+                          {paymentMethod === 'razorpay' && <div className="w-2.5 h-2.5 bg-primary rounded-full" />}
+                        </div>
+                        
+                        <div className="flex-grow flex flex-wrap items-center justify-between gap-2">
+                          <span className="font-display font-bold text-sm text-dark flex items-center gap-2">
+                            <CreditCard size={16} className="text-primary" />
+                            <span>Pay Online (UPI, Cards, NetBanking, Wallets)</span>
+                          </span>
+                          <span className="bg-primary/10 px-2 py-0.5 rounded text-[9px] font-semibold text-primary">Instant Verification</span>
+                        </div>
                       </div>
-                      <p className="text-[11px] text-gray-500 font-sans leading-relaxed">
-                        UPI (GPay, PhonePe, Paytm), Credit/Debit Cards, NetBanking & Wallets.
-                      </p>
-                      <div className="mt-3 pt-2 border-t border-border-gray/30 flex items-center justify-between text-[10px] font-semibold text-primary">
-                        <span>Official Gateway</span>
-                        <span className="bg-primary/10 px-2 py-0.5 rounded text-primary">Instant Verification</span>
-                      </div>
-                    </button>
+                      
+                      {paymentMethod === 'razorpay' && (
+                        <div className="mt-4 pl-8 space-y-3 animate-fade-in-up">
+                          <p className="text-xs text-gray-500 font-sans leading-relaxed">
+                            Clicking <strong>Pay & Place Order</strong> opens the official Razorpay Checkout popup. Your payment is verified securely before order confirmation.
+                          </p>
+                          <div className="flex flex-wrap gap-2 text-[9px] font-medium text-gray-500">
+                            <span className="bg-white border border-gray-200 px-2 py-0.5 rounded">UPI / GPay / PhonePe</span>
+                            <span className="bg-white border border-gray-200 px-2 py-0.5 rounded">Visa / Mastercard / RuPay</span>
+                            <span className="bg-white border border-gray-200 px-2 py-0.5 rounded">NetBanking</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   )}
 
                   {isCODEnabled && (
-                    <button
-                      type="button"
+                    <div 
                       onClick={() => setPaymentMethod('cod')}
-                      className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
-                        paymentMethod === 'cod'
-                          ? 'border-primary bg-primary/5 shadow-xs'
-                          : 'border-border-gray/60 bg-white hover:border-primary/30'
+                      className={`p-5 transition-all cursor-pointer text-left ${
+                        paymentMethod === 'cod' ? 'bg-primary/[0.02]' : 'bg-white hover:bg-slate-50/40'
                       }`}
                     >
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="font-display font-bold text-sm text-dark flex items-center gap-2">
-                          <Truck size={18} className="text-secondary" />
-                          <span>Cash on Delivery</span>
-                        </span>
-                        {paymentMethod === 'cod' && (
-                          <span className="w-2.5 h-2.5 bg-primary rounded-full" />
-                        )}
+                      <div className="flex items-center gap-3.5">
+                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 transition-all bg-white ${
+                          paymentMethod === 'cod' ? 'border-primary ring-4 ring-primary/10' : 'border-gray-300'
+                        }`}>
+                          {paymentMethod === 'cod' && <div className="w-2.5 h-2.5 bg-primary rounded-full" />}
+                        </div>
+                        
+                        <div className="flex-grow flex flex-wrap items-center justify-between gap-2">
+                          <span className="font-display font-bold text-sm text-dark flex items-center gap-2">
+                            <Truck size={16} className="text-primary" />
+                            <span>Cash on Delivery (COD)</span>
+                          </span>
+                          <span className="bg-emerald-50 text-emerald-750 border border-emerald-200/50 px-2 py-0.5 rounded text-[9px] font-semibold">Pay on Delivery</span>
+                        </div>
                       </div>
-                      <p className="text-[11px] text-gray-500 font-sans leading-relaxed">
-                        Pay in cash or mobile UPI QR scan upon package arrival.
-                      </p>
-                      <div className="mt-3 pt-2 border-t border-border-gray/30 flex items-center justify-between text-[10px] font-semibold text-secondary">
-                        <span>Doorstep Payment</span>
-                        <span className="bg-emerald-50 px-2 py-0.5 rounded text-secondary">Zero Online Risk</span>
-                      </div>
-                    </button>
+                      
+                      {paymentMethod === 'cod' && (
+                        <div className="mt-4 pl-8 space-y-2 animate-fade-in-up">
+                          <p className="text-xs text-gray-500 font-sans leading-relaxed">
+                            You will pay the total amount of <strong className="text-primary font-bold">₹{total.toFixed(2)}</strong> in cash or via mobile UPI QR scan to the courier agent upon arrival.
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   )}
 
                   {!isRazorpayEnabled && !isCODEnabled && (
-                    <div className="sm:col-span-2 p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold">
+                    <div className="p-5 bg-amber-50 text-amber-850 text-xs font-semibold text-center leading-relaxed">
                       ⚠️ No payment methods are currently enabled by the store administrator.
                     </div>
                   )}
                 </div>
-
-                {paymentMethod === 'razorpay' ? (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="p-5 border border-primary/20 bg-primary/[0.02] rounded-2xl space-y-3 text-left"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-display font-bold text-xs text-primary uppercase tracking-wider">
-                        Razorpay Secure Checkout
-                      </span>
-                      <span className="text-[10px] text-gray-400 font-mono">256-BIT SSL ENCRYPTED</span>
-                    </div>
-                    <p className="text-xs text-gray-600 font-sans leading-relaxed">
-                      Clicking <strong>Pay & Place Order</strong> opens the official Razorpay Checkout popup. Your payment is verified on our secure backend before confirming your botanical order.
-                    </p>
-                    <div className="flex flex-wrap gap-2 pt-1 text-[10px] font-medium text-gray-500">
-                      <span className="bg-white border border-gray-200 px-2 py-1 rounded">UPI / GPay / PhonePe</span>
-                      <span className="bg-white border border-gray-200 px-2 py-1 rounded">Visa / Mastercard / RuPay</span>
-                      <span className="bg-white border border-gray-200 px-2 py-1 rounded">NetBanking (50+ Banks)</span>
-                    </div>
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="p-5 border border-[#1F7A4D]/25 bg-[#EBF3F0]/40 rounded-2xl space-y-3.5 text-left"
-                  >
-                    <div className="flex items-center gap-2 text-primary font-display font-semibold text-sm">
-                      <Truck size={18} />
-                      <span>Cash on Delivery (COD) Selected</span>
-                    </div>
-                    <p className="text-xs text-gray-650 font-sans leading-relaxed">
-                      You will pay the total amount of <strong className="text-primary font-bold font-display">₹{total.toFixed(2)}</strong> in cash or via mobile UPI QR scan to the delivery associate when your botanical package arrives.
-                    </p>
-                  </motion.div>
-                )}
 
                 {/* Submit Action */}
                 <div className="pt-4">
@@ -759,16 +747,20 @@ export const Checkout: React.FC = () => {
                     <span>Subtotal</span>
                     <span className="font-semibold text-dark">₹{subtotal.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between text-gray-500">
-                    <span>Logistics Shipping</span>
-                    <span className="font-semibold text-dark">
-                      {shipping === 0 ? <span className="text-primary font-bold">FREE</span> : `₹${shipping.toFixed(2)}`}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-gray-500">
-                    <span>Est. Sales Tax (8%)</span>
-                    <span className="font-semibold text-dark">₹{tax.toFixed(2)}</span>
-                  </div>
+                  {isShippingEnabled && (
+                    <div className="flex justify-between text-gray-500">
+                      <span>Logistics Shipping</span>
+                      <span className="font-semibold text-dark">
+                        {shipping === 0 ? <span className="text-emerald-600 font-bold uppercase text-[10px]">FREE</span> : `₹${shipping.toFixed(2)}`}
+                      </span>
+                    </div>
+                  )}
+                  {isTaxEnabled && (
+                    <div className="flex justify-between text-gray-500">
+                      <span>{settings.taxName || 'Sales Tax'} ({taxPercent}%)</span>
+                      <span className="font-semibold text-dark">₹{tax.toFixed(2)}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex justify-between items-center pt-4 font-display text-dark">

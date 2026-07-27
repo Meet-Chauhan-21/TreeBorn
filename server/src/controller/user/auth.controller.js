@@ -584,32 +584,36 @@ const facebookRegister = async (req, res) => {
 
     if (user) {
       if (user.facebookId && user.facebookId === facebookId) {
-        if (!user.isVerified) {
-          const token = crypto.randomBytes(32).toString('hex');
-          user.verificationToken = token;
-          user.verificationTokenExpires = Date.now() + 24 * 60 * 60 * 1000;
-          user.lastVerificationSentAt = Date.now();
-          await user.save();
-          await sendVerificationEmail(user.email, user.name, token);
-          return res.status(200).json({
-            message: 'Verification link sent! Please check your inbox to verify your email.'
-          });
-        }
-        return res.status(400).json({ message: 'This email is already verified and linked to your Facebook account.' });
+        user.isVerified = true;
+        user.verificationToken = null;
+        user.verificationTokenExpires = null;
+        await user.save();
+
+        const { accessToken } = await generateTokensAndSetCookie(user, res);
+        return res.status(200).json({
+          message: 'Facebook login successful',
+          user: {
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+            role: user.role,
+            addresses: user.addresses || []
+          },
+          accessToken
+        });
       }
       return res.status(400).json({ message: 'An account already exists with this email address.' });
     }
 
     user = await User.findOne({ facebookId });
-    const token = crypto.randomBytes(32).toString('hex');
 
     if (user) {
       user.email = email.toLowerCase();
       user.name = name || user.name;
-      user.isVerified = false;
-      user.verificationToken = token;
-      user.verificationTokenExpires = Date.now() + 24 * 60 * 60 * 1000;
-      user.lastVerificationSentAt = Date.now();
+      user.isVerified = true;
+      user.verificationToken = null;
+      user.verificationTokenExpires = null;
       await user.save();
     } else {
       user = new User({
@@ -618,22 +622,23 @@ const facebookRegister = async (req, res) => {
         facebookId,
         provider: 'facebook',
         role: 'user',
-        isVerified: false,
-        verificationToken: token,
-        verificationTokenExpires: Date.now() + 24 * 60 * 60 * 1000,
-        lastVerificationSentAt: Date.now()
+        isVerified: true
       });
       await user.save();
     }
 
-    try {
-      await sendVerificationEmail(user.email, user.name, token);
-    } catch (emailErr) {
-      console.error('Failed to send Facebook verification email:', emailErr);
-    }
-
+    const { accessToken } = await generateTokensAndSetCookie(user, res);
     return res.status(200).json({
-      message: 'Verification link sent! Please check your inbox and verify your email to log in.'
+      message: 'Facebook login successful',
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        addresses: user.addresses || []
+      },
+      accessToken
     });
   } catch (error) {
     console.error('Facebook registration error:', error);

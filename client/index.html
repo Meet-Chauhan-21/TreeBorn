@@ -1,6 +1,39 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <script>
+      (function() {
+        try {
+          const saved = localStorage.getItem('treeborn_settings');
+          if (saved) {
+            const settings = JSON.parse(saved);
+            if (settings && settings.themeColor) {
+              const color = settings.themeColor;
+              document.documentElement.style.setProperty('--color-primary', color);
+              
+              // Lighten and darken helpers
+              function adjustBrightness(hex, percent) {
+                let R = parseInt(hex.substring(1, 3), 16);
+                let G = parseInt(hex.substring(3, 5), 16);
+                let B = parseInt(hex.substring(5, 7), 16);
+                R = Math.max(0, Math.min(255, Math.round(R * (1 + percent))));
+                G = Math.max(0, Math.min(255, Math.round(G * (1 + percent))));
+                B = Math.max(0, Math.min(255, Math.round(B * (1 + percent))));
+                const rHex = R.toString(16).padStart(2, '0');
+                const gHex = G.toString(16).padStart(2, '0');
+                const bHex = B.toString(16).padStart(2, '0');
+                return '#' + rHex + gHex + bHex;
+              }
+              
+              document.documentElement.style.setProperty('--color-primary-light', adjustBrightness(color, 0.25));
+              document.documentElement.style.setProperty('--color-primary-dark', adjustBrightness(color, -0.3));
+            }
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      })();
+    </script>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />

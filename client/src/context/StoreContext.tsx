@@ -50,33 +50,58 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
 
-  const [settings, setSettings] = useState<AppSettings>({
-    email: 'dabhisanjay901@gmail.com',
-    whatsappNumber: '9023374410',
-    themeColor: '#581C87',
-    enableCreditCard: true,
-    enablePaypal: true,
-    enableCOD: true,
-    shopName: 'TREEBORN Skincare',
-    address: '10, GURUKRUPA SOCIETY, NEAR ARCHANA SOCIETY, DABHOLI ROAD, KATARGAM SURAT GUJARAT 395004 India',
-    gstNumber: '24AAAAA0000A1Z5',
-    logo: 'https://images.unsplash.com/photo-1617897903246-719242758050?q=80&w=200&auto=format&fit=crop',
-    homepageImages: {
-      spotlight: 'https://images.unsplash.com/photo-1617897903246-719242758050?q=80&w=800&auto=format&fit=crop',
-      spotlightName: 'Restorative Peptide Serum',
-      spotlightDescription: 'A concentrated multi-peptide serum designed to target visible signs of aging, restore firmness, and deeply hydrate the skin.',
-      spotlightPrice: 85,
-      spotlightOldPrice: 110,
-      about: {
-        main: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?q=80&w=800&auto=format&fit=crop',
-        secondary: 'https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?q=80&w=600&auto=format&fit=crop'
-      }
+  const [settings, setSettings] = useState<AppSettings>(() => {
+    try {
+      const saved = localStorage.getItem('treeborn_settings');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.error('Failed to parse saved settings', e);
     }
+    return {
+      email: 'dabhisanjay901@gmail.com',
+      whatsappNumber: '9023374410',
+      themeColor: '#581C87',
+      enableCreditCard: true,
+      enablePaypal: true,
+      enableCOD: true,
+      shopName: 'TREEBORN Skincare',
+      address: '10, GURUKRUPA SOCIETY, NEAR ARCHANA SOCIETY, DABHOLI ROAD, KATARGAM SURAT GUJARAT 395004 India',
+      gstNumber: '24AAAAA0000A1Z5',
+      logo: 'https://images.unsplash.com/photo-1617897903246-719242758050?q=80&w=200&auto=format&fit=crop',
+      enableTax: false,
+      taxPercentage: 8,
+      taxName: 'GST',
+      enableDeliveryCharge: false,
+      deliveryCharge: 40,
+      enableFreeDeliveryThreshold: false,
+      freeDeliveryThreshold: 500,
+      banners: [
+        'https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?q=80&w=1200&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1556228720-195a672e8a03?q=80&w=1200&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?q=80&w=1200&auto=format&fit=crop'
+      ],
+      homepageImages: {
+        spotlight: 'https://images.unsplash.com/photo-1617897903246-719242758050?q=80&w=800&auto=format&fit=crop',
+        spotlightName: 'Restorative Peptide Serum',
+        spotlightDescription: 'A concentrated multi-peptide serum designed to target visible signs of aging, restore firmness, and deeply hydrate the skin.',
+        spotlightPrice: 85,
+        spotlightOldPrice: 110,
+        about: {
+          main: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?q=80&w=800&auto=format&fit=crop',
+          secondary: 'https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?q=80&w=600&auto=format&fit=crop'
+        }
+      }
+    };
   });
 
   const updateLocalSettings = (newSettings: AppSettings) => {
     setSettings(newSettings);
     applyThemeColor(newSettings.themeColor);
+    try {
+      localStorage.setItem('treeborn_settings', JSON.stringify(newSettings));
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const applyThemeColor = (color: string) => {
@@ -132,6 +157,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           const data = await response.json();
           setSettings(data);
           applyThemeColor(data.themeColor);
+          try {
+            localStorage.setItem('treeborn_settings', JSON.stringify(data));
+          } catch (e) {
+            console.error(e);
+          }
         }
       } catch (err) {
         console.error('Error fetching global settings:', err);

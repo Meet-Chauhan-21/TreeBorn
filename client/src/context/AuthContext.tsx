@@ -281,7 +281,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
       }
 
-      toast.success(data.message || 'Verification link sent! Please check your inbox.');
+      setAccessToken(data.accessToken);
+      if (data.user) {
+        setUser(data.user);
+      }
+      toast.success(data.message || 'Facebook Sign-In successful!');
       setLoading(false);
       return true;
     } catch (error) {

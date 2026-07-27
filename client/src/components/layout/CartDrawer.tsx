@@ -12,13 +12,19 @@ export const CartDrawer: React.FC = () => {
     setIsCartOpen,
     updateCartQuantity,
     removeFromCart,
+    settings,
   } = useStore();
 
   const subtotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
   const itemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
-  const freeShippingThreshold = 75;
-  const progressToFreeShipping = Math.min((subtotal / freeShippingThreshold) * 100, 100);
-  const remainingForFreeShipping = freeShippingThreshold - subtotal;
+  
+  const isShippingEnabled = settings.enableDeliveryCharge;
+  const isFreeShippingEnabled = settings.enableFreeDeliveryThreshold;
+  const freeShippingThreshold = settings.freeDeliveryThreshold || 0;
+  
+  const showFreeShippingProgress = isShippingEnabled && isFreeShippingEnabled && freeShippingThreshold > 0;
+  const progressToFreeShipping = showFreeShippingProgress ? Math.min((subtotal / freeShippingThreshold) * 100, 100) : 0;
+  const remainingForFreeShipping = showFreeShippingProgress ? (freeShippingThreshold - subtotal) : 0;
 
   const handleCheckout = () => {
     setIsCartOpen(false);
@@ -66,7 +72,7 @@ export const CartDrawer: React.FC = () => {
             <div className="flex-grow overflow-y-auto p-6 space-y-6">
               
               {/* Free Shipping Indicator */}
-              {itemsCount > 0 && (
+              {itemsCount > 0 && showFreeShippingProgress && (
                 <div className="bg-accent-sage/65 border border-accent-sage-dark/30 rounded-xl p-4 space-y-2">
                   <div className="text-xs text-primary font-sans font-semibold">
                     {subtotal >= freeShippingThreshold ? (

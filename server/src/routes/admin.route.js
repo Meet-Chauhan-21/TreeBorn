@@ -68,6 +68,7 @@ router.use(verifyJWT, authorizeRoles('admin'));
 
 // Dashboard endpoints
 router.get('/dashboard', dashboardController.getDashboardStats);
+router.get('/api-metrics', dashboardController.getApiMetrics);
 
 // Settings endpoints
 router.get('/settings', dashboardController.getSettings);
