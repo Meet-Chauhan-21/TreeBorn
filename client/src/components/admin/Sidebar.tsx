@@ -251,21 +251,21 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => 
                             onClick={() => toggleMenu(item.label)}
                             className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 group cursor-pointer focus:outline-none ${
                               isActive
-                                ? 'bg-white/[0.04] text-white font-bold'
+                                ? 'bg-white/[0.08] text-white font-bold border border-white/[0.12]'
                                 : 'text-slate-400 hover:bg-white/[0.03] hover:text-white hover:translate-x-0.5'
                             }`}
                           >
                             <div className="flex items-center gap-3">
                               <item.icon
                                 size={18}
-                                className={isActive ? 'text-primary' : 'text-slate-400 group-hover:text-slate-200 transition-colors duration-200'}
+                                className={isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-200 transition-colors duration-200'}
                               />
                               <span className="text-xs font-semibold">{item.label}</span>
                             </div>
                             <ChevronDown
                               size={14}
                               className={`text-slate-500 transition-transform duration-200 ${
-                                isMenuOpen ? 'rotate-180 text-primary' : ''
+                                isMenuOpen ? 'rotate-180 text-white' : ''
                               }`}
                             />
                           </button>
@@ -286,13 +286,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => 
                                   to={sub.path}
                                   className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-[11px] transition-all duration-200 group ${
                                     isSubActive
-                                      ? 'text-primary font-bold bg-primary/10 border border-primary/20'
+                                      ? 'text-white font-bold bg-white/[0.06] border border-white/[0.1]'
                                       : 'text-slate-400 hover:bg-white/[0.02] hover:text-white hover:translate-x-0.5'
                                   }`}
                                 >
                                   <sub.icon
                                     size={12}
-                                    className={isSubActive ? 'text-primary' : 'text-slate-500 group-hover:text-slate-350 transition-colors duration-200'}
+                                    className={isSubActive ? 'text-white' : 'text-slate-555 group-hover:text-slate-350 transition-colors duration-200'}
                                   />
                                   <span>{sub.label}</span>
                                 </Link>
@@ -310,14 +310,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => 
                         to={navigatePath}
                         className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group ${
                           isActive
-                            ? 'bg-primary/10 text-primary font-semibold border border-primary/20 shadow-3xs'
+                            ? 'bg-white/[0.08] text-white font-semibold border border-white/[0.12] shadow-3xs'
                             : 'text-slate-400 hover:bg-white/[0.03] hover:text-white hover:translate-x-0.5'
                         } ${collapsed ? 'justify-center' : ''}`}
                         title={collapsed ? item.label : undefined}
                       >
                         <item.icon
                           size={18}
-                          className={isActive ? 'text-primary' : 'text-slate-400 group-hover:text-slate-200 transition-colors duration-200'}
+                          className={isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-200 transition-colors duration-200'}
                         />
                         {!collapsed && <span className="text-xs font-semibold">{item.label}</span>}
                       </Link>

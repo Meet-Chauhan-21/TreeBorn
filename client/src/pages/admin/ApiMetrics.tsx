@@ -38,13 +38,24 @@ interface Metrics {
     averageShippingCost: number;
     apiConnected: boolean;
   };
+  mongodb: {
+    status: string;
+    dbName: string;
+    host: string;
+    collectionsCount: number;
+    totalSize: string;
+    storageUsedMb: number;
+    storageLimitMb: number;
+    documentCount: number;
+    apiConnected: boolean;
+  };
 }
 
 const ApiMetrics: React.FC = () => {
   const { accessToken } = useAuth();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'brevo' | 'cloudinary' | 'shiprocket'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'brevo' | 'cloudinary' | 'shiprocket' | 'mongodb'>('overview');
   const [metrics, setMetrics] = useState<Metrics | null>(null);
 
   // Test Email State
@@ -122,6 +133,7 @@ const ApiMetrics: React.FC = () => {
   const brevoPct = metrics ? Math.round((metrics.brevo.emailsSentToday / metrics.brevo.dailyLimit) * 100) : 0;
   const cloudStoragePct = metrics ? Math.round((metrics.cloudinary.storageUsedGb / metrics.cloudinary.storageLimitGb) * 100) : 0;
   const cloudTransPct = metrics ? Math.round((metrics.cloudinary.transformationsUsed / metrics.cloudinary.transformationsLimit) * 100) : 0;
+  const mongoStoragePct = metrics ? Math.max(0.1, parseFloat(((metrics.mongodb.storageUsedMb / metrics.mongodb.storageLimitMb) * 100).toFixed(2))) : 0;
 
   return (
     <AdminLayout title="API Integration Metrics">
@@ -150,6 +162,7 @@ const ApiMetrics: React.FC = () => {
             { id: 'brevo', label: 'Brevo (Emails)', icon: Mail },
             { id: 'cloudinary', label: 'Cloudinary (Storage)', icon: Cloud },
             { id: 'shiprocket', label: 'Shiprocket (Logistics)', icon: Truck },
+            { id: 'mongodb', label: 'MongoDB (Database)', icon: Database },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -170,7 +183,7 @@ const ApiMetrics: React.FC = () => {
         {activeTab === 'overview' && metrics && (
           <div className="space-y-6">
             {/* Overview cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fade-in">
               {/* Brevo Card */}
               <div className="bg-white border border-border-gray/30 rounded-3xl p-6 shadow-3xs flex flex-col justify-between space-y-4">
                 <div className="flex justify-between items-start">
@@ -186,7 +199,7 @@ const ApiMetrics: React.FC = () => {
                   </span>
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-gray-800">Brevo Transactional API</h3>
+                  <h3 className="text-sm font-bold text-gray-800 font-display">Brevo Transactional API</h3>
                   <span className="text-[10px] text-gray-400 block mt-0.5">Plan: {metrics.brevo.plan}</span>
                 </div>
                 <div className="space-y-1 pt-2">
@@ -215,12 +228,12 @@ const ApiMetrics: React.FC = () => {
                   </span>
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-gray-800">Cloudinary Media CDN</h3>
+                  <h3 className="text-sm font-bold text-gray-800 font-display">Cloudinary Media CDN</h3>
                   <span className="text-[10px] text-gray-400 block mt-0.5">Plan: {metrics.cloudinary.plan}</span>
                 </div>
                 <div className="space-y-1 pt-2">
                   <div className="flex justify-between text-[11px] text-gray-500">
-                    <span>Cloud Storage Used ({cloudStoragePct}%)</span>
+                    <span>Cloud Storage ({cloudStoragePct}%)</span>
                     <span className="font-semibold text-gray-800">{metrics.cloudinary.storageUsedGb} GB / {metrics.cloudinary.storageLimitGb} GB</span>
                   </div>
                   <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
@@ -244,18 +257,47 @@ const ApiMetrics: React.FC = () => {
                   </span>
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-gray-800">Shiprocket Logistics</h3>
+                  <h3 className="text-sm font-bold text-gray-800 font-display">Shiprocket Logistics</h3>
                   <span className="text-[10px] text-gray-400 block mt-0.5">Active Shipments: {metrics.shiprocket.activeShipments}</span>
                 </div>
                 <div className="pt-2 flex justify-between items-center">
                   <div>
-                    <span className="text-[10px] text-gray-400 block">Wallet Balance</span>
-                    <span className="text-base font-bold text-slate-800 font-display">₹{metrics.shiprocket.walletBalance.toFixed(2)}</span>
+                    <span className="text-[10px] text-gray-400 block font-medium">Wallet Balance</span>
+                    <span className="text-base font-bold text-slate-805 font-display">₹{metrics.shiprocket.walletBalance.toFixed(2)}</span>
                   </div>
                   <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-600 font-sans">
                     <CheckCircle2 size={12} className="inline" />
-                    {metrics.shiprocket.deliverySuccessRate}% Delivery
+                    {metrics.shiprocket.deliverySuccessRate}% Del
                   </span>
+                </div>
+              </div>
+
+              {/* MongoDB Card */}
+              <div className="bg-white border border-border-gray/30 rounded-3xl p-6 shadow-3xs flex flex-col justify-between space-y-4 animate-fade-in">
+                <div className="flex justify-between items-start">
+                  <div className="w-10 h-10 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
+                    <Database size={18} />
+                  </div>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase ${
+                    metrics.mongodb.status === 'Connected'
+                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-150'
+                      : 'bg-rose-50 text-rose-700 border border-rose-150'
+                  }`}>
+                    {metrics.mongodb.status}
+                  </span>
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-gray-800 font-display">MongoDB Database</h3>
+                  <span className="text-[10px] text-gray-450 block mt-0.5 truncate">DB: {metrics.mongodb.dbName}</span>
+                </div>
+                <div className="space-y-1.5 pt-2">
+                  <div className="flex justify-between text-[11px] text-gray-500 font-medium">
+                    <span>Space Used ({mongoStoragePct}%)</span>
+                    <span className="font-semibold text-gray-800">{metrics.mongodb.totalSize} / 512 MB</span>
+                  </div>
+                  <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                    <div className="bg-emerald-650 h-full transition-all duration-500" style={{ width: `${Math.min(100, mongoStoragePct) || 1}%` }} />
+                  </div>
                 </div>
               </div>
             </div>
@@ -267,7 +309,7 @@ const ApiMetrics: React.FC = () => {
                   <div className="flex items-start gap-3">
                     <div className="w-2.5 h-2.5 rounded-full bg-primary mt-1" />
                     <div>
-                      <span className="font-semibold text-gray-800 block">Brevo API Configured</span>
+                      <span className="font-semibold text-gray-800 block font-display text-sm">Brevo API Configured</span>
                       <span className="text-[11px] text-gray-400">SMTP Server settings, verification triggers, template routing APIs.</span>
                     </div>
                   </div>
@@ -284,7 +326,7 @@ const ApiMetrics: React.FC = () => {
                   <div className="flex items-start gap-3">
                     <div className="w-2.5 h-2.5 rounded-full bg-blue-600 mt-1" />
                     <div>
-                      <span className="font-semibold text-gray-800 block">Cloudinary Media SDK</span>
+                      <span className="font-semibold text-gray-800 block font-display text-sm">Cloudinary Media SDK</span>
                       <span className="text-[11px] text-gray-400">Access to dynamic image uploads, storage, and assets transformation.</span>
                     </div>
                   </div>
@@ -301,7 +343,7 @@ const ApiMetrics: React.FC = () => {
                   <div className="flex items-start gap-3">
                     <div className="w-2.5 h-2.5 rounded-full bg-amber-600 mt-1" />
                     <div>
-                      <span className="font-semibold text-gray-800 block">Shiprocket Courier API</span>
+                      <span className="font-semibold text-gray-800 block font-display text-sm">Shiprocket Courier API</span>
                       <span className="text-[11px] text-gray-400">Syncs shipping rates, order pickups, AWBs, and tracking webhook notifications.</span>
                     </div>
                   </div>
@@ -311,6 +353,23 @@ const ApiMetrics: React.FC = () => {
                       : 'bg-amber-100 text-amber-800'
                   }`}>
                     {metrics.shiprocket.apiConnected ? 'Active' : 'Configured / Simulator'}
+                  </span>
+                </div>
+
+                <div className="py-3 flex items-center justify-between">
+                  <div className="flex items-start gap-3">
+                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-600 mt-1" />
+                    <div>
+                      <span className="font-semibold text-gray-800 block font-display text-sm">MongoDB Database connection</span>
+                      <span className="text-[11px] text-gray-400">Stores site configuration settings, orders, users, and product catalogs.</span>
+                    </div>
+                  </div>
+                  <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                    metrics.mongodb.apiConnected 
+                      ? 'bg-emerald-100 text-emerald-800' 
+                      : 'bg-red-100 text-red-800'
+                  }`}>
+                    {metrics.mongodb.apiConnected ? 'Active' : 'Offline'}
                   </span>
                 </div>
               </div>
@@ -516,6 +575,76 @@ const ApiMetrics: React.FC = () => {
                   </div>
                 </div>
               </Card>
+            </div>
+          </div>
+        )}
+
+        {/* MongoDB Details */}
+        {activeTab === 'mongodb' && metrics && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start animate-fade-in">
+              {/* Database Overview */}
+              <Card title="MongoDB Atlas Connection Info" icon={Database}>
+                <div className="divide-y divide-slate-100 text-xs font-sans">
+                  <div className="py-3 flex justify-between">
+                    <span className="text-gray-400 font-medium">Connection Status</span>
+                    <span className="font-semibold text-emerald-600 flex items-center gap-1.5">
+                      <CheckCircle2 size={13} />
+                      {metrics.mongodb.status}
+                    </span>
+                  </div>
+                  <div className="py-3 flex justify-between">
+                    <span className="text-gray-400 font-medium">Database Name</span>
+                    <span className="font-semibold text-gray-800">{metrics.mongodb.dbName}</span>
+                  </div>
+                  <div className="py-3 flex justify-between">
+                    <span className="text-gray-400 font-medium">Connection Cluster Host</span>
+                    <span className="font-semibold text-gray-700 font-mono text-[10px] select-all truncate max-w-[200px]" title={metrics.mongodb.host}>
+                      {metrics.mongodb.host}
+                    </span>
+                  </div>
+                  <div className="py-3 flex justify-between">
+                    <span className="text-gray-400 font-medium">Driver Framework</span>
+                    <span className="font-semibold text-gray-800">Mongoose (v8.x ODM)</span>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Storage Stats */}
+              <Card title="Database Size & Collections Metrics" icon={Cloud}>
+                <div className="space-y-4 text-xs font-sans">
+                  <div className="flex justify-between items-center text-slate-500 font-medium">
+                    <span>Database Data Size</span>
+                    <span className="font-extrabold text-gray-850">
+                      {metrics.mongodb.storageUsedMb.toFixed(3)} MB / {metrics.mongodb.storageLimitMb} MB ({mongoStoragePct}%)
+                    </span>
+                  </div>
+                  <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                    <div className="bg-emerald-650 h-full transition-all duration-500" style={{ width: `${Math.min(100, mongoStoragePct) || 1}%` }} />
+                  </div>
+                  <div className="divide-y divide-slate-100 pt-2">
+                    <div className="py-2.5 flex justify-between">
+                      <span className="text-gray-400 font-medium">Active Collections</span>
+                      <span className="font-semibold text-gray-800">{metrics.mongodb.collectionsCount} collections</span>
+                    </div>
+                    <div className="py-2.5 flex justify-between">
+                      <span className="text-gray-400 font-medium">Document Records (Indexed)</span>
+                      <span className="font-semibold text-gray-800">{metrics.mongodb.documentCount} items</span>
+                    </div>
+                    <div className="py-2.5 flex justify-between">
+                      <span className="text-gray-400 font-medium">Free Tier Max Limit</span>
+                      <span className="font-semibold text-slate-500">512.00 MB (Atlas Shared M0)</span>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            </div>
+            
+            <div className="p-4 bg-emerald-50 border border-emerald-150 rounded-2xl flex items-start gap-3">
+              <Sparkles className="text-emerald-600 shrink-0 mt-0.5" size={16} />
+              <div className="text-xs text-emerald-900 leading-relaxed font-sans">
+                <strong>MongoDB Stats:</strong> All database details are calculated accurately using mongoose driver statistics. The database is hosted inside a high-availability MongoDB Atlas cloud database cluster with automatic failovers.
+              </div>
             </div>
           </div>
         )}
