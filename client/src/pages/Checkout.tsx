@@ -97,6 +97,45 @@ export const Checkout: React.FC = () => {
     zip: ''
   });
 
+  const [addressErrors, setAddressErrors] = useState<Record<string, string>>({});
+  const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
+
+  const validateAddressForm = (form = newAddressForm) => {
+    const errs: Record<string, string> = {};
+    if (!form.name || form.name.trim().length < 2) {
+      errs.name = 'Please enter recipient full name (min 2 letters)';
+    }
+    if (!form.street || form.street.trim().length < 5) {
+      errs.street = 'Please enter full street address (min 5 characters)';
+    }
+    if (!form.country) {
+      errs.country = 'Country selection is required';
+    }
+    if (!form.state) {
+      errs.state = 'State selection is required';
+    }
+    if (!form.district) {
+      errs.district = 'District selection is required';
+    }
+    const zipClean = form.zip.replace(/\D/g, '');
+    if (!zipClean || zipClean.length !== 6) {
+      errs.zip = 'ZIP / Pincode must be exactly 6 digits';
+    }
+    const phoneClean = form.phone.replace(/\D/g, '');
+    if (!phoneClean || phoneClean.length !== 10) {
+      errs.phone = 'Mobile phone number must be exactly 10 digits';
+    } else if (!/^[6-9]/.test(phoneClean)) {
+      errs.phone = 'Please enter a valid 10-digit mobile number starting with 6-9';
+    }
+    return errs;
+  };
+
+  const handleBlurField = (field: string) => {
+    setTouchedFields((prev) => ({ ...prev, [field]: true }));
+    const errs = validateAddressForm();
+    setAddressErrors(errs);
+  };
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
@@ -230,21 +269,21 @@ export const Checkout: React.FC = () => {
     
     // Address Validation
     if (useNewAddress) {
-      const { name, phone, street, country, state, district, zip } = newAddressForm;
-      if (!name || !phone || !street || !country || !state || !district || !zip) {
-        toast.error('Please complete all required shipping fields.');
-        return;
-      }
-      
-      const phoneRegex = /^[0-9]{10}$/;
-      if (!phoneRegex.test(phone.trim())) {
-        toast.error('Contact phone number must be exactly 10 digits.');
-        return;
-      }
+      const errs = validateAddressForm();
+      setAddressErrors(errs);
+      setTouchedFields({
+        name: true,
+        street: true,
+        country: true,
+        state: true,
+        district: true,
+        zip: true,
+        phone: true
+      });
 
-      const zipRegex = /^[0-9]{6}$/;
-      if (!zipRegex.test(zip.trim())) {
-        toast.error('ZIP / Postal Code must be exactly 6 digits.');
+      const firstErrMsg = Object.values(errs)[0];
+      if (firstErrMsg) {
+        toast.error(firstErrMsg);
         return;
       }
     } else {
@@ -519,11 +558,23 @@ export const Checkout: React.FC = () => {
                         <input
                           type="text"
                           required
-                          placeholder="Meet Chauhan"
+                          placeholder="Enter recipient full name"
                           value={newAddressForm.name}
-                          onChange={(e) => setNewAddressForm({ ...newAddressForm, name: e.target.value })}
-                          className="w-full border border-border-gray/80 px-4 py-3 text-sm rounded-xl text-dark focus:outline-none focus:border-primary font-sans bg-light-gray/10"
+                          onBlur={() => handleBlurField('name')}
+                          onChange={(e) => {
+                            const updated = { ...newAddressForm, name: e.target.value };
+                            setNewAddressForm(updated);
+                            if (touchedFields.name) setAddressErrors(validateAddressForm(updated));
+                          }}
+                          className={`w-full border px-4 py-3 text-sm rounded-xl text-dark focus:outline-none font-sans bg-light-gray/10 transition-colors ${
+                            touchedFields.name && addressErrors.name
+                              ? 'border-red-500 focus:border-red-500'
+                              : 'border-border-gray/80 focus:border-primary'
+                          }`}
                         />
+                        {touchedFields.name && addressErrors.name && (
+                          <span className="text-[10px] text-red-500 font-medium font-sans mt-1 block">{addressErrors.name}</span>
+                        )}
                       </div>
 
                       <div className="space-y-1.5 sm:col-span-2">
@@ -531,42 +582,78 @@ export const Checkout: React.FC = () => {
                         <input
                           type="text"
                           required
-                          placeholder="404 Luxury Tower, SG Road"
+                          placeholder="Enter house/flat no., street, area, landmark"
                           value={newAddressForm.street}
-                          onChange={(e) => setNewAddressForm({ ...newAddressForm, street: e.target.value })}
-                          className="w-full border border-border-gray/80 px-4 py-3 text-sm rounded-xl text-dark focus:outline-none focus:border-primary font-sans bg-light-gray/10"
+                          onBlur={() => handleBlurField('street')}
+                          onChange={(e) => {
+                            const updated = { ...newAddressForm, street: e.target.value };
+                            setNewAddressForm(updated);
+                            if (touchedFields.street) setAddressErrors(validateAddressForm(updated));
+                          }}
+                          className={`w-full border px-4 py-3 text-sm rounded-xl text-dark focus:outline-none font-sans bg-light-gray/10 transition-colors ${
+                            touchedFields.street && addressErrors.street
+                              ? 'border-red-500 focus:border-red-500'
+                              : 'border-border-gray/80 focus:border-primary'
+                          }`}
                         />
+                        {touchedFields.street && addressErrors.street && (
+                          <span className="text-[10px] text-red-500 font-medium font-sans mt-1 block">{addressErrors.street}</span>
+                        )}
                       </div>
 
                       {/* Cascaded Country -> State -> District dropdowns */}
                       <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <SearchableDropdown
-                          label="Country"
-                          required
-                          options={countryOptions}
-                          value={newAddressForm.country}
-                          onChange={handleCountryChange}
-                        />
+                        <div>
+                          <SearchableDropdown
+                            label="Country"
+                            required
+                            options={countryOptions}
+                            value={newAddressForm.country}
+                            onChange={(val) => {
+                              handleCountryChange(val);
+                              handleBlurField('country');
+                            }}
+                          />
+                          {touchedFields.country && addressErrors.country && (
+                            <span className="text-[10px] text-red-500 font-medium font-sans mt-1 block">{addressErrors.country}</span>
+                          )}
+                        </div>
 
-                        <SearchableDropdown
-                          label="State"
-                          required
-                          options={stateOptions}
-                          value={newAddressForm.state}
-                          onChange={handleStateChange}
-                          placeholder={newAddressForm.country ? "Select State" : "Choose Country first"}
-                          disabled={!newAddressForm.country}
-                        />
+                        <div>
+                          <SearchableDropdown
+                            label="State"
+                            required
+                            options={stateOptions}
+                            value={newAddressForm.state}
+                            onChange={(val) => {
+                              handleStateChange(val);
+                              handleBlurField('state');
+                            }}
+                            placeholder={newAddressForm.country ? "Select State" : "Choose Country first"}
+                            disabled={!newAddressForm.country}
+                          />
+                          {touchedFields.state && addressErrors.state && (
+                            <span className="text-[10px] text-red-500 font-medium font-sans mt-1 block">{addressErrors.state}</span>
+                          )}
+                        </div>
 
-                        <SearchableDropdown
-                          label="District"
-                          required
-                          options={districtOptions}
-                          value={newAddressForm.district}
-                          onChange={handleDistrictChange}
-                          placeholder={newAddressForm.state ? "Select District" : "Choose State first"}
-                          disabled={!newAddressForm.state}
-                        />
+                        <div>
+                          <SearchableDropdown
+                            label="District"
+                            required
+                            options={districtOptions}
+                            value={newAddressForm.district}
+                            onChange={(val) => {
+                              handleDistrictChange(val);
+                              handleBlurField('district');
+                            }}
+                            placeholder={newAddressForm.state ? "Select District" : "Choose State first"}
+                            disabled={!newAddressForm.state}
+                          />
+                          {touchedFields.district && addressErrors.district && (
+                            <span className="text-[10px] text-red-500 font-medium font-sans mt-1 block">{addressErrors.district}</span>
+                          )}
+                        </div>
                       </div>
 
                       <div className="space-y-1.5">
@@ -574,17 +661,27 @@ export const Checkout: React.FC = () => {
                         <input
                           type="text"
                           required
-                          placeholder="380054"
+                          placeholder="Enter 6-digit pincode"
                           value={newAddressForm.zip}
+                          onBlur={() => handleBlurField('zip')}
                           onChange={(e) => {
                             const val = e.target.value.replace(/\D/g, '');
                             if (val.length <= 6) {
-                              setNewAddressForm({ ...newAddressForm, zip: val });
+                              const updated = { ...newAddressForm, zip: val };
+                              setNewAddressForm(updated);
+                              if (touchedFields.zip) setAddressErrors(validateAddressForm(updated));
                             }
                           }}
                           maxLength={6}
-                          className="w-full border border-border-gray/80 px-4 py-3 text-sm rounded-xl text-dark focus:outline-none focus:border-primary font-sans bg-light-gray/10"
+                          className={`w-full border px-4 py-3 text-sm rounded-xl text-dark focus:outline-none font-sans bg-light-gray/10 transition-colors ${
+                            touchedFields.zip && addressErrors.zip
+                              ? 'border-red-500 focus:border-red-500'
+                              : 'border-border-gray/80 focus:border-primary'
+                          }`}
                         />
+                        {touchedFields.zip && addressErrors.zip && (
+                          <span className="text-[10px] text-red-500 font-medium font-sans mt-1 block">{addressErrors.zip}</span>
+                        )}
                       </div>
 
                       <div className="space-y-1.5">
@@ -592,17 +689,27 @@ export const Checkout: React.FC = () => {
                         <input
                           type="text"
                           required
-                          placeholder="9876543210"
+                          placeholder="Enter 10-digit mobile number"
                           value={newAddressForm.phone}
+                          onBlur={() => handleBlurField('phone')}
                           onChange={(e) => {
                             const val = e.target.value.replace(/\D/g, '');
                             if (val.length <= 10) {
-                              setNewAddressForm({ ...newAddressForm, phone: val });
+                              const updated = { ...newAddressForm, phone: val };
+                              setNewAddressForm(updated);
+                              if (touchedFields.phone) setAddressErrors(validateAddressForm(updated));
                             }
                           }}
                           maxLength={10}
-                          className="w-full border border-border-gray/80 px-4 py-3 text-sm rounded-xl text-dark focus:outline-none focus:border-primary font-sans bg-light-gray/10"
+                          className={`w-full border px-4 py-3 text-sm rounded-xl text-dark focus:outline-none font-sans bg-light-gray/10 transition-colors ${
+                            touchedFields.phone && addressErrors.phone
+                              ? 'border-red-500 focus:border-red-500'
+                              : 'border-border-gray/80 focus:border-primary'
+                          }`}
                         />
+                        {touchedFields.phone && addressErrors.phone && (
+                          <span className="text-[10px] text-red-500 font-medium font-sans mt-1 block">{addressErrors.phone}</span>
+                        )}
                       </div>
                     </div>
                   </div>

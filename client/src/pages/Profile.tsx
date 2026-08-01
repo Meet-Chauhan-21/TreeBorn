@@ -705,35 +705,21 @@ export const Profile: React.FC = () => {
                         const isCancelled = currentStatus === 'Cancelled';
                         const isRTO = order.deliveryStatus?.toLowerCase().includes('rto');
                         
-                        let steps = ['Placed', 'Shipment Created', 'AWB Generated', 'Pickup Scheduled', 'In Transit', 'Out For Delivery', 'Delivered'];
+                        let steps = ['Order Placed', 'Processing', 'In Transit', 'Delivered'];
                         if (isCancelled) {
-                          steps = ['Placed', 'Cancelled'];
+                          steps = ['Order Placed', 'Cancelled'];
                         } else if (isRTO) {
-                          steps = ['Placed', 'Shipment Created', 'AWB Generated', 'Pickup Scheduled', 'In Transit', 'Out For Delivery', 'RTO'];
+                          steps = ['Order Placed', 'In Transit', 'Returned'];
                         }
 
                         const getActiveIndex = (ord: any) => {
                           if (isCancelled) return 1;
-                          if (isRTO) {
-                            const status = String(ord.deliveryStatus || '').toLowerCase();
-                            if (status.includes('rto')) return 6;
-                            if (status.includes('out for delivery') || status.includes('out_for_delivery')) return 5;
-                            if (status.includes('transit') || status.includes('shipped')) return 4;
-                            if (ord.pickupScheduled) return 3;
-                            if (ord.awbCode) return 2;
-                            if (ord.shipmentCreated) return 1;
-                            return 0;
-                          }
-                          
                           const orderStatus = String(ord.status || '').toLowerCase();
                           const deliveryStatus = String(ord.deliveryStatus || '').toLowerCase();
                           
-                          if (orderStatus === 'delivered' || deliveryStatus.includes('deliver')) return 6;
-                          if (deliveryStatus.includes('out for delivery') || deliveryStatus.includes('out_for_delivery')) return 5;
-                          if (deliveryStatus.includes('transit') || deliveryStatus.includes('shipped') || orderStatus === 'shipped') return 4;
-                          if (ord.pickupScheduled) return 3;
-                          if (ord.awbCode) return 2;
-                          if (ord.shipmentCreated) return 1;
+                          if (orderStatus === 'delivered' || deliveryStatus.includes('delivered')) return 3;
+                          if (deliveryStatus.includes('out for delivery') || deliveryStatus.includes('out_for_delivery') || deliveryStatus.includes('transit') || deliveryStatus.includes('shipped') || orderStatus === 'shipped') return 2;
+                          if (ord.shipmentCreated || ord.awbCode || ord.pickupScheduled || orderStatus === 'confirmed' || orderStatus === 'processing') return 1;
                           return 0;
                         };
                         
@@ -742,35 +728,35 @@ export const Profile: React.FC = () => {
                         return (
                           <div
                             key={order.orderNumber}
-                            className="border border-border-gray/40 rounded-3xl overflow-hidden shadow-xs hover:border-primary/10 transition-all duration-300 hover:shadow-sm bg-white"
+                            className="border border-border-gray/40 rounded-2xl overflow-hidden bg-white transition-all duration-200"
                           >
                             {/* Collapsible Order Header bar */}
                             <div 
                               onClick={() => setExpandedOrderId(isExpanded ? null : orderId)}
-                              className="bg-light-blue/10 border-b border-border-gray/30 p-4 sm:px-6 flex flex-wrap justify-between items-center gap-3 cursor-pointer hover:bg-light-blue/15 transition-all"
+                              className="bg-slate-50/80 hover:bg-slate-100/70 p-4 sm:px-6 flex flex-wrap justify-between items-center gap-3 cursor-pointer transition-colors"
                             >
-                              <div className="flex gap-4 sm:gap-8 text-xs text-gray-500 font-sans">
+                              <div className="flex flex-wrap gap-4 sm:gap-8 text-xs text-gray-500 font-sans">
                                 <div>
-                                  <span className="block font-medium text-gray-400">Order Placed</span>
+                                  <span className="block text-[10px] font-medium uppercase tracking-wider text-gray-400">Order Placed</span>
                                   <span className="font-semibold text-dark mt-0.5 block">{formatOrderDate(order.createdAt)}</span>
                                 </div>
                                 <div>
-                                  <span className="block font-medium text-gray-400">Order ID</span>
+                                  <span className="block text-[10px] font-medium uppercase tracking-wider text-gray-400">Order ID</span>
                                   <span className="font-semibold text-dark mt-0.5 block">{order.orderNumber}</span>
                                 </div>
                                 <div>
-                                  <span className="block font-medium text-gray-400">Grand Total</span>
+                                  <span className="block text-[10px] font-medium uppercase tracking-wider text-gray-400">Grand Total</span>
                                   <span className="font-bold text-primary mt-0.5 block">₹{order.totals.total.toFixed(2)}</span>
                                 </div>
                               </div>
 
-                              <div className="flex items-center gap-4">
-                                <span className={`inline-flex items-center px-3 py-0.5 rounded-full text-[9px] font-sans font-bold uppercase tracking-wider ${
+                              <div className="flex items-center gap-3">
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[9.5px] font-sans font-bold uppercase tracking-wider ${
                                   currentStatus === 'Pending'
-                                    ? 'bg-amber-50 text-amber-700 border border-amber-200/50'
+                                    ? 'bg-amber-50 text-amber-700 border border-amber-200'
                                     : currentStatus === 'Confirmed'
-                                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-250/50'
-                                      : 'bg-rose-50 text-rose-700 border border-rose-200/50'
+                                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                      : 'bg-rose-50 text-rose-700 border border-rose-200'
                                 }`}>
                                   {currentStatus}
                                 </span>
@@ -792,12 +778,12 @@ export const Profile: React.FC = () => {
 
                             {/* Collapsible Content */}
                             {isExpanded && (
-                              <div className="p-5 sm:p-6 space-y-6 border-t border-border-gray/10 bg-white">
-                                {/* Professional Amazon/Flipkart Stepper */}
-                                <div className="border border-border-gray/30 rounded-2xl p-6 bg-slate-50/50 space-y-6">
-                                  <div className="flex flex-wrap justify-between items-center gap-4">
+                              <div className="p-5 sm:p-6 space-y-6 border-t border-border-gray/20 bg-white">
+                                {/* Professional Clean Stepper */}
+                                <div className="space-y-4">
+                                  <div className="flex flex-wrap justify-between items-center gap-2">
                                     <h4 className="text-[10px] font-sans font-bold uppercase tracking-widest text-gray-400">
-                                      Delivery Status Tracking
+                                      Delivery Status
                                     </h4>
                                     
                                     {order.shipmentCreated && (
@@ -814,12 +800,7 @@ export const Profile: React.FC = () => {
                                         )}
                                         {order.deliveryStatus && (
                                           <div>
-                                            <span className="text-gray-400 font-medium">Shipment Status:</span> <span className="font-semibold text-primary">{order.deliveryStatus}</span>
-                                          </div>
-                                        )}
-                                        {(order.shiprocketResponse?.etd || order.shiprocketResponse?.response?.etd) && (
-                                          <div>
-                                            <span className="text-gray-400 font-medium">Est. Delivery:</span> <span className="font-semibold text-dark">{new Date(order.shiprocketResponse?.etd || order.shiprocketResponse?.response?.etd).toLocaleDateString()}</span>
+                                            <span className="text-gray-400 font-medium">Status:</span> <span className="font-semibold text-primary">{order.deliveryStatus}</span>
                                           </div>
                                         )}
                                       </div>
@@ -827,47 +808,115 @@ export const Profile: React.FC = () => {
                                   </div>
 
                                   {isCancelled ? (
-                                    <div className="bg-rose-50/50 border border-rose-200/40 rounded-2xl p-4 flex items-center gap-3 text-rose-800 font-sans text-xs">
+                                    <div className="bg-rose-50 border border-rose-100 rounded-xl p-4 flex items-center gap-3 text-rose-800 font-sans text-xs">
                                       <AlertTriangle size={18} className="text-rose-500 shrink-0" />
                                       <div>
                                         <p className="font-bold">Order Cancelled</p>
-                                        <p className="mt-0.5 text-rose-600/80">This order has been cancelled. If any payment was captured, it will be refunded back to the source account.</p>
+                                        <p className="mt-0.5 text-rose-600/80">This order has been cancelled. Any captured payment will be refunded to your account.</p>
                                       </div>
                                     </div>
                                   ) : (
-                                    <div className="py-6 px-4">
-                                      <div className="relative flex items-center justify-between w-full z-0">
-                                        {/* Progress Bar line background */}
-                                        <div className="absolute left-0 right-0 top-[16px] -translate-y-1/2 h-1 bg-slate-200/80 z-0 rounded-full" />
-                                        <div 
-                                          className="absolute left-0 top-[16px] -translate-y-1/2 h-1 bg-primary transition-all duration-500 z-0 rounded-full" 
-                                          style={{ width: `${(activeIndex / (steps.length - 1)) * 100}%` }}
-                                        />
-                                        
+                                    <>
+                                      {/* Mobile Vertical Status Stepper (Amazon & Flipkart Style) */}
+                                      <div className="sm:hidden space-y-4 py-3 px-4 bg-slate-50/70 rounded-2xl border border-slate-100 font-sans">
                                         {steps.map((step, idx) => {
                                           const isActive = idx <= activeIndex;
                                           const isCurrent = idx === activeIndex;
+                                          const isLast = idx === steps.length - 1;
+
                                           return (
-                                            <div key={step} className="flex flex-col items-center relative z-10">
-                                              <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all shadow-3xs ${
-                                                isActive 
-                                                  ? 'bg-primary border-primary text-white scale-110' 
-                                                  : 'bg-white border-slate-200 text-slate-400'
-                                              }`}>
-                                                {isActive ? <CheckCircle size={14} className="text-white" /> : <div className="w-2 h-2 bg-slate-200 rounded-full" />}
+                                            <div key={step} className="flex items-start gap-3.5 relative">
+                                              {/* Connecting vertical line */}
+                                              {!isLast && (
+                                                <div
+                                                  className={`absolute left-[13px] top-[26px] bottom-[-16px] w-[2px] rounded-full transition-colors ${
+                                                    idx < activeIndex ? 'bg-primary' : 'bg-slate-200'
+                                                  }`}
+                                                />
+                                              )}
+
+                                              {/* Circle Icon */}
+                                              <div
+                                                className={`w-7 h-7 rounded-full border-2 flex items-center justify-center shrink-0 z-10 transition-all ${
+                                                  isActive
+                                                    ? 'bg-primary border-primary text-white shadow-xs'
+                                                    : 'bg-white border-slate-300 text-slate-400'
+                                                }`}
+                                              >
+                                                {isActive ? <CheckCircle size={13} className="text-white" /> : <div className="w-2 h-2 bg-slate-300 rounded-full" />}
                                               </div>
-                                              <span className={`text-[8px] sm:text-[9px] font-bold uppercase tracking-wider mt-3 font-display text-center ${
-                                                isCurrent 
-                                                  ? 'text-primary font-extrabold' 
-                                                  : isActive ? 'text-slate-800' : 'text-slate-400'
-                                              }`}>
-                                                {step}
-                                              </span>
+
+                                              {/* Step Title & Subtitle */}
+                                              <div className="pt-0.5 min-w-0 flex-1">
+                                                <p
+                                                  className={`text-xs font-bold uppercase tracking-wider ${
+                                                    isCurrent
+                                                      ? 'text-primary font-extrabold'
+                                                      : isActive
+                                                        ? 'text-slate-900'
+                                                        : 'text-slate-400'
+                                                  }`}
+                                                >
+                                                  {step}
+                                                </p>
+                                                {isCurrent && (
+                                                  <p className="text-[10px] font-semibold text-emerald-600 mt-0.5 font-sans">
+                                                    {step === 'Delivered'
+                                                      ? 'Package Delivered Successfully'
+                                                      : step === 'In Transit'
+                                                        ? 'Package is on the way'
+                                                        : step === 'Processing'
+                                                          ? 'Order being packed & processed'
+                                                          : 'Order placed & confirmed'}
+                                                  </p>
+                                                )}
+                                              </div>
                                             </div>
                                           );
                                         })}
                                       </div>
-                                    </div>
+
+                                      {/* Desktop Horizontal Stepper Bar */}
+                                      <div className="hidden sm:block py-4 px-2 bg-slate-50/60 rounded-2xl border border-slate-100">
+                                        <div className="relative flex items-center justify-between w-full max-w-2xl mx-auto px-6 z-0">
+                                          {/* Progress Bar line background */}
+                                          <div className="absolute left-8 right-8 top-[16px] -translate-y-1/2 h-1 bg-slate-200 z-0 rounded-full" />
+                                          <div
+                                            className="absolute left-8 top-[16px] -translate-y-1/2 h-1 bg-primary transition-all duration-500 z-0 rounded-full"
+                                            style={{ width: `${(activeIndex / (steps.length - 1)) * 90}%` }}
+                                          />
+
+                                          {steps.map((step, idx) => {
+                                            const isActive = idx <= activeIndex;
+                                            const isCurrent = idx === activeIndex;
+                                            return (
+                                              <div key={step} className="flex flex-col items-center relative z-10 min-w-0 px-2">
+                                                <div
+                                                  className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${
+                                                    isActive
+                                                      ? 'bg-primary border-primary text-white scale-105 shadow-sm'
+                                                      : 'bg-white border-slate-300 text-slate-400'
+                                                  }`}
+                                                >
+                                                  {isActive ? <CheckCircle size={14} className="text-white" /> : <div className="w-2 h-2 bg-slate-300 rounded-full" />}
+                                                </div>
+                                                <span
+                                                  className={`text-[10px] font-bold uppercase tracking-wider mt-2.5 font-sans text-center leading-tight ${
+                                                    isCurrent
+                                                      ? 'text-primary font-extrabold'
+                                                      : isActive
+                                                        ? 'text-slate-800'
+                                                        : 'text-slate-400'
+                                                  }`}
+                                                >
+                                                  {step}
+                                                </span>
+                                              </div>
+                                            );
+                                          })}
+                                        </div>
+                                      </div>
+                                    </>
                                   )}
 
                                   {order.trackingUrl && (
@@ -876,7 +925,7 @@ export const Profile: React.FC = () => {
                                         href={order.trackingUrl}
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="inline-flex items-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold px-4 py-2.5 rounded-full transition duration-200 focus:outline-none"
+                                        className="inline-flex items-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold px-4 py-2 rounded-full transition duration-200 focus:outline-none"
                                       >
                                         Track Shipment Live
                                       </a>
@@ -884,55 +933,55 @@ export const Profile: React.FC = () => {
                                   )}
                                 </div>
 
-                                {/* Order Details Grid */}
+                                {/* Order Items & Shipping Details Grid */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
                                   {/* Left: Items Summary */}
-                                  <div className="space-y-4">
+                                  <div className="space-y-3">
                                     <h4 className="text-[10px] font-sans font-bold uppercase tracking-widest text-gray-400">
-                                      Order Items Breakdown
+                                      Order Items ({order.items?.length || 0})
                                     </h4>
-                                    <div className="border border-border-gray/30 rounded-2xl p-4 divide-y divide-border-gray/20 bg-white">
+                                    <div className="divide-y divide-gray-100">
                                       {order.items.map((item, idx) => (
                                         <div
                                           key={`${item.productId}-${idx}`}
-                                          className="py-3 first:pt-0 last:pb-0 flex justify-between items-center text-xs font-sans"
+                                          className="py-2.5 first:pt-0 last:pb-0 flex justify-between items-center text-xs font-sans"
                                         >
                                           <div>
                                             <h5 className="font-semibold text-dark leading-tight">{item.name}</h5>
-                                            <div className="flex gap-2 text-[10px] text-gray-400 mt-1">
+                                            <div className="flex gap-2 text-[10px] text-gray-400 mt-0.5">
                                               <span>Size: {item.selectedSize || '50ml'}</span>
                                               <span>&bull;</span>
-                                              <span>Quantity: {item.quantity}</span>
+                                              <span>Qty: {item.quantity}</span>
                                             </div>
                                           </div>
-                                          <span className="font-bold text-primary whitespace-nowrap">₹{item.price.toFixed(2)}</span>
+                                          <span className="font-bold text-primary whitespace-nowrap ml-4">₹{item.price.toFixed(2)}</span>
                                         </div>
                                       ))}
                                     </div>
                                   </div>
 
                                   {/* Right: Shipping Address & Summary totals */}
-                                  <div className="space-y-6">
-                                    {/* Shipping Address Card */}
-                                    <div className="space-y-3">
+                                  <div className="space-y-5">
+                                    {/* Shipping Address */}
+                                    <div className="space-y-2">
                                       <h4 className="text-[10px] font-sans font-bold uppercase tracking-widest text-gray-400">
-                                        Shipping Destination
+                                        Shipping Address
                                       </h4>
-                                      <div className="border border-border-gray/30 rounded-2xl p-4 text-xs text-gray-600 bg-white leading-relaxed">
+                                      <div className="text-xs text-gray-600 font-sans leading-relaxed">
                                         <p className="font-semibold text-dark">{order.shippingAddress?.name || user.name}</p>
-                                        <p className="text-gray-400 mt-0.5">{order.shippingAddress?.phone || user.phone}</p>
-                                        <p className="mt-2 text-gray-550">
+                                        <p className="text-gray-400 text-[11px]">{order.shippingAddress?.phone || user.phone}</p>
+                                        <p className="mt-1 text-gray-550">
                                           {order.shippingAddress?.street}, {order.shippingAddress?.district}, {order.shippingAddress?.state}, {order.shippingAddress?.country} - {order.shippingAddress?.zip}
                                         </p>
                                       </div>
                                     </div>
 
                                     {/* Financial Totals Breakdown */}
-                                    <div className="space-y-3">
+                                    <div className="space-y-2 pt-2 border-t border-gray-100">
                                       <h4 className="text-[10px] font-sans font-bold uppercase tracking-widest text-gray-400">
-                                        Payment & Invoice Totals
+                                        Payment Breakdown
                                       </h4>
-                                      <div className="border border-border-gray/30 rounded-2xl p-4 space-y-2.5 text-xs text-gray-650 bg-white">
+                                      <div className="space-y-1.5 text-xs text-gray-650 font-sans">
                                         <div className="flex justify-between">
                                           <span>Payment Method</span>
                                           <span className="font-semibold uppercase text-dark">
@@ -946,15 +995,6 @@ export const Profile: React.FC = () => {
                                           }`}>{order.payment?.status || 'Pending'}</span>
                                         </div>
                                         <div className="flex justify-between">
-                                          <span>Transaction ID</span>
-                                          <span className="font-mono text-dark text-[11px]">{order.payment?.transactionId || order.payment?.razorpayPaymentId || 'N/A'}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                          <span>Paid Date</span>
-                                          <span className="text-gray-700">{order.payment?.paidAt ? new Date(order.payment.paidAt).toLocaleDateString() : 'N/A'}</span>
-                                        </div>
-                                        <hr className="border-border-gray/20 my-1" />
-                                        <div className="flex justify-between">
                                           <span>Subtotal</span>
                                           <span>₹{order.totals.subtotal.toFixed(2)}</span>
                                         </div>
@@ -962,13 +1002,8 @@ export const Profile: React.FC = () => {
                                           <span>Shipping Fee</span>
                                           <span>₹{order.totals.shipping.toFixed(2)}</span>
                                         </div>
-                                        <div className="flex justify-between">
-                                          <span>Taxes / GST</span>
-                                          <span>₹{order.totals.tax.toFixed(2)}</span>
-                                        </div>
-                                        <hr className="border-border-gray/40 my-1" />
-                                        <div className="flex justify-between font-bold text-sm">
-                                          <span className="text-dark">Amount Paid</span>
+                                        <div className="flex justify-between font-bold text-sm pt-1 border-t border-gray-100">
+                                          <span className="text-dark">Total Amount</span>
                                           <span className="text-primary">₹{order.totals.total.toFixed(2)}</span>
                                         </div>
                                       </div>
@@ -977,10 +1012,10 @@ export const Profile: React.FC = () => {
                                 </div>
 
                                 {/* Download Invoice Button inside details */}
-                                <div className="flex justify-end pt-2 border-t border-border-gray/10">
+                                <div className="flex justify-end pt-3 border-t border-border-gray/20">
                                   <button
                                     onClick={() => handleDownloadInvoice(order)}
-                                    className="bg-primary hover:bg-primary-light text-white text-xs font-bold px-5 py-3 rounded-full flex items-center gap-2 cursor-pointer shadow-3xs transition-all active:scale-[0.98]"
+                                    className="bg-primary hover:bg-primary-light text-white text-xs font-bold px-5 py-2.5 rounded-full flex items-center gap-2 cursor-pointer shadow-3xs transition-all active:scale-[0.98]"
                                   >
                                     <Download size={14} />
                                     <span>Download PDF Invoice</span>
@@ -1066,7 +1101,7 @@ export const Profile: React.FC = () => {
                           <input
                             type="text"
                             name="name"
-                            placeholder="Priyesh Patel"
+                            placeholder="Enter recipient full name"
                             value={addressFormik.values.name}
                             onChange={addressFormik.handleChange}
                             onBlur={addressFormik.handleBlur}
@@ -1089,7 +1124,7 @@ export const Profile: React.FC = () => {
                           <input
                             type="text"
                             name="phone"
-                            placeholder="9876543210"
+                            placeholder="Enter 10-digit mobile number"
                             value={addressFormik.values.phone}
                             onChange={(e) => {
                               const val = e.target.value.replace(/\D/g, '');
@@ -1119,7 +1154,7 @@ export const Profile: React.FC = () => {
                         <input
                           type="text"
                           name="street"
-                          placeholder="404 Luxury Tower, SG Highway"
+                          placeholder="Enter house/flat no., street, area"
                           value={addressFormik.values.street}
                           onChange={addressFormik.handleChange}
                           onBlur={addressFormik.handleBlur}
@@ -1185,7 +1220,7 @@ export const Profile: React.FC = () => {
                           <input
                             type="text"
                             name="zip"
-                            placeholder="380054"
+                            placeholder="Enter 6-digit pincode"
                             value={addressFormik.values.zip}
                             onChange={(e) => {
                               const val = e.target.value.replace(/\D/g, '');

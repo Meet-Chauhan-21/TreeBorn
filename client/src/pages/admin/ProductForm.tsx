@@ -329,7 +329,7 @@ const ProductForm: React.FC = () => {
               price: product.price.toString(),
               oldPrice: product.oldPrice?.toString() || '',
               discount: product.discount?.toString() || '',
-              stock: product.stock?.toString() || '',
+              stock: product.stock !== undefined && product.stock !== null ? product.stock.toString() : '0',
               sku: product.sku || '',
               status: product.status || 'active',
               isBestSeller: Boolean(product.isBestSeller),

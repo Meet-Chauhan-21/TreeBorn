@@ -221,6 +221,34 @@ const updateProduct = async (req, res) => {
   }
 };
 
+// @desc    Quick update product stock
+// @route   PATCH /api/admin/products/:id/stock
+// @access  Private/Admin
+const updateProductStock = async (req, res) => {
+  try {
+    const { stock } = req.body;
+    if (stock === undefined || stock === null || Number.isNaN(Number(stock)) || Number(stock) < 0) {
+      return res.status(400).json({ message: 'Valid non-negative stock number is required.' });
+    }
+
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found.' });
+    }
+
+    product.stock = parseInt(stock, 10);
+    const updatedProduct = await product.save();
+
+    return res.status(200).json({
+      message: `Stock updated to ${updatedProduct.stock} for "${updatedProduct.name}"`,
+      product: updatedProduct
+    });
+  } catch (error) {
+    console.error('Update Product Stock Error:', error);
+    return res.status(500).json({ message: 'Server error. Failed to update stock.' });
+  }
+};
+
 // @desc    Delete product
 // @route   DELETE /api/admin/products/:id
 // @access  Private/Admin
@@ -477,6 +505,7 @@ module.exports = {
   getAllProductsAdmin,
   createProduct,
   updateProduct,
+  updateProductStock,
   deleteProduct,
   copyProduct,
   uploadImage,

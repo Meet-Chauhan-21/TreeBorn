@@ -268,14 +268,32 @@ export const ProductDetail: React.FC = () => {
                   {product.description}
                 </p>
 
-                {/* Volume Display */}
-                <div className="pt-2 flex items-center gap-2">
-                  <span className="text-xs font-semibold text-slate-500 font-display uppercase tracking-wider">
-                    Volume:
-                  </span>
-                  <span className="px-3.5 py-1 bg-slate-100 border border-slate-200/50 rounded-full text-xs font-semibold text-slate-700 font-sans">
-                    {product.volume || '50ml'}
-                  </span>
+                {/* Volume & Stock Status Display */}
+                <div className="pt-2 flex items-center gap-3 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-slate-500 font-display uppercase tracking-wider">
+                      Volume:
+                    </span>
+                    <span className="px-3.5 py-1 bg-slate-100 border border-slate-200/50 rounded-full text-xs font-semibold text-slate-700 font-sans">
+                      {product.volume || '50ml'}
+                    </span>
+                  </div>
+
+                  {product.stock !== undefined && (
+                    <span className={`px-3.5 py-1 rounded-full text-xs font-bold font-sans uppercase tracking-wider border ${
+                      product.stock <= 0
+                        ? 'bg-rose-50 text-rose-700 border-rose-200'
+                        : product.stock <= 10
+                          ? 'bg-amber-50 text-amber-700 border-amber-200'
+                          : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    }`}>
+                      {product.stock <= 0
+                        ? 'Out of Stock'
+                        : product.stock <= 10
+                          ? `Only ${product.stock} left in stock`
+                          : 'In Stock'}
+                    </span>
+                  )}
                 </div>
 
                 {/* Premium Trust Indicators */}
@@ -300,14 +318,16 @@ export const ProductDetail: React.FC = () => {
                   <div className="flex items-center border border-border-gray/60 rounded-full bg-light-gray overflow-hidden">
                     <button
                       onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                      className="p-3.5 hover:bg-gray-200 text-dark/70 transition-colors focus:outline-none cursor-pointer"
+                      disabled={!product.stock || product.stock <= 0}
+                      className="p-3.5 hover:bg-gray-200 text-dark/70 transition-colors focus:outline-none cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       <Minus size={13} strokeWidth={2.5} />
                     </button>
                     <span className="px-4 text-sm font-semibold text-dark font-sans">{quantity}</span>
                     <button
-                      onClick={() => setQuantity((q) => q + 1)}
-                      className="p-3.5 hover:bg-gray-200 text-dark/70 transition-colors focus:outline-none cursor-pointer"
+                      onClick={() => setQuantity((q) => Math.min(product.stock ?? 99, q + 1))}
+                      disabled={!product.stock || product.stock <= 0 || (product.stock !== undefined && quantity >= product.stock)}
+                      className="p-3.5 hover:bg-gray-200 text-dark/70 transition-colors focus:outline-none cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       <Plus size={13} strokeWidth={2.5} />
                     </button>
@@ -316,10 +336,15 @@ export const ProductDetail: React.FC = () => {
                   {/* Add to Bag CTA */}
                   <button
                     onClick={handleAddToCart}
-                    className="flex-grow bg-primary hover:bg-primary-light active:scale-[0.99] text-white py-4 px-3 sm:px-6 rounded-full font-display font-semibold text-[10px] sm:text-xs tracking-wider uppercase flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer shadow-md transition-all duration-300 whitespace-nowrap"
+                    disabled={!product.stock || product.stock <= 0}
+                    className={`flex-grow py-4 px-3 sm:px-6 rounded-full font-display font-semibold text-[10px] sm:text-xs tracking-wider uppercase flex items-center justify-center gap-1.5 sm:gap-2 transition-all duration-300 whitespace-nowrap ${
+                      !product.stock || product.stock <= 0
+                        ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none'
+                        : 'bg-primary hover:bg-primary-light active:scale-[0.99] text-white cursor-pointer shadow-md'
+                    }`}
                   >
                     <ShoppingBag size={14} />
-                    <span>Add to Bag</span>
+                    <span>{!product.stock || product.stock <= 0 ? 'Out of Stock' : 'Add to Bag'}</span>
                   </button>
 
                   {/* Wishlist CTA */}

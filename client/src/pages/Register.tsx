@@ -303,7 +303,7 @@ export const Register: React.FC = () => {
                             <input
                               type="text"
                               name="name"
-                              placeholder="Priyesh Patel"
+                              placeholder="Enter your full name"
                               value={formik.values.name}
                               onChange={formik.handleChange}
                               onBlur={formik.handleBlur}
@@ -329,7 +329,7 @@ export const Register: React.FC = () => {
                             <input
                               type="email"
                               name="email"
-                              placeholder="meet.chauhan@example.com"
+                              placeholder="name@example.com"
                               value={formik.values.email}
                               onChange={formik.handleChange}
                               onBlur={formik.handleBlur}
@@ -355,7 +355,7 @@ export const Register: React.FC = () => {
                             <input
                               type="text"
                               name="phone"
-                              placeholder="9876543210"
+                              placeholder="Enter 10-digit mobile number"
                               value={formik.values.phone}
                               onChange={formik.handleChange}
                               onBlur={formik.handleBlur}

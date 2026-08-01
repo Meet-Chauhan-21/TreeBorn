@@ -532,6 +532,11 @@ export const Category: React.FC = () => {
 
                             {/* Badges */}
                             <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
+                              {product.stock !== undefined && product.stock <= 0 ? (
+                                <span className="bg-rose-600 text-white text-[9px] font-display font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-sm">
+                                  Out of Stock
+                                </span>
+                              ) : null}
                               {product.discount && product.discount > 0 ? (
                                 <span className="bg-primary text-white text-[9px] font-display font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shadow-sm">
                                   -{product.discount}%
@@ -578,10 +583,15 @@ export const Category: React.FC = () => {
                                 onClick={(e) => handleAddToCart(e, product)}
                                 variant="primary"
                                 size="sm"
-                                className="w-full shadow-lg text-[10px]"
+                                disabled={product.stock !== undefined && product.stock <= 0}
+                                className={`w-full shadow-lg text-[10px] ${
+                                  product.stock !== undefined && product.stock <= 0
+                                    ? '!bg-slate-300 !text-slate-500 !border-slate-300 cursor-not-allowed'
+                                    : ''
+                                }`}
                                 leftIcon={<ShoppingBag size={12} />}
                               >
-                                Add to Bag
+                                {product.stock !== undefined && product.stock <= 0 ? 'Out of Stock' : 'Add to Bag'}
                               </Button>
                             </div>
                           </div>

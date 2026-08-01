@@ -281,7 +281,7 @@ export const Login: React.FC = () => {
                         <input
                           type="email"
                           name="email"
-                          placeholder="meet.chauhan@example.com"
+                          placeholder="name@example.com"
                           value={formik.values.email}
                           onChange={formik.handleChange}
                           onBlur={formik.handleBlur}

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { Product, Category, AppSettings, CartItem } from '../types';
 import { fallbackProducts, fetchPublicProducts } from '../services/products';
 import { API_BASE_URL } from '../config';
+import { toast } from 'sonner';
 
 interface StoreContextType {
   cart: CartItem[];
@@ -206,21 +207,42 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   const addToCart = (product: Product, quantity: number, size?: string) => {
+    if (product.stock !== undefined && product.stock <= 0) {
+      toast.error(`"${product.name}" is currently out of stock.`);
+      return;
+    }
+
     const finalSize = size || product.volume || '50ml';
+    const maxStock = product.stock ?? Infinity;
+
     setCart((prevCart) => {
       const existingIdx = prevCart.findIndex(
         (item) => item.product.id === product.id && item.selectedSize === finalSize
       );
 
       if (existingIdx > -1) {
+        const existingQty = prevCart[existingIdx].quantity;
+        const newQty = existingQty + quantity;
+        if (newQty > maxStock) {
+          toast.error(`Only ${maxStock} units of "${product.name}" are available in stock.`);
+          return prevCart.map((item, idx) =>
+            idx === existingIdx
+              ? { ...item, quantity: maxStock }
+              : item
+          );
+        }
         return prevCart.map((item, idx) =>
           idx === existingIdx
-            ? { ...item, quantity: item.quantity + quantity }
+            ? { ...item, quantity: newQty }
             : item
         );
       }
 
-      return [...prevCart, { product, quantity, selectedSize: finalSize }];
+      const initialQty = Math.min(quantity, maxStock);
+      if (quantity > maxStock) {
+        toast.error(`Only ${maxStock} units of "${product.name}" are available in stock.`);
+      }
+      return [...prevCart, { product, quantity: initialQty, selectedSize: finalSize }];
     });
   };
 
@@ -235,12 +257,19 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       removeFromCart(productId, size);
       return;
     }
+
     setCart((prevCart) =>
-      prevCart.map((item) =>
-        item.product.id === productId && item.selectedSize === size
-          ? { ...item, quantity }
-          : item
-      )
+      prevCart.map((item) => {
+        if (item.product.id === productId && item.selectedSize === size) {
+          const maxStock = item.product.stock ?? Infinity;
+          if (quantity > maxStock) {
+            toast.error(`Only ${maxStock} units available in stock.`);
+            return { ...item, quantity: maxStock };
+          }
+          return { ...item, quantity };
+        }
+        return item;
+      })
     );
   };
 

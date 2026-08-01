@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Plus, Edit, Trash2, Copy } from 'lucide-react';
+import { Search, Filter, Plus, Edit, Trash2, Copy, Package } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import AdminLayout from '../../components/admin/AdminLayout';
@@ -30,6 +30,56 @@ const ProductsList: React.FC = () => {
   // Copy Modal States
   const [copyModalOpen, setCopyModalOpen] = useState(false);
   const [itemToCopy, setItemToCopy] = useState<string | null>(null);
+
+  // Quick Stock Edit Modal States
+  const [stockModalOpen, setStockModalOpen] = useState(false);
+  const [productToStock, setProductToStock] = useState<any | null>(null);
+  const [newStockValue, setNewStockValue] = useState<string>('0');
+  const [stockUpdating, setStockUpdating] = useState(false);
+
+  const handleStockEditTrigger = (product: any) => {
+    setProductToStock(product);
+    setNewStockValue(String(product.stock ?? 0));
+    setStockModalOpen(true);
+  };
+
+  const confirmQuickStockUpdate = async () => {
+    if (!productToStock) return;
+    const num = parseInt(newStockValue, 10);
+    if (Number.isNaN(num) || num < 0) {
+      toast.error('Please enter a valid non-negative integer for stock.');
+      return;
+    }
+
+    setStockUpdating(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/products/${productToStock._id}/stock`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ stock: num })
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        toast.success(data.message || 'Stock updated successfully');
+        setProducts(prev =>
+          prev.map(p => (p._id === productToStock._id ? { ...p, stock: num } : p))
+        );
+        setStockModalOpen(false);
+        setProductToStock(null);
+      } else {
+        toast.error(data.message || 'Failed to update stock');
+      }
+    } catch (err) {
+      console.error('Quick stock update error:', err);
+      toast.error('Failed to update product stock');
+    } finally {
+      setStockUpdating(false);
+    }
+  };
 
   const { accessToken } = useAuth();
 
@@ -168,13 +218,24 @@ const ProductsList: React.FC = () => {
       key: 'stock',
       header: 'Stock',
       render: (item: any) => (
-        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider border ${
-          item.stock < 10
-            ? 'bg-rose-50 text-rose-700 border-rose-200'
-            : 'bg-emerald-50 text-emerald-700 border-emerald-250'
-        }`}>
-          {item.stock} Left
-        </span>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleStockEditTrigger(item);
+          }}
+          title="Click to quick edit stock"
+          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider border cursor-pointer hover:scale-105 transition-transform ${
+            (item.stock ?? 0) === 0
+              ? 'bg-rose-50 text-rose-700 border-rose-200'
+              : (item.stock ?? 0) <= 10
+                ? 'bg-amber-50 text-amber-700 border-amber-200'
+                : 'bg-emerald-50 text-emerald-700 border-emerald-250'
+          }`}
+        >
+          <Package size={11} />
+          <span>{item.stock ?? 0} Left</span>
+        </button>
       ),
     },
     {
@@ -188,6 +249,17 @@ const ProductsList: React.FC = () => {
       className: 'text-right',
       render: (item: any) => (
         <div className="flex items-center justify-end gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            icon={Package}
+            className="!text-amber-600 hover:!text-amber-800 hover:!bg-amber-50"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleStockEditTrigger(item);
+            }}
+            title="Quick Edit Stock"
+          />
           <Button
             variant="ghost"
             size="sm"
@@ -431,6 +503,76 @@ const ProductsList: React.FC = () => {
                 className="flex-1 py-2.5 px-4 bg-blue-600 hover:bg-blue-755 text-white font-semibold text-xs rounded-xl transition-colors cursor-pointer focus:outline-none"
               >
                 Copy
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Quick Stock Edit Modal */}
+      {stockModalOpen && productToStock && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4 border border-gray-100 text-left">
+            <div className="flex items-center gap-3 border-b border-gray-100 pb-3">
+              <div className="w-10 h-10 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center shrink-0">
+                <Package size={20} />
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-base font-bold text-gray-900 truncate">{productToStock.name}</h3>
+                <p className="text-xs text-gray-400 font-sans">Quick Restock / Stock Update</p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-gray-700 font-sans block">
+                Current Stock Quantity (Units)
+              </label>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setNewStockValue((v) => String(Math.max(0, parseInt(v || '0', 10) - 1)))}
+                  className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-lg flex items-center justify-center"
+                >
+                  -
+                </button>
+                <input
+                  type="number"
+                  min="0"
+                  value={newStockValue}
+                  onChange={(e) => setNewStockValue(e.target.value)}
+                  className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-center font-bold text-lg text-gray-900 focus:outline-none focus:border-amber-500 font-mono"
+                />
+                <button
+                  type="button"
+                  onClick={() => setNewStockValue((v) => String(parseInt(v || '0', 10) + 1))}
+                  className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-lg flex items-center justify-center"
+                >
+                  +
+                </button>
+              </div>
+              <p className="text-[10px] text-gray-400 font-sans mt-1">
+                Enter 0 for Out of Stock, or any positive number for total inventory.
+              </p>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setStockModalOpen(false);
+                  setProductToStock(null);
+                }}
+                className="flex-1 py-2.5 px-4 bg-gray-50 hover:bg-gray-100 text-gray-700 font-semibold text-xs rounded-xl border border-gray-200 transition-colors cursor-pointer focus:outline-none"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={stockUpdating}
+                onClick={confirmQuickStockUpdate}
+                className="flex-1 py-2.5 px-4 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl transition-colors cursor-pointer focus:outline-none flex items-center justify-center gap-1.5"
+              >
+                {stockUpdating ? 'Saving...' : 'Update Stock'}
               </button>
             </div>
           </div>

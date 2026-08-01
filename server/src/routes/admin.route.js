@@ -89,6 +89,7 @@ router.get('/products', productController.getAllProductsAdmin);
 router.post('/products', productController.createProduct);
 router.post('/products/:id/copy', productController.copyProduct);
 router.put('/products/:id', productController.updateProduct);
+router.patch('/products/:id/stock', productController.updateProductStock);
 router.delete('/products/:id', productController.deleteProduct);
 
 // Category CRUD endpoints

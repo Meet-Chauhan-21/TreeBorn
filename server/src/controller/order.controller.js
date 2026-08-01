@@ -135,6 +135,24 @@ const createOrder = async (req, res) => {
       return res.status(400).json({ message: 'Invalid totals provided.', missing: missingTotals });
     }
 
+    // Pre-validate product stock before proceeding
+    const Product = require('../models/product.model');
+    for (const item of items) {
+      const dbProduct = await Product.findById(item.productId);
+      if (!dbProduct) {
+        return res.status(400).json({ message: `Product "${item.name}" was not found.` });
+      }
+      if (dbProduct.status !== 'active') {
+        return res.status(400).json({ message: `Product "${dbProduct.name}" is currently inactive.` });
+      }
+      if (dbProduct.stock !== undefined && dbProduct.stock !== null && dbProduct.stock < item.quantity) {
+        if (dbProduct.stock <= 0) {
+          return res.status(400).json({ message: `Product "${dbProduct.name}" is out of stock.` });
+        }
+        return res.status(400).json({ message: `Insufficient stock for "${dbProduct.name}". Only ${dbProduct.stock} left in stock.` });
+      }
+    }
+
     let paymentData = {};
 
     // Strict Razorpay Signature Verification
