@@ -162,7 +162,7 @@ export const Checkout: React.FC = () => {
     if (loading) return;
     if (!user && !orderPlaced) {
       toast.error('Please sign in to place an order.');
-      navigate('/login');
+      navigate('/login', { state: { from: '/checkout' } });
     }
   }, [user, loading, navigate, orderPlaced]);
 

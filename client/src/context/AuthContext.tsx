@@ -38,6 +38,8 @@ interface AuthContextType {
     limit?: number
   ) => Promise<{ orders: Order[]; total: number; page: number; limit: number } | null>;
   resendVerification: (email: string) => Promise<{ success: boolean; message?: string; cooldownRemaining?: number }>;
+  forgotPassword: (email: string) => Promise<{ success: boolean; message: string }>;
+  resetPassword: (token: string, newPassword: string) => Promise<{ success: boolean; message: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -593,6 +595,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const forgotPassword = async (email: string): Promise<{ success: boolean; message: string }> => {
+    try {
+      const response = await fetch(`${API_BASE}/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        toast.success(data.message || 'Password reset link sent to your email.');
+        return { success: true, message: data.message };
+      } else {
+        toast.error(data.message || 'Failed to request password reset.');
+        return { success: false, message: data.message };
+      }
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      toast.error('Network error. Failed to process password reset request.');
+      return { success: false, message: 'Network error. Please try again.' };
+    }
+  };
+
+  const resetPassword = async (token: string, newPassword: string): Promise<{ success: boolean; message: string }> => {
+    try {
+      const response = await fetch(`${API_BASE}/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, newPassword }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        toast.success(data.message || 'Password reset successful!');
+        return { success: true, message: data.message };
+      } else {
+        toast.error(data.message || 'Failed to reset password.');
+        return { success: false, message: data.message };
+      }
+    } catch (error) {
+      console.error('Reset password error:', error);
+      toast.error('Network error. Failed to reset password.');
+      return { success: false, message: 'Network error. Please try again.' };
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -612,7 +658,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         deleteAddress,
         placeOrder,
         fetchOrders,
-        resendVerification
+        resendVerification,
+        forgotPassword,
+        resetPassword
       }}
     >
       {children}

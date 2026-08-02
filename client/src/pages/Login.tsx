@@ -11,10 +11,17 @@ import Footer from '../components/layout/Footer';
 import Container from '../components/layout/Container';
 import Button from '../components/layout/Button';
 
+import { validateEmailAddress } from '../util/emailValidation';
+
 // Validation Schema using Yup
 const loginSchema = Yup.object().shape({
   email: Yup.string()
     .email('Please enter a valid email address')
+    .test('valid-domain', 'Temporary, disposable, or dummy email addresses are not permitted.', (value) => {
+      if (!value) return true;
+      const res = validateEmailAddress(value);
+      return res.valid;
+    })
     .required('Email address is required'),
   password: Yup.string()
     .min(6, 'Password must be at least 6 characters')
@@ -24,10 +31,17 @@ const loginSchema = Yup.object().shape({
 export const Login: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, facebookLogin, facebookRegister, user, resendVerification } = useAuth();
+  const { login, facebookLogin, facebookRegister, user, resendVerification, forgotPassword } = useAuth();
   
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Forgot password modal state
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotSubmitting, setForgotSubmitting] = useState(false);
+  const [forgotSuccessMessage, setForgotSuccessMessage] = useState('');
+  const [forgotErrorMessage, setForgotErrorMessage] = useState('');
 
   // States for verification notifications and resend cooldown
   const [infoMessage, setInfoMessage] = useState<string>(location.state?.message || '');
@@ -83,7 +97,20 @@ export const Login: React.FC = () => {
   React.useEffect(() => {
     if (user) {
       const defaultPath = user.role === 'admin' ? '/admin' : '/profile';
-      const from = (location.state as any)?.from?.pathname || defaultPath;
+      const searchParams = new URLSearchParams(window.location.search);
+      const redirectQuery = searchParams.get('redirect');
+      
+      let from = defaultPath;
+      const stateFrom = (location.state as any)?.from;
+      
+      if (redirectQuery) {
+        from = redirectQuery;
+      } else if (typeof stateFrom === 'string') {
+        from = stateFrom;
+      } else if (stateFrom && typeof stateFrom === 'object' && stateFrom.pathname) {
+        from = stateFrom.pathname + (stateFrom.search || '');
+      }
+
       navigate(from, { replace: true });
     }
   }, [user, navigate, location]);
@@ -99,6 +126,33 @@ export const Login: React.FC = () => {
     } else if (res.cooldownRemaining) {
       setCooldownSeconds(res.cooldownRemaining);
       setInfoMessage(res.message || 'Please wait before requesting another email.');
+    }
+  };
+
+  const handleForgotPasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!forgotEmail) {
+      setForgotErrorMessage('Please enter your email address.');
+      return;
+    }
+
+    const check = validateEmailAddress(forgotEmail);
+    if (!check.valid) {
+      setForgotErrorMessage(check.reason || 'Please enter a valid email address.');
+      return;
+    }
+
+    setForgotSubmitting(true);
+    setForgotErrorMessage('');
+    setForgotSuccessMessage('');
+
+    const res = await forgotPassword(forgotEmail);
+    setForgotSubmitting(false);
+
+    if (res.success) {
+      setForgotSuccessMessage(res.message);
+    } else {
+      setForgotErrorMessage(res.message);
     }
   };
 
@@ -269,6 +323,89 @@ export const Login: React.FC = () => {
                       </button>
                     </form>
                   </div>
+                ) : showForgotPassword ? (
+                  <div className="space-y-4">
+                    <div className="text-center pb-2">
+                      <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mx-auto mb-3">
+                        <Lock size={22} />
+                      </div>
+                      <h2 className="text-xl font-display font-bold text-dark tracking-tight">
+                        Forgot Password
+                      </h2>
+                      <p className="text-xs text-gray-500 font-sans mt-1 leading-relaxed">
+                        Enter your registered email address and we'll send you a link to reset your password.
+                      </p>
+                    </div>
+
+                    {forgotSuccessMessage ? (
+                      <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl space-y-3 text-center">
+                        <p className="text-xs text-emerald-800 font-medium">
+                          {forgotSuccessMessage}
+                        </p>
+                        <Button
+                          type="button"
+                          onClick={() => {
+                            setShowForgotPassword(false);
+                            setForgotSuccessMessage('');
+                          }}
+                          variant="outline"
+                          className="w-full py-2.5 text-xs font-semibold cursor-pointer"
+                        >
+                          Back to Sign In
+                        </Button>
+                      </div>
+                    ) : (
+                      <form onSubmit={handleForgotPasswordSubmit} className="space-y-4">
+                        {forgotErrorMessage && (
+                          <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-600">
+                            {forgotErrorMessage}
+                          </div>
+                        )}
+
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-semibold text-dark/70 font-display flex items-center gap-1.5">
+                            <Mail size={13} className="text-gray-400" />
+                            <span>Account Email Address</span>
+                          </label>
+                          <input
+                            type="email"
+                            required
+                            value={forgotEmail}
+                            onChange={(e) => setForgotEmail(e.target.value)}
+                            placeholder="name@example.com"
+                            className="w-full border px-4 py-3 text-sm rounded-xl text-dark focus:outline-none focus:border-primary font-sans bg-light-gray/20 transition-colors border-border-gray/80"
+                          />
+                        </div>
+
+                        <Button
+                          type="submit"
+                          variant="primary"
+                          className="w-full py-3.5 rounded-xl font-display font-semibold text-xs uppercase tracking-wider mt-4"
+                          disabled={forgotSubmitting}
+                        >
+                          {forgotSubmitting ? (
+                            <span className="flex items-center justify-center gap-2">
+                              <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                              <span>Sending Reset Link...</span>
+                            </span>
+                          ) : (
+                            'Send Password Reset Link'
+                          )}
+                        </Button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowForgotPassword(false);
+                            setForgotErrorMessage('');
+                          }}
+                          className="w-full text-center text-xs text-gray-500 font-sans hover:underline pt-2 cursor-pointer"
+                        >
+                          Back to Sign In
+                        </button>
+                      </form>
+                    )}
+                  </div>
                 ) : (
                   <>
                     <form onSubmit={formik.handleSubmit} className="space-y-4">
@@ -305,6 +442,16 @@ export const Login: React.FC = () => {
                             <Lock size={13} className="text-gray-400" />
                             <span>Password</span>
                           </label>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setForgotEmail(formik.values.email);
+                              setShowForgotPassword(true);
+                            }}
+                            className="text-[11px] font-semibold text-primary hover:underline cursor-pointer"
+                          >
+                            Forgot Password?
+                          </button>
                         </div>
                         
                         <div className="relative">

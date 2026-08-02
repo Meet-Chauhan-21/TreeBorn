@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { User as UserIcon, ShoppingBag, MapPin, LogOut, Download, Mail, Phone, Plus, Trash2, Edit, CheckCircle, Shield, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
 import { jsPDF } from 'jspdf';
@@ -53,9 +53,58 @@ const addressSchema = Yup.object().shape({
 
 export const Profile: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const initialTab = (tabParam === 'orders' || tabParam === 'addresses') ? tabParam : 'profile';
   const { user, loading, logout, updateUser, addAddress, updateAddress, deleteAddress, fetchOrders } = useAuth();
   const { settings } = useStore();
-  const [activeTab, setActiveTab] = useState<'profile' | 'orders' | 'addresses'>('profile');
+  const [activeTabState, setActiveTabState] = useState<'profile' | 'orders' | 'addresses'>(initialTab);
+
+  // Password update state in profile
+  const [showPasswordChange, setShowPasswordChange] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+
+  const handleUpdatePasswordInProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword.length < 6) {
+      toast.error('New password must be at least 6 characters long.');
+      return;
+    }
+    if (newPassword !== confirmNewPassword) {
+      toast.error('Passwords do not match.');
+      return;
+    }
+
+    setIsUpdatingPassword(true);
+    const success = await updateUser({
+      name: profileFormik.values.name,
+      email: profileFormik.values.email,
+      phone: profileFormik.values.phone,
+      password: newPassword
+    });
+    setIsUpdatingPassword(false);
+
+    if (success) {
+      toast.success('Your password has been updated successfully!');
+      setNewPassword('');
+      setConfirmNewPassword('');
+      setShowPasswordChange(false);
+    }
+  };
+
+  useEffect(() => {
+    if (tabParam && (tabParam === 'profile' || tabParam === 'orders' || tabParam === 'addresses')) {
+      setActiveTabState(tabParam);
+    }
+  }, [tabParam]);
+
+  const activeTab = activeTabState;
+  const setActiveTab = (tab: 'profile' | 'orders' | 'addresses') => {
+    setActiveTabState(tab);
+    setSearchParams({ tab }, { replace: true });
+  };
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
 
   const handleDownloadInvoice = (order: Order) => {
@@ -671,6 +720,84 @@ export const Profile: React.FC = () => {
                       </button>
                     </div>
                   </form>
+
+                  {/* Password & Security Section */}
+                  <div className="pt-8 border-t border-border-gray/50 mt-8 max-w-2xl space-y-4">
+                    <div>
+                      <h3 className="text-sm font-bold font-display text-dark flex items-center gap-2">
+                        <Shield size={16} className="text-primary" />
+                        <span>Password &amp; Security</span>
+                      </h3>
+                      <p className="text-xs text-gray-500 font-sans mt-0.5">
+                        Update your password to keep your account secure.
+                      </p>
+                    </div>
+
+                    {/* Direct Password Change */}
+                    <div className="bg-light-gray/20 border border-border-gray/50 rounded-2xl p-4">
+                      {!showPasswordChange ? (
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-medium text-dark/80">
+                            Want to change your account password?
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setShowPasswordChange(true)}
+                            className="text-xs font-bold text-primary hover:underline cursor-pointer"
+                          >
+                            Change Password
+                          </button>
+                        </div>
+                      ) : (
+                        <form onSubmit={handleUpdatePasswordInProfile} className="space-y-4">
+                          <div className="flex items-center justify-between border-b border-border-gray/40 pb-2">
+                            <h4 className="text-xs font-bold text-dark uppercase tracking-wider">
+                              Set New Password
+                            </h4>
+                            <button
+                              type="button"
+                              onClick={() => setShowPasswordChange(false)}
+                              className="text-[11px] text-gray-400 hover:text-dark cursor-pointer"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                              <label className="text-[11px] font-semibold text-gray-600">New Password</label>
+                              <input
+                                type="password"
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                                placeholder="••••••••"
+                                className="w-full border border-border-gray/80 px-3.5 py-2.5 text-xs rounded-xl focus:outline-none focus:border-primary bg-white"
+                              />
+                            </div>
+
+                            <div className="space-y-1">
+                              <label className="text-[11px] font-semibold text-gray-600">Confirm New Password</label>
+                              <input
+                                type="password"
+                                value={confirmNewPassword}
+                                onChange={(e) => setConfirmNewPassword(e.target.value)}
+                                placeholder="••••••••"
+                                className="w-full border border-border-gray/80 px-3.5 py-2.5 text-xs rounded-xl focus:outline-none focus:border-primary bg-white"
+                              />
+                            </div>
+                          </div>
+
+                          <button
+                            type="submit"
+                            disabled={isUpdatingPassword}
+                            className="bg-dark hover:bg-black text-white text-xs font-bold px-5 py-2.5 rounded-xl transition cursor-pointer"
+                          >
+                            {isUpdatingPassword ? 'Updating Password...' : 'Update Password'}
+                          </button>
+                        </form>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
 

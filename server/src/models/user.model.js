@@ -113,6 +113,12 @@ const userSchema = new mongoose.Schema(
     lastVerificationSentAt: {
       type: Date
     },
+    resetPasswordToken: {
+      type: String
+    },
+    resetPasswordExpires: {
+      type: Date
+    },
     addresses: [addressSchema]
   },
   {

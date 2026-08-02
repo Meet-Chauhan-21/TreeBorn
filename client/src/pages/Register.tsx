@@ -10,6 +10,7 @@ import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import Container from '../components/layout/Container';
 import Button from '../components/layout/Button';
+import { validateEmailAddress } from '../util/emailValidation';
 
 // Validation Schema using Yup
 const registerSchema = Yup.object().shape({
@@ -18,6 +19,11 @@ const registerSchema = Yup.object().shape({
     .required('Full Name is required'),
   email: Yup.string()
     .email('Invalid email address')
+    .test('valid-domain', 'Temporary, disposable, or dummy email addresses are not permitted. Please use a valid email address.', (value) => {
+      if (!value) return true;
+      const res = validateEmailAddress(value);
+      return res.valid;
+    })
     .required('Email address is required'),
   phone: Yup.string()
     .matches(/^[6-9]\d{9}$/, 'Please enter a valid 10-digit Indian phone number')

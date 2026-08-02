@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { Star, Heart, ShoppingBag, Plus, Minus, Check, ArrowLeft, ShieldCheck, Sparkles, Truck } from 'lucide-react';
+import { Star, Heart, ShoppingBag, Plus, Minus, Check, ArrowLeft, ShieldCheck, Sparkles, Truck, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
@@ -360,10 +360,34 @@ export const ProductDetail: React.FC = () => {
                     <Heart size={18} fill={isWishlisted ? '#EF4444' : 'none'} />
                   </button>
                 </div>
+
+                {/* Professional Colorful Feature Highlights */}
+                <div className="pt-5 pb-5 mt-5 mb-2 border-y border-border-gray/30 space-y-4">
+                  <div className="flex items-center gap-4">
+                    <CheckCircle2 size={25} className="text-emerald-500 shrink-0 stroke-[2.2]" />
+                    <span className="text-sm sm:text-[15px] font-sans text-slate-700 leading-snug">
+                      <strong className="font-semibold text-slate-900">In Stock &amp; Ready to Ship</strong> &bull; Free delivery on orders over ₹999
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <Sparkles size={25} className="text-amber-500 shrink-0 stroke-[2.2]" />
+                    <span className="text-sm sm:text-[15px] font-sans text-slate-700 leading-snug">
+                      <strong className="font-semibold text-slate-900">100% Bio-Organic Actives</strong> &bull; Dermatologically tested &amp; cruelty-free
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <ShieldCheck size={25} className="text-indigo-600 shrink-0 stroke-[2.2]" />
+                    <span className="text-sm sm:text-[15px] font-sans text-slate-700 leading-snug">
+                      <strong className="font-semibold text-slate-900">7-Day Easy Returns</strong> &bull; 100% Quality &amp; Authenticity Guarantee
+                    </span>
+                  </div>
+                </div>
               </div>
 
               {/* Specification Tab System */}
-              <div className="mt-10 bg-light-gray/60 border border-border-gray/30 rounded-2xl p-6 space-y-4">
+              <div className="mt-2 bg-light-gray/60 border border-border-gray/30 rounded-2xl p-6 space-y-4">
                 <div className="border-b border-border-gray/50 flex space-x-5 text-xs font-display font-semibold">
                   <button
                     onClick={() => setActiveTab('desc')}

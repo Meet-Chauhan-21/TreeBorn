@@ -2,6 +2,7 @@ const nodemailer = require('nodemailer');
 const dns = require('dns');
 const {
   getVerificationTemplate,
+  getForgotPasswordTemplate,
   getOrderConfirmationTemplate,
   getAdminNewOrderTemplate
 } = require('./emailTemplates');
@@ -262,8 +263,39 @@ const sendAdminNewOrderEmail = async (order, adminEmail) => {
   return true;
 };
 
+const sendPasswordResetEmail = async (email, name, token) => {
+  const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+  const resetUrl = `${clientUrl}/reset-password?token=${token}`;
+  const currentYear = new Date().getFullYear().toString();
+
+  const htmlContent = getForgotPasswordTemplate(name, resetUrl, currentYear);
+
+  console.log("📧 sendPasswordResetEmail called");
+  console.log("Recipient:", email);
+
+  try {
+    const sent = await sendEmail({ to: email, subject: 'Reset Your Password — TREEBORN', html: htmlContent });
+    if (!sent) {
+      console.log('\n==================================================');
+      console.log('🔑 [MOCK EMAIL] Password Reset Email Sent');
+      console.log(`👤 Recipient Name: ${name}`);
+      console.log(`📧 Recipient Email: ${email}`);
+      console.log(`🔗 Password Reset Link: ${resetUrl}`);
+      console.log('==================================================\n');
+    }
+  } catch (error) {
+    console.error("❌ SEND PASSWORD RESET MAIL ERROR");
+    console.error(error);
+    throw error;
+  }
+
+  return true;
+};
+
 module.exports = {
   sendVerificationEmail,
+  sendPasswordResetEmail,
   sendOrderConfirmationEmail,
   sendAdminNewOrderEmail,
 };
+

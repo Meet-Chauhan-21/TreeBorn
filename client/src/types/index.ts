@@ -186,6 +186,7 @@ export interface User {
   email: string;
   phone?: string;
   role?: string;
+  password?: string;
   addresses?: Address[];
 }
 

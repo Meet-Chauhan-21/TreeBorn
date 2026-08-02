@@ -251,22 +251,52 @@ const getApiMetrics = async (req, res) => {
 
     if (process.env.BREVO_API_KEY) {
       try {
-        const response = await fetch('https://api.brevo.com/v3/getAccount', {
-          headers: {
-            'accept': 'application/json',
-            'api-key': process.env.BREVO_API_KEY
-          }
-        });
+        const headers = {
+          'accept': 'application/json',
+          'api-key': process.env.BREVO_API_KEY
+        };
+
+        const response = await fetch('https://api.brevo.com/v3/getAccount', { headers });
         if (response.ok) {
           const data = await response.json();
-          const emailCreditsObj = data.plan?.find(p => p.type === 'email') || {};
+          
+          const now = new Date();
+          const todayStr = now.toISOString().split('T')[0];
+          const firstOfMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+
+          let sentToday = 0;
+          let sentThisMonth = 0;
+
+          try {
+            const todayRes = await fetch(`https://api.brevo.com/v3/smtp/statistics/aggregatedReport?startDate=${todayStr}&endDate=${todayStr}`, { headers });
+            if (todayRes.ok) {
+              const todayData = await todayRes.json();
+              sentToday = todayData.requests || 0;
+            }
+          } catch (e) {
+            console.error('Error fetching Brevo today report:', e);
+          }
+
+          try {
+            const monthRes = await fetch(`https://api.brevo.com/v3/smtp/statistics/aggregatedReport?startDate=${firstOfMonthStr}&endDate=${todayStr}`, { headers });
+            if (monthRes.ok) {
+              const monthData = await monthRes.json();
+              sentThisMonth = monthData.requests || 0;
+            }
+          } catch (e) {
+            console.error('Error fetching Brevo month report:', e);
+          }
+
+          const isFreePlan = data.plan?.some(p => p.type === 'free') ?? true;
+          const remaining = data.emailCredits !== undefined ? data.emailCredits : Math.max(0, 300 - sentToday);
+
           brevoMetrics = {
             status: 'Connected',
-            plan: data.plan?.[0]?.type === 'free' ? 'Free Tier' : 'Paid Plan',
+            plan: isFreePlan ? 'Free Tier (300/day)' : 'Paid Plan',
             dailyLimit: 300,
-            emailsSentToday: 300 - (data.emailCredits || 0),
-            emailsSentThisMonth: emailCreditsObj.credits - (data.emailCredits || 0) || 12,
-            remainingCredits: data.emailCredits || 0,
+            emailsSentToday: sentToday,
+            emailsSentThisMonth: sentThisMonth,
+            remainingCredits: remaining,
             apiConnected: true
           };
         }

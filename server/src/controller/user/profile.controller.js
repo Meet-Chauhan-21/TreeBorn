@@ -26,10 +26,16 @@ const getUserProfile = async (req, res) => {
 // @access  Protected
 const updateUserProfile = async (req, res) => {
   try {
-    const { name, email, phone } = req.body;
+    const { name, email, phone, password, newPassword } = req.body;
 
     if (!name || !email || !phone) {
       return res.status(400).json({ message: 'Name, email, and phone number are required.' });
+    }
+
+    const { validateEmailAddress } = require('../../util/emailValidation.util');
+    const emailCheck = validateEmailAddress(email);
+    if (!emailCheck.valid) {
+      return res.status(400).json({ message: emailCheck.reason });
     }
 
     const user = await User.findById(req.user._id);
@@ -47,6 +53,16 @@ const updateUserProfile = async (req, res) => {
     user.name = name;
     user.email = email.toLowerCase();
     user.phone = phone;
+
+    const pwdToSet = newPassword || password;
+    if (pwdToSet) {
+      if (pwdToSet.length < 6) {
+        return res.status(400).json({ message: 'Password must be at least 6 characters long.' });
+      }
+      const bcrypt = require('bcryptjs');
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(pwdToSet, salt);
+    }
 
     const updatedUser = await user.save();
 

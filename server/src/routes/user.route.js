@@ -10,7 +10,9 @@ const {
   facebookSignIn,
   facebookRegister,
   verifyEmail,
-  resendVerification
+  resendVerification,
+  forgotPassword,
+  resetPassword
 } = require('../controller/user/auth.controller');
 
 const {
@@ -44,6 +46,8 @@ router.post('/facebook', googleRateLimiter, facebookSignIn);
 router.post('/facebook-register', googleRateLimiter, facebookRegister);
 router.post('/verify-email', verifyEmail);
 router.post('/resend-verification', resendVerification);
+router.post('/forgot-password', forgotPassword);
+router.post('/reset-password', resetPassword);
 router.post('/contact-us', async (req, res) => {
   try {
     const { name, email, message } = req.body;
