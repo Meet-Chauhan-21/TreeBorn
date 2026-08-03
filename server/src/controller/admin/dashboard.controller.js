@@ -289,13 +289,16 @@ const getApiMetrics = async (req, res) => {
 
           const isFreePlan = data.plan?.some(p => p.type === 'free') ?? true;
           const remaining = data.emailCredits !== undefined ? data.emailCredits : Math.max(0, 300 - sentToday);
+          
+          // On Brevo Free tier, emailCredits is remaining out of 300 daily credits
+          const calculatedToday = data.emailCredits !== undefined ? Math.max(0, 300 - data.emailCredits) : sentToday;
 
           brevoMetrics = {
             status: 'Connected',
             plan: isFreePlan ? 'Free Tier (300/day)' : 'Paid Plan',
             dailyLimit: 300,
-            emailsSentToday: sentToday,
-            emailsSentThisMonth: sentThisMonth,
+            emailsSentToday: calculatedToday,
+            emailsSentThisMonth: Math.max(sentThisMonth, calculatedToday),
             remainingCredits: remaining,
             apiConnected: true
           };
@@ -306,12 +309,22 @@ const getApiMetrics = async (req, res) => {
     }
 
     if (!brevoMetrics.apiConnected) {
-      const orderEmailsCount = await Order.countDocuments();
-      const userEmailsCount = await User.countDocuments();
-      brevoMetrics.emailsSentThisMonth = orderEmailsCount * 2 + userEmailsCount;
-      brevoMetrics.emailsSentToday = Math.min(3, orderEmailsCount);
-      brevoMetrics.remainingCredits = Math.max(0, 300 - brevoMetrics.emailsSentToday);
-      brevoMetrics.status = process.env.SMTP_USER ? 'SMTP Active' : 'Disconnected';
+      const now = new Date();
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+      const ordersToday = await Order.countDocuments({ createdAt: { $gte: startOfToday } });
+      const usersToday = await User.countDocuments({ createdAt: { $gte: startOfToday } });
+      const ordersMonth = await Order.countDocuments({ createdAt: { $gte: startOfMonth } });
+      const usersMonth = await User.countDocuments({ createdAt: { $gte: startOfMonth } });
+
+      const calculatedToday = (ordersToday * 2) + usersToday;
+      const calculatedMonth = (ordersMonth * 2) + usersMonth;
+
+      brevoMetrics.emailsSentToday = calculatedToday;
+      brevoMetrics.emailsSentThisMonth = calculatedMonth;
+      brevoMetrics.remainingCredits = Math.max(0, 300 - calculatedToday);
+      brevoMetrics.status = process.env.SMTP_USER || process.env.BREVO_API_KEY ? 'SMTP Active' : 'Disconnected';
     }
 
     // 2. Cloudinary Metrics
@@ -491,6 +504,34 @@ const getApiMetrics = async (req, res) => {
   }
 };
 
+// @desc    Send test email via Brevo / SMTP
+// @route   POST /api/admin/test-email
+// @access  Private/Admin
+const sendTestEmailAdmin = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: 'Recipient email address is required.' });
+    }
+
+    const { validateEmailAddress } = require('../../util/emailValidation.util');
+    const emailCheck = validateEmailAddress(email);
+    if (!emailCheck.valid) {
+      return res.status(400).json({ message: emailCheck.reason });
+    }
+
+    const { sendVerificationEmail } = require('../../util/email.util');
+    await sendVerificationEmail(email, 'TreeBorn Administrator', 'TEST_TOKEN_12345');
+
+    return res.status(200).json({
+      message: `Test email dispatched successfully to ${email}!`
+    });
+  } catch (error) {
+    console.error('Send Test Email Error:', error);
+    return res.status(500).json({ message: error.message || 'Failed to send test email.' });
+  }
+};
+
 module.exports = {
   getDashboardStats,
   getSettings,
@@ -498,5 +539,6 @@ module.exports = {
   getNotifications,
   markNotificationRead,
   clearNotifications,
-  getApiMetrics
+  getApiMetrics,
+  sendTestEmailAdmin
 };

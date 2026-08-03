@@ -138,7 +138,7 @@ export const CartDrawer: React.FC = () => {
                           </h4>
                           <button
                             onClick={() => removeFromCart(item.product.id, item.selectedSize)}
-                            className="text-gray-400 hover:text-red-500 transition-colors focus:outline-none cursor-pointer"
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded-md transition-colors focus:outline-none cursor-pointer"
                             aria-label="Remove item"
                           >
                             <Trash2 size={15} />

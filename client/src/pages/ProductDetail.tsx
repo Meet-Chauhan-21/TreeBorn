@@ -366,21 +366,21 @@ export const ProductDetail: React.FC = () => {
                   <div className="flex items-center gap-4">
                     <CheckCircle2 size={25} className="text-emerald-500 shrink-0 stroke-[2.2]" />
                     <span className="text-sm sm:text-[15px] font-sans text-slate-700 leading-snug">
-                      <strong className="font-semibold text-slate-900">In Stock &amp; Ready to Ship</strong> &bull; Free delivery on orders over ₹999
+                      <strong className="font-semibold text-slate-900">Fresh Botanical Formulations</strong> &bull; 100% natural active extracts
                     </span>
                   </div>
 
                   <div className="flex items-center gap-4">
                     <Sparkles size={25} className="text-amber-500 shrink-0 stroke-[2.2]" />
                     <span className="text-sm sm:text-[15px] font-sans text-slate-700 leading-snug">
-                      <strong className="font-semibold text-slate-900">100% Bio-Organic Actives</strong> &bull; Dermatologically tested &amp; cruelty-free
+                      <strong className="font-semibold text-slate-900">Cruelty-Free &amp; Toxin-Free</strong> &bull; Free from parabens, sulfates &amp; artificial dyes
                     </span>
                   </div>
 
                   <div className="flex items-center gap-4">
                     <ShieldCheck size={25} className="text-indigo-600 shrink-0 stroke-[2.2]" />
                     <span className="text-sm sm:text-[15px] font-sans text-slate-700 leading-snug">
-                      <strong className="font-semibold text-slate-900">7-Day Easy Returns</strong> &bull; 100% Quality &amp; Authenticity Guarantee
+                      <strong className="font-semibold text-slate-900">Fast Express Dispatch</strong> &bull; Safe &amp; secure delivery across India
                     </span>
                   </div>
                 </div>

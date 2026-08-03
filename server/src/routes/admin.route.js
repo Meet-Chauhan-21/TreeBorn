@@ -69,6 +69,7 @@ router.use(verifyJWT, authorizeRoles('admin'));
 // Dashboard endpoints
 router.get('/dashboard', dashboardController.getDashboardStats);
 router.get('/api-metrics', dashboardController.getApiMetrics);
+router.post('/test-email', dashboardController.sendTestEmailAdmin);
 
 // Settings endpoints
 router.get('/settings', dashboardController.getSettings);
@@ -90,6 +91,7 @@ router.post('/products', productController.createProduct);
 router.post('/products/:id/copy', productController.copyProduct);
 router.put('/products/:id', productController.updateProduct);
 router.patch('/products/:id/stock', productController.updateProductStock);
+router.put('/products/:id/stock', productController.updateProductStock);
 router.delete('/products/:id', productController.deleteProduct);
 
 // Category CRUD endpoints

@@ -101,21 +101,26 @@ const ApiMetrics: React.FC = () => {
     }
     setSendingTest(true);
     try {
-      await fetch(`${API_BASE_URL}/admin/settings`, {
-        method: 'GET', // check settings to make sure SMTP works, or run a generic test email endpoint
-        headers: { 'Authorization': `Bearer ${accessToken}` }
+      const response = await fetch(`${API_BASE_URL}/admin/test-email`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email: testEmail })
       });
-      
-      // Since this is a test email, we can call our server to send a test verification link or custom test email
-      // We will perform a POST request to /api/auth/resend-verification or similar, or simulate successful triggers
-      setTimeout(() => {
-        toast.success(`Test transactional email sent successfully to ${testEmail}!`);
-        setSendingTest(false);
+      const data = await response.json();
+      if (response.ok) {
+        toast.success(data.message || `Test email sent to ${testEmail}!`);
         setTestEmail('');
-      }, 1500);
-
+        fetchMetrics();
+      } else {
+        toast.error(data.message || 'Failed to send test email');
+      }
     } catch (err) {
+      console.error('Test email error:', err);
       toast.error('Failed to send test email');
+    } finally {
       setSendingTest(false);
     }
   };

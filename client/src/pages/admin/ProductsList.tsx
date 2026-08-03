@@ -51,9 +51,15 @@ const ProductsList: React.FC = () => {
       return;
     }
 
+    const targetId = productToStock._id || productToStock.id;
+    if (!targetId) {
+      toast.error('Product ID missing. Cannot update stock.');
+      return;
+    }
+
     setStockUpdating(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/products/${productToStock._id}/stock`, {
+      const response = await fetch(`${API_BASE_URL}/admin/products/${targetId}/stock`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
@@ -66,7 +72,7 @@ const ProductsList: React.FC = () => {
       if (response.ok) {
         toast.success(data.message || 'Stock updated successfully');
         setProducts(prev =>
-          prev.map(p => (p._id === productToStock._id ? { ...p, stock: num } : p))
+          prev.map(p => ((p._id === targetId || p.id === targetId) ? { ...p, stock: num } : p))
         );
         setStockModalOpen(false);
         setProductToStock(null);
