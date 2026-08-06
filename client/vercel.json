@@ -1,19 +1,23 @@
 {
-  "rewrites": [
+  "headers": [
     {
       "source": "/sitemap.xml",
-      "destination": "/sitemap.xml"
+      "headers": [
+        { "key": "Content-Type", "value": "application/xml; charset=utf-8" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
     },
     {
       "source": "/robots.txt",
-      "destination": "/robots.txt"
-    },
+      "headers": [
+        { "key": "Content-Type", "value": "text/plain; charset=utf-8" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
+    }
+  ],
+  "rewrites": [
     {
-      "source": "/manifest.json",
-      "destination": "/manifest.json"
-    },
-    {
-      "source": "/((?!sitemap\\.xml|robots\\.txt|manifest\\.json|favicon\\.svg|.*\\..*).*)",
+      "source": "/((?!sitemap\\.xml|robots\\.txt|manifest\\.json|favicon\\.svg|.*\\.[a-zA-Z0-9]+$).*)",
       "destination": "/index.html"
     }
   ]
