@@ -298,6 +298,64 @@ const createOrder = async (req, res) => {
       console.error('Failed to dispatch order emails:', emailError);
     }
 
+    // Automatically push order to Shiprocket
+    try {
+      const shiprocketService = require('../services/shiprocket.service');
+      if (process.env.SHIPROCKET_EMAIL && process.env.SHIPROCKET_PASSWORD) {
+        const parts = (shippingAddress.name || '').trim().split(/\s+/);
+        const firstName = parts[0] || 'Customer';
+        const lastName = parts.slice(1).join(' ') || '.';
+        const pickupLocation = await shiprocketService.resolvePickupLocation(process.env.SHIPROCKET_PICKUP_LOCATION || 'Primary');
+
+        const pad = (num) => String(num).padStart(2, '0');
+        const d = new Date(order.createdAt);
+        const orderDateStr = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+
+        const shipPayload = {
+          order_id: order.orderNumber,
+          order_date: orderDateStr,
+          pickup_location: pickupLocation,
+          billing_customer_name: firstName,
+          billing_last_name: lastName,
+          billing_address: shippingAddress.street,
+          billing_city: shippingAddress.district || shippingAddress.state,
+          billing_pincode: shippingAddress.zip,
+          billing_state: shippingAddress.state,
+          billing_country: shippingAddress.country || 'India',
+          billing_email: userEmail || 'customer@example.com',
+          billing_phone: shippingAddress.phone || '9999999999',
+          shipping_is_billing: true,
+          order_items: order.items.map((item) => ({
+            name: item.name,
+            sku: item.productId,
+            units: Number(item.quantity),
+            selling_price: Number(item.price)
+          })),
+          payment_method: order.payment.method === 'cod' ? 'COD' : 'Prepaid',
+          sub_total: Number(totals.subtotal),
+          length: 15,
+          breadth: 10,
+          height: 10,
+          weight: 0.5
+        };
+
+        console.log(`Auto-pushing order #${order.orderNumber} to Shiprocket...`);
+        const shipRes = await shiprocketService.createAdhocOrder(shipPayload);
+        if (shipRes && (shipRes.order_id || shipRes.shipment_id)) {
+          order.shipmentCreated = true;
+          order.shipmentId = String(shipRes.shipment_id || shipRes.response?.shipment_id || '');
+          order.deliveryStatus = 'Draft';
+          order.shiprocketResponse = shipRes;
+          order.createdShipmentAt = new Date();
+          order.updatedShipmentAt = new Date();
+          await order.save();
+          console.log(`Order #${order.orderNumber} successfully pushed to Shiprocket! Shipment ID: ${order.shipmentId}`);
+        }
+      }
+    } catch (shipError) {
+      console.error('Failed to auto-create Shiprocket order upon checkout:', shipError.message || shipError);
+    }
+
     return res.status(201).json({
       message: 'Order created successfully',
       order

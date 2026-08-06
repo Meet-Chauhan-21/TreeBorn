@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import SEO from '../components/common/SEO';
 import { Star, Heart, ShoppingBag, Plus, Minus, Check, ArrowLeft, ShieldCheck, Sparkles, Truck, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import Navbar from '../components/layout/Navbar';
@@ -152,12 +152,46 @@ export const ProductDetail: React.FC = () => {
   const backupSimilar = products.filter((p) => p.id !== product.id).slice(0, 4);
   const displaySimilar = similarProducts.length > 0 ? similarProducts : backupSimilar;
 
+  const productSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    image: product.image,
+    description: product.description,
+    sku: product.id,
+    brand: {
+      '@type': 'Brand',
+      name: 'TREEBORN'
+    },
+    offers: {
+      '@type': 'Offer',
+      url: typeof window !== 'undefined' ? window.location.href : `https://treeborn.in/product/${product.id}`,
+      priceCurrency: 'INR',
+      price: product.price,
+      itemCondition: 'https://schema.org/NewCondition',
+      availability: (product.stock === undefined || product.stock > 0) ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock'
+    },
+    ...(product.rating
+      ? {
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: product.rating,
+            reviewCount: product.reviewsCount || 12
+          }
+        }
+      : {})
+  };
+
   return (
     <>
-      <Helmet>
-        <title>{`${product.name} — TREEBORN Skincare`}</title>
-        <meta name="description" content={product.description} />
-      </Helmet>
+      <SEO
+        title={`${product.name} — TREEBORN Botanical Skincare`}
+        description={`${product.description.slice(0, 150)}... Pure organic skincare by TREEBORN.`}
+        keywords={`treeborn ${product.name}, ${product.category || 'botanical skincare'}, buy ${product.name} online, organic skincare India`}
+        ogImage={product.image}
+        ogType="product"
+        jsonLd={productSchema}
+      />
 
       <Navbar />
 

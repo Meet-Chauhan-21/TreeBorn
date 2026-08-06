@@ -8,6 +8,7 @@ const orderRoutes = require('./src/routes/order.route');
 const productRoutes = require('./src/routes/product.route');
 const adminRoutes = require('./src/routes/admin.route');
 const webhookRoutes = require('./src/routes/webhook.route');
+const seoRoutes = require('./src/routes/seo.route');
 const dns = require("dns");
 
 const app = express();
@@ -65,6 +66,7 @@ const Category = require('./src/models/category.model');
 const Product = require('./src/models/product.model');
 
 // API Routes
+app.use('/', seoRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/users', orderRoutes);
 app.use('/api/products', productRoutes);

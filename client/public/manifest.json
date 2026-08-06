@@ -1,0 +1,17 @@
+{
+  "name": "TREEBORN — Organic Botanical Skincare",
+  "short_name": "TREEBORN",
+  "description": "Unlock your skin's biological potential with TREEBORN's premium organic, cruelty-free botanical skincare formulas.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#581C87",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

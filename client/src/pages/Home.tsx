@@ -1,5 +1,4 @@
-import React from 'react';
-import { Helmet } from 'react-helmet-async';
+import SEO from '../components/common/SEO';
 import Navbar from '../components/layout/Navbar';
 import Hero from '../components/home/Hero';
 import PromoBanner from '../components/home/PromoBanner';
@@ -14,14 +13,26 @@ import Footer from '../components/layout/Footer';
 import WhatsAppButton from '../components/layout/WhatsAppButton';
 
 export const Home: React.FC = () => {
+  const websiteSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'TREEBORN Skincare',
+    url: typeof window !== 'undefined' ? window.location.origin : 'https://treeborn.in',
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: `${typeof window !== 'undefined' ? window.location.origin : 'https://treeborn.in'}/search?q={search_term_string}`,
+      'query-input': 'required name=search_term_string'
+    }
+  };
+
   return (
     <>
-      <Helmet>
-        <title>TREEBORN — Premium Botanical Skincare & Cellular Restoration</title>
-        <meta name="description" content="Unlock your skin's biological potential with TREEBORN's premium, organic, cruelty-free skincare formulas. Experience advanced cellular science designed for natural glow." />
-        <meta property="og:title" content="TREEBORN — Premium Botanical Skincare" />
-        <meta property="og:description" content="Pure botanical active formulas designed for deep cellular renewal and moisture barrier restoration." />
-      </Helmet>
+      <SEO
+        title="TREEBORN — Organic Botanical Skincare & Cellular Restoration"
+        description="Unlock your skin's biological potential with TREEBORN's luxury organic, cruelty-free botanical skincare formulas. Formulated for deep moisture, collagen restoration, and natural glow."
+        keywords="treeborn, treeborn skincare, botanical skincare India, organic face serum, collagen serum, natural glow cream, vegan skincare brand, anti aging cream India, clear skin formula"
+        jsonLd={websiteSchema}
+      />
 
       <Navbar />
       <main>

@@ -43,12 +43,13 @@ const createShipment = async (req, res) => {
     }
 
     const { firstName, lastName } = splitName(order.shippingAddress.name);
+    const pickupLocation = await shiprocketService.resolvePickupLocation(process.env.SHIPROCKET_PICKUP_LOCATION || 'Primary');
 
     // Format payload for Shiprocket
     const payload = {
       order_id: order.orderNumber,
       order_date: formatOrderDate(order.createdAt),
-      pickup_location: process.env.SHIPROCKET_PICKUP_LOCATION || 'Primary',
+      pickup_location: pickupLocation,
       billing_customer_name: firstName,
       billing_last_name: lastName,
       billing_address: order.shippingAddress.street,

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import SEO from '../components/common/SEO';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Star,
@@ -300,13 +300,12 @@ export const Category: React.FC = () => {
 
   return (
     <>
-      <Helmet>
-        <title>{`${activeCategory.name} — Curated Skincare | TREEBORN`}</title>
-        <meta
-          name="description"
-          content={`Explore our range of premium organic formulations specifically curated for ${activeCategory.name}. Experience biological cellular skin restoration.`}
-        />
-      </Helmet>
+      <SEO
+        title={`${activeCategory.name} — Curated Organic Skincare | TREEBORN`}
+        description={`Explore our range of luxury organic formulations specifically curated for ${activeCategory.name}. Experience biological cellular skin restoration with TREEBORN.`}
+        keywords={`treeborn ${activeCategory.name}, organic ${activeCategory.name}, botanical skincare, buy ${activeCategory.name} India`}
+        ogImage={activeCategory.image}
+      />
 
       <Navbar />
 

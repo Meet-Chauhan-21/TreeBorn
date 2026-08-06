@@ -219,6 +219,37 @@ const getWalletBalance = async () => {
   });
 };
 
+/**
+ * Get registered Pickup Locations from Shiprocket account
+ */
+const getPickupLocations = async () => {
+  return await request('/settings/company/pickup', {
+    method: 'GET'
+  });
+};
+
+/**
+ * Resolve a valid pickup location name from Shiprocket account
+ */
+const resolvePickupLocation = async (preferredLocation = '') => {
+  try {
+    const response = await getPickupLocations();
+    const addresses = response.data?.shipping_address || response.data || [];
+    if (Array.isArray(addresses) && addresses.length > 0) {
+      if (preferredLocation) {
+        const match = addresses.find((a) => a.pickup_location?.toLowerCase() === preferredLocation.toLowerCase());
+        if (match) return match.pickup_location;
+      }
+      // Fallback to first active/primary pickup address
+      const primary = addresses.find((a) => a.is_primary_location === 1 || a.status === 1) || addresses[0];
+      return primary.pickup_location || preferredLocation || 'Primary';
+    }
+  } catch (err) {
+    console.warn('Could not fetch Shiprocket pickup locations automatically:', err.message);
+  }
+  return preferredLocation || 'Primary';
+};
+
 module.exports = {
   createAdhocOrder,
   assignAWB,
@@ -230,5 +261,8 @@ module.exports = {
   schedulePickup,
   generateInvoice,
   trackShipment,
-  getWalletBalance
+  getWalletBalance,
+  getPickupLocations,
+  resolvePickupLocation
 };
+
