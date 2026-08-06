@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 import Home from '../pages/Home';
 import ProductDetail from '../pages/ProductDetail';
 import Category from '../pages/Category';
@@ -79,6 +79,10 @@ export const router = createBrowserRouter([
         path: '/terms-conditions',
         element: <TermsConditions />,
       },
+      {
+        path: '*',
+        element: <Navigate to="/" replace />,
+      },
     ],
   },
   {
@@ -140,6 +144,10 @@ export const router = createBrowserRouter([
   {
     path: '/admin/legal',
     element: <LegalPages />,
+  },
+  {
+    path: '*',
+    element: <Navigate to="/" replace />,
   },
 ]);
 
