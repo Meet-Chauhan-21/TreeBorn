@@ -159,6 +159,12 @@ const OrdersList: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('');
 
+  // Server-side total stats
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [confirmedCount, setConfirmedCount] = useState(0);
+  const [pendingCount, setPendingCount] = useState(0);
+  const [totalRevenue, setTotalRevenue] = useState(0);
+
   // Pagination States
   const [currentPage, setCurrentPage] = useState(1);
   const [recordsPerPage, setRecordsPerPage] = useState(15);
@@ -172,30 +178,6 @@ const OrdersList: React.FC = () => {
     setDeleteModalOpen(true);
   };
 
-  const confirmDeleteOrder = async () => {
-    if (!itemToDelete || !accessToken) return;
-    try {
-      const response = await fetch(`${API_BASE_URL}/admin/orders/${itemToDelete.id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${accessToken}` }
-      });
-      if (response.ok) {
-        toast.success(`Order ${itemToDelete.name} deleted successfully`);
-        setOrders(orders.filter(o => o._id !== itemToDelete.id));
-      } else {
-        setOrders(orders.filter(o => o._id !== itemToDelete.id));
-        toast.success(`Order ${itemToDelete.name} deleted successfully`);
-      }
-    } catch (error) {
-      console.error('Error deleting order:', error);
-      setOrders(orders.filter(o => o._id !== itemToDelete.id));
-      toast.success(`Order ${itemToDelete.name} deleted successfully`);
-    } finally {
-      setDeleteModalOpen(false);
-      setItemToDelete(null);
-    }
-  };
-
   const { accessToken } = useAuth();
   const [reloading, setReloading] = useState(false);
 
@@ -203,12 +185,23 @@ const OrdersList: React.FC = () => {
     if (!accessToken) return;
     if (showToast) setReloading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/orders`, {
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: recordsPerPage.toString(),
+        search: searchQuery,
+        status: statusFilter,
+        date: dateFilter
+      });
+      const response = await fetch(`${API_BASE_URL}/admin/orders?${params.toString()}`, {
         headers: { 'Authorization': `Bearer ${accessToken}` }
       });
       if (response.ok) {
         const data = await response.json();
-        setOrders(data.orders);
+        setOrders(data.orders || []);
+        setTotalRecords(data.total || 0);
+        if (data.confirmedCount !== undefined) setConfirmedCount(data.confirmedCount);
+        if (data.pendingCount !== undefined) setPendingCount(data.pendingCount);
+        if (data.totalRevenue !== undefined) setTotalRevenue(data.totalRevenue);
         if (showToast) toast.success('Orders reloaded successfully');
       }
     } catch (error) {
@@ -222,31 +215,35 @@ const OrdersList: React.FC = () => {
 
   useEffect(() => {
     fetchOrders();
-  }, [accessToken]);
+  }, [accessToken, currentPage, recordsPerPage, searchQuery, statusFilter, dateFilter]);
 
-  const filteredOrders = orders.filter((order) => {
-    const matchesSearch = order.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (order.user?.name || '').toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || order.status.toLowerCase() === statusFilter;
-    
-    let matchesDate = true;
-    if (dateFilter && order.createdAt) {
-      const orderDate = new Date(order.createdAt);
-      const year = orderDate.getFullYear();
-      const month = String(orderDate.getMonth() + 1).padStart(2, '0');
-      const day = String(orderDate.getDate()).padStart(2, '0');
-      const localDateStr = `${year}-${month}-${day}`;
-      matchesDate = localDateStr === dateFilter;
+  const confirmDeleteOrder = async () => {
+    if (!itemToDelete || !accessToken) return;
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/orders/${itemToDelete.id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${accessToken}` }
+      });
+      if (response.ok) {
+        toast.success(`Order ${itemToDelete.name} deleted successfully`);
+        await fetchOrders();
+      } else {
+        const data = await response.json().catch(() => ({}));
+        toast.error(data.message || `Failed to delete order ${itemToDelete.name}`);
+      }
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      toast.error(`Failed to delete order ${itemToDelete.name}`);
+    } finally {
+      setDeleteModalOpen(false);
+      setItemToDelete(null);
     }
-    
-    return matchesSearch && matchesStatus && matchesDate;
-  });
+  };
 
-  // Pagination Calculations
-  const indexOfLastRecord = currentPage * recordsPerPage;
-  const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
-  const currentRecords = filteredOrders.slice(indexOfFirstRecord, indexOfLastRecord);
-  const totalPages = Math.ceil(filteredOrders.length / recordsPerPage);
+  // Pagination Calculations (server paginated)
+  const totalPages = Math.max(Math.ceil(totalRecords / recordsPerPage), 1);
+  const indexOfFirstRecord = totalRecords > 0 ? (currentPage - 1) * recordsPerPage + 1 : 0;
+  const indexOfLastRecord = Math.min(currentPage * recordsPerPage, totalRecords);
 
   const columns = [
     { key: 'orderNumber', header: 'Order Number', render: (item: any) => (
@@ -362,7 +359,7 @@ const OrdersList: React.FC = () => {
           <div className="bg-indigo-50/70 border border-indigo-200/80 p-4 rounded-2xl shadow-xs text-left hover:shadow-md transition-all">
             <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-800 block">Total Orders</span>
             <div className="flex items-baseline justify-between mt-1.5">
-              <span className="text-2xl font-extrabold text-indigo-600 font-display">{orders.length}</span>
+              <span className="text-2xl font-extrabold text-indigo-600 font-display">{totalRecords}</span>
               <span className="text-[10px] font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded border border-indigo-200">Orders</span>
             </div>
             <span className="text-[10px] font-medium text-indigo-500 mt-1 block">Customer Purchases</span>
@@ -372,7 +369,7 @@ const OrdersList: React.FC = () => {
             <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800 block">Confirmed Orders</span>
             <div className="flex items-baseline justify-between mt-1.5">
               <span className="text-2xl font-extrabold text-emerald-600 font-display">
-                {orders.filter((o: any) => o.status === 'Confirmed').length}
+                {confirmedCount}
               </span>
               <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">Confirmed</span>
             </div>
@@ -383,7 +380,7 @@ const OrdersList: React.FC = () => {
             <span className="text-[11px] font-bold uppercase tracking-wider text-amber-800 block">Pending Orders</span>
             <div className="flex items-baseline justify-between mt-1.5">
               <span className="text-2xl font-extrabold text-amber-600 font-display">
-                {orders.filter((o: any) => o.status === 'Pending').length}
+                {pendingCount}
               </span>
               <span className="text-[10px] font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded border border-amber-200">Pending</span>
             </div>
@@ -394,7 +391,7 @@ const OrdersList: React.FC = () => {
             <span className="text-[11px] font-bold uppercase tracking-wider text-purple-800 block">Order Revenue Total</span>
             <div className="flex items-baseline justify-between mt-1.5">
               <span className="text-xl font-extrabold text-purple-600 font-display truncate">
-                ₹{orders.reduce((sum: number, o: any) => sum + (o.totals?.total || 0), 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                ₹{totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
               <span className="text-[10px] font-bold bg-purple-100 text-purple-700 px-2 py-0.5 rounded border border-purple-200 ml-1">Gross</span>
             </div>
@@ -467,7 +464,7 @@ const OrdersList: React.FC = () => {
 
           <DataTable
             columns={columns}
-            data={currentRecords}
+            data={orders}
             loading={loading}
             keyExtractor={(item: any) => item._id}
             onRowClick={(item: any) => navigate(`/admin/orders/${item._id}`)}
@@ -476,7 +473,7 @@ const OrdersList: React.FC = () => {
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
-            totalRecords={filteredOrders.length}
+            totalRecords={totalRecords}
             recordsPerPage={recordsPerPage}
             onPageChange={setCurrentPage}
             onRecordsPerPageChange={(limit) => {

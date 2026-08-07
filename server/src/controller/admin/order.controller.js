@@ -1,5 +1,7 @@
+const mongoose = require('mongoose');
 const Order = require('../../models/order.model');
 const Notification = require('../../models/notification.model');
+const User = require('../../models/user.model');
 
 // @desc    Get all orders
 // @route   GET /api/admin/orders
@@ -7,30 +9,66 @@ const Notification = require('../../models/notification.model');
 const getAllOrders = async (req, res) => {
   try {
     const page = Math.max(parseInt(req.query.page || '1', 10), 1);
-    const limit = Math.min(Math.max(parseInt(req.query.limit || '50', 10), 1), 100);
+    let limit = parseInt(req.query.limit || '50', 10);
+    if (req.query.all === 'true' || limit > 1000) {
+      limit = 2000;
+    } else {
+      limit = Math.min(Math.max(limit, 1), 500);
+    }
     const skip = (page - 1) * limit;
-    const search = req.query.search || '';
-    const status = req.query.status || '';
+    const search = (req.query.search || '').trim();
+    const status = (req.query.status || '').trim();
+    const date = (req.query.date || '').trim();
 
     let query = {};
     if (search) {
+      const searchRegex = { $regex: search, $options: 'i' };
+      const matchingUsers = await User.find({
+        $or: [{ name: searchRegex }, { email: searchRegex }]
+      }).select('_id');
+      const userIds = matchingUsers.map(u => u._id);
+
       query.$or = [
-        { orderNumber: { $regex: search, $options: 'i' } },
-        { 'shippingAddress.name': { $regex: search, $options: 'i' } }
+        { orderNumber: searchRegex },
+        { 'shippingAddress.name': searchRegex },
+        { 'shippingAddress.phone': searchRegex },
+        { 'items.name': searchRegex },
+        { user: { $in: userIds } }
       ];
     }
+
     if (status && status !== 'all') {
-      query.status = status;
+      query.status = { $regex: `^${status}$`, $options: 'i' };
     }
 
-    const [orders, total] = await Promise.all([
+    if (date) {
+      const startOfDay = new Date(`${date}T00:00:00.000Z`);
+      const endOfDay = new Date(`${date}T23:59:59.999Z`);
+      query.createdAt = { $gte: startOfDay, $lte: endOfDay };
+    }
+
+    const baseQuery = { ...query };
+    delete baseQuery.status;
+
+    const [orders, total, confirmedCount, pendingCount, revenueResult] = await Promise.all([
       Order.find(query).populate('user', 'name email').sort({ createdAt: -1 }).skip(skip).limit(limit),
-      Order.countDocuments(query)
+      Order.countDocuments(query),
+      Order.countDocuments({ ...baseQuery, status: { $regex: '^Confirmed$', $options: 'i' } }),
+      Order.countDocuments({ ...baseQuery, status: { $regex: '^Pending$', $options: 'i' } }),
+      Order.aggregate([
+        { $match: query },
+        { $group: { _id: null, totalRevenue: { $sum: '$totals.total' } } }
+      ])
     ]);
+
+    const totalRevenue = revenueResult.length > 0 ? revenueResult[0].totalRevenue : 0;
 
     return res.status(200).json({
       orders,
       total,
+      confirmedCount,
+      pendingCount,
+      totalRevenue,
       page,
       limit
     });
@@ -107,10 +145,33 @@ const updateOrderStatus = async (req, res) => {
 // @access  Private/Admin
 const deleteOrder = async (req, res) => {
   try {
-    const order = await Order.findByIdAndDelete(req.params.id);
+    const { id } = req.params;
+    let order = null;
+
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      order = await Order.findByIdAndDelete(id);
+    }
+    
+    if (!order) {
+      order = await Order.findOneAndDelete({ orderNumber: id });
+    }
+
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
     }
+
+    // Clean up notifications related to this order
+    try {
+      await Notification.deleteMany({
+        $or: [
+          { link: `/admin/orders/${order._id}` },
+          { link: `/admin/orders/${order.orderNumber}` }
+        ]
+      });
+    } catch (notifErr) {
+      console.error('Failed to cleanup order notifications:', notifErr);
+    }
+
     return res.status(200).json({ message: 'Order deleted successfully' });
   } catch (error) {
     console.error('Delete Order Error:', error);
